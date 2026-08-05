@@ -19,8 +19,8 @@ from twisted.protocols.ftp import CommandFailed, FTPClient
 
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
-from cowrie.core.network import communication_allowed, outbound_bind_address
-from cowrie.core.rate_limiter import RateLimiter
+from cowrie.core.download import outbound_rate_limiter
+from cowrie.core.network import outbound_bind_address, resolve_allowed
 from cowrie.shell.command import HoneyPotCommand
 
 if TYPE_CHECKING:
@@ -29,16 +29,7 @@ if TYPE_CHECKING:
 commands = {}
 
 # Per-host limiter on outbound FTP connections, matching wget/curl.
-ftpget_rate_limiter = RateLimiter(
-    enabled=CowrieConfig.getboolean(
-        "shell", "ftpget_rate_limit_enabled", fallback=True
-    ),
-    max_requests=CowrieConfig.getint("shell", "ftpget_rate_limit_requests", fallback=5),
-    window_seconds=CowrieConfig.getint(
-        "shell", "ftpget_rate_limit_window", fallback=60
-    ),
-    max_keys=CowrieConfig.getint("shell", "ftpget_rate_limit_max_hosts", fallback=1000),
-)
+ftpget_rate_limiter = outbound_rate_limiter("ftpget")
 
 
 class FTPFileReceiver(Protocol):
@@ -172,8 +163,11 @@ Download a file via FTP
             self.exit(1)
             return
 
-        allowed = yield communication_allowed(self.host)
-        if not allowed:
+        # Connect to this exact address rather than the hostname: resolving
+        # again at connect time lets a malicious DNS server answer the check
+        # and the connection differently.
+        self.resolved_host = yield resolve_allowed(self.host)
+        if self.resolved_host is None:
             self.exit(1)
             return
 
@@ -216,7 +210,7 @@ Download a file via FTP
             self.write(f"Connecting to {self.host}\n")
 
         d = creator.connectTCP(
-            self.host,
+            self.resolved_host,
             self.port,
             timeout=30,
             bindAddress=(outbound_bind_address(), 0),
@@ -298,6 +292,20 @@ Download a file via FTP
             limit=self.limit_size,
         )
         self.errorWrite("ftpget: file exceeds download size limit\n")
+
+    def handle_CTRL_C(self) -> None:
+        self.write("^C\n")
+        self.exit()
+
+    def exit(self, code: int | None = None) -> None:
+        # Close the download artifact on every exit path so an aborted
+        # transfer does not leave its empty temp file behind in the download
+        # directory. close() is idempotent and removes an empty artifact, so
+        # the normal success/error paths are unaffected.
+        artifact = getattr(self, "artifactFile", None)
+        if artifact is not None:
+            artifact.close()
+        HoneyPotCommand.exit(self, code)
 
     def _download_success(self, result: None) -> None:
         """
