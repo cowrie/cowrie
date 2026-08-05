@@ -144,6 +144,31 @@ class Output(cowrie.core.output.Output):
                 (event["session"], event["timestamp"], event["url"], None, None),
             )
 
+        elif event["eventid"] == "cowrie.session.file_upload":
+            self.simpleQuery(
+                "INSERT INTO `downloads` (`session`, `timestamp`, `url`, `outfile`, `shasum`) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (
+                    event["session"],
+                    event["timestamp"],
+                    "",
+                    event["outfile"],
+                    event["shasum"],
+                ),
+            )
+
+        elif event["eventid"] == "cowrie.session.input":
+            self.simpleQuery(
+                "INSERT INTO `input` (`session`, `timestamp`, `realm`, `input`) "
+                "VALUES (?, ?, ?, ?)",
+                (
+                    event["session"],
+                    event["timestamp"],
+                    event["realm"],
+                    event["input"],
+                ),
+            )
+
         elif event["eventid"] == "cowrie.client.version":
             r = yield self.db.runQuery(
                 "SELECT `id` FROM `clients` WHERE `version` = ?", (event["version"],)
