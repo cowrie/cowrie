@@ -12,13 +12,6 @@ on:  # yamllint disable-line rule:truthy
       - main
 
   workflow_dispatch:
-    inputs:
-      logLevel:
-        description: 'Log level'
-        required: true
-        default: 'warning'
-      tags:
-        description: 'test-pypi upload'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
