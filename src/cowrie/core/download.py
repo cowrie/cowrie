@@ -8,19 +8,39 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
+from urllib.parse import urljoin, urlparse
 
+import treq
+from twisted.internet.defer import Deferred, inlineCallbacks
 from twisted.internet.endpoints import HostnameEndpoint, wrapClientTLS
 from twisted.web.client import Agent, BrowserLikePolicyForHTTPS
 
 from cowrie.core.config import CowrieConfig
-from cowrie.core.network import outbound_bind_address
+from cowrie.core.network import outbound_bind_address, resolve_allowed
 from cowrie.core.rate_limiter import RateLimiter
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
+
     from twisted.internet.interfaces import IReactorCore
     from twisted.web.client import URI
 
     from cowrie.core.artifact import Artifact
+
+# Redirect codes that send the client to a new location.
+_REDIRECT_CODES = (301, 302, 303, 307, 308)
+
+
+class BlockedAddress(Exception):
+    """The requested host resolves to an address the honeypot must not reach."""
+
+    def __init__(self, host: str) -> None:
+        super().__init__(f"blocked address for host {host}")
+        self.host = host
+
+
+class TooManyRedirects(Exception):
+    """A redirect chain ran past its hop limit."""
 
 
 def outbound_rate_limiter(command: str) -> RateLimiter:
@@ -82,6 +102,44 @@ def pinned_agent(reactor: IReactorCore, address: str, policy: Any = None) -> Age
     return Agent.usingEndpointFactory(
         reactor, _PinnedEndpointFactory(reactor, address, policy)
     )
+
+
+@inlineCallbacks
+def fetch(
+    reactor: IReactorCore,
+    url: str,
+    method: str = "get",
+    headers: dict[Any, Any] | None = None,
+    timeout: int = 10,
+    max_redirects: int = 5,
+) -> Generator[Deferred, Any, Any]:
+    """Fetch ``url``, validating every hop and connecting to what was validated.
+
+    Redirects are followed here rather than by the agent so each new location
+    is checked against the blocklist; an agent following them itself would
+    reach whatever the redirect names.
+    """
+    for _ in range(max_redirects + 1):
+        host = urlparse(url).hostname or ""
+        address = yield resolve_allowed(host)
+        if address is None:
+            raise BlockedAddress(host)
+
+        response = yield getattr(treq, method)(
+            url=url,
+            agent=pinned_agent(reactor, address),
+            allow_redirects=False,
+            headers=headers,
+            timeout=timeout,
+        )
+
+        location = response.headers.getRawHeaders("location")
+        if response.code not in _REDIRECT_CODES or not location:
+            return response
+
+        url = urljoin(url, location[0])
+
+    raise TooManyRedirects
 
 
 def capture_download(

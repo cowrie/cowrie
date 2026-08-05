@@ -10,10 +10,13 @@ from __future__ import annotations
 import os
 import tempfile
 import unittest
+from typing import Any
+from unittest import mock
 from unittest.mock import MagicMock
 
-from twisted.internet import reactor
+from twisted.internet import defer, reactor
 from twisted.web.client import URI
+from twisted.web.http_headers import Headers
 
 from cowrie.core import download
 from cowrie.core.config import CowrieConfig
@@ -90,6 +93,94 @@ class TestPinnedAgent(unittest.TestCase):
         )
 
         policy.creatorForNetloc.assert_called_once_with(b"example.invalid", 443)
+
+
+class FakeResponse:
+    def __init__(self, code: int = 200, location: str | None = None) -> None:
+        self.code = code
+        self.headers = Headers()
+        if location is not None:
+            self.headers.setRawHeaders("location", [location])
+
+
+class TestFetch(unittest.TestCase):
+    """Every hop of a fetch is validated and connected to by address."""
+
+    def setUp(self) -> None:
+        self.validated: list[str] = []
+        self.requested: list[tuple[str, str]] = []
+        self.responses: list[FakeResponse] = []
+
+        def fake_resolve(host: str) -> Any:
+            self.validated.append(host)
+            return defer.succeed(None if host.startswith("blocked") else "203.0.113.9")
+
+        def fake_get(url: str, agent: Any = None, **kwargs: Any) -> Any:
+            self.requested.append((url, agent._endpointFactory._address))
+            return defer.succeed(self.responses.pop(0))
+
+        for target, attr in ((download, "resolve_allowed"), (download.treq, "get")):
+            patcher = mock.patch.object(
+                target, attr, fake_resolve if attr == "resolve_allowed" else fake_get
+            )
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def _fetch(self, url: str) -> Any:
+        result: list[Any] = []
+        failure: list[Any] = []
+        download.fetch(reactor, url).addCallbacks(result.append, failure.append)
+        return result, failure
+
+    def test_returns_the_response_for_a_direct_hit(self) -> None:
+        self.responses = [FakeResponse()]
+
+        _result, failure = self._fetch("http://example.invalid/payload")
+
+        self.assertFalse(failure)
+        self.assertEqual(self.validated, ["example.invalid"])
+        self.assertEqual(
+            self.requested, [("http://example.invalid/payload", "203.0.113.9")]
+        )
+
+    def test_blocked_host_is_refused(self) -> None:
+        result, failure = self._fetch("http://blocked.invalid/payload")
+
+        self.assertFalse(result)
+        self.assertIsInstance(failure[0].value, download.BlockedAddress)
+
+    def test_each_redirect_hop_is_validated(self) -> None:
+        # An agent that follows redirects itself would reach the new location
+        # unchecked, which is how a public URL smuggles you to a private one.
+        self.responses = [
+            FakeResponse(302, "http://blocked.invalid/inner"),
+            FakeResponse(),
+        ]
+
+        result, failure = self._fetch("http://example.invalid/payload")
+
+        self.assertFalse(result)
+        self.assertIsInstance(failure[0].value, download.BlockedAddress)
+        self.assertEqual(self.validated, ["example.invalid", "blocked.invalid"])
+
+    def test_relative_redirect_resolves_against_the_current_url(self) -> None:
+        self.responses = [FakeResponse(302, "/second"), FakeResponse()]
+
+        _result, failure = self._fetch("http://example.invalid/first")
+
+        self.assertFalse(failure)
+        self.assertEqual(
+            [url for url, _ in self.requested],
+            ["http://example.invalid/first", "http://example.invalid/second"],
+        )
+
+    def test_redirect_loop_gives_up(self) -> None:
+        self.responses = [FakeResponse(302, "http://example.invalid/x")] * 10
+
+        result, failure = self._fetch("http://example.invalid/x")
+
+        self.assertFalse(result)
+        self.assertIsInstance(failure[0].value, download.TooManyRedirects)
 
 
 if __name__ == "__main__":
