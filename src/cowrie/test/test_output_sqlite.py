@@ -68,5 +68,56 @@ class OutputSqliteHardeningTests(unittest.TestCase):
         self.assertEqual(args[-2:], (None, None))
 
 
+class OutputSqliteEventCoverageTests(unittest.TestCase):
+    """Events the other SQL plugins store must not be dropped here."""
+
+    def _executed(self, event: dict[str, Any]) -> list[Any]:
+        out = _make()
+        out.db = Mock()
+        out.db.runQuery.return_value = defer.succeed(None)
+        out.db.runOperation.return_value = defer.succeed(None)
+        out.write(event)
+        return out.db.runQuery.call_args_list + out.db.runOperation.call_args_list
+
+    def test_file_upload_is_stored(self) -> None:
+        # An SFTP upload is a captured payload; dropping it loses the record
+        # that the file ever arrived.
+        calls = self._executed(
+            {
+                "eventid": "cowrie.session.file_upload",
+                "session": "s1",
+                "timestamp": "2026-01-01T00:00:00.000000Z",
+                "shasum": "a" * 64,
+                "outfile": "/tmp/x",
+                "filename": "payload.bin",
+            }
+        )
+
+        self.assertTrue(calls, "file_upload was not written to the database")
+        self.assertTrue(
+            any("downloads" in call[0][0] for call in calls),
+            f"no insert into downloads: {[c[0][0] for c in calls]}",
+        )
+
+    def test_session_input_is_stored(self) -> None:
+        # Direct-tcpip and telnet sessions report commands through
+        # cowrie.session.input rather than cowrie.command.input.
+        calls = self._executed(
+            {
+                "eventid": "cowrie.session.input",
+                "session": "s1",
+                "timestamp": "2026-01-01T00:00:00.000000Z",
+                "realm": "shell",
+                "input": "uname -a",
+            }
+        )
+
+        self.assertTrue(calls, "session.input was not written to the database")
+        self.assertTrue(
+            any("input" in call[0][0] for call in calls),
+            f"no insert into input: {[c[0][0] for c in calls]}",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
