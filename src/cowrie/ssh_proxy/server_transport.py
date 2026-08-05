@@ -421,7 +421,8 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             # With python >= 3 we can use super?
             transport.SSHServerTransport.sendDisconnect(self, reason, desc)
         else:
-            self.transport.write(b"Packet corrupt\n")
+            # this message is used to detect Cowrie behaviour
+            # self.transport.write(b"Packet corrupt\n")
             self._log.info(
                 "Disconnecting with error, code {code}\nreason: {desc}",
                 code=reason,
