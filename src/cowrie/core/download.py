@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import urljoin, urlparse
 
 import treq
@@ -99,9 +99,10 @@ def pinned_agent(reactor: IReactorCore, address: str, policy: Any = None) -> Age
     validation lookup with a public address and the connection lookup with a
     private one.
     """
-    return Agent.usingEndpointFactory(
+    agent = Agent.usingEndpointFactory(
         reactor, _PinnedEndpointFactory(reactor, address, policy)
     )
+    return cast("Agent", agent)
 
 
 @inlineCallbacks

@@ -119,10 +119,11 @@ class TestFetch(unittest.TestCase):
             self.requested.append((url, agent._endpointFactory._address))
             return defer.succeed(self.responses.pop(0))
 
-        for target, attr in ((download, "resolve_allowed"), (download.treq, "get")):
-            patcher = mock.patch.object(
-                target, attr, fake_resolve if attr == "resolve_allowed" else fake_get
-            )
+        for target, replacement in (
+            ("cowrie.core.download.resolve_allowed", fake_resolve),
+            ("cowrie.core.download.treq.get", fake_get),
+        ):
+            patcher = mock.patch(target, replacement)
             patcher.start()
             self.addCleanup(patcher.stop)
 
