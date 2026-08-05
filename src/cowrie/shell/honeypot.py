@@ -1093,7 +1093,13 @@ class HoneyPotShell:
             if newbyt == b"".join(self.protocol.lineBuffer):
                 self.protocol.terminal.write(b"\n")
                 maxlen = max(len(x[fs.A_NAME]) for x in files) + 1
-                perline = int(self.protocol.user.windowSize[1] / (maxlen + 1))
+                # windowSize is only set once the client sent a window-change
+                # request; fall back to 80 columns like __init__ does above.
+                if hasattr(self.protocol.user, "windowSize"):
+                    columns = self.protocol.user.windowSize[1]
+                else:
+                    columns = 80
+                perline = max(1, int(columns / (maxlen + 1)))
                 count = 0
                 for file in files:
                     if count == perline:
