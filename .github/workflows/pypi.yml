@@ -69,7 +69,11 @@ jobs:
         if: ${{ github.repository == 'cowrie/cowrie' }}
         run: |
           set -eu
-          python -m pip install cowrie
+          # Install exactly the version this run built; a plain
+          # 'pip install cowrie' can silently test the previous release
+          # when the index has not propagated yet.
+          EXPECTED=$(python -c "from setuptools_scm import get_version; print(get_version(local_scheme='no-local-version'))")
+          python -m pip install "cowrie==${EXPECTED}"
 
           # entry point is registered and on PATH
           which cowrie
@@ -91,4 +95,4 @@ jobs:
 
           # cowrie start refuses to run from uninitialised dirs
           rm -rf /tmp/cowrie-empty && mkdir /tmp/cowrie-empty && cd /tmp/cowrie-empty
-          cowrie start 2>&1 | grep -q "not initialised"
+          cowrie start 2>&1 | grep -q "not initialized"
