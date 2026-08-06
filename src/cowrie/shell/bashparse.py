@@ -829,6 +829,14 @@ class BashParser:
             if only.data in ("dollar_var", "dollar_brace"):
                 special = self._special_param(only)
                 if special is not None:
+                    _, special_name = self._var_name(only)
+                    if special_name in ("@", "*") and special == "":
+                        # $@ / $* represent the positional-parameter list; with
+                        # none set, they contribute zero words, like an unset
+                        # ordinary variable -- not a phantom empty-string
+                        # argument. $? and $# are scalars where "0" is a real
+                        # value, so they are not touched here.
+                        return None
                     return special
                 value = self.context.get_variable(self._var_name(only)[0])
                 if not value:
