@@ -144,6 +144,36 @@ class BashParseVariableTests(unittest.TestCase):
     def test_question_mark_status(self) -> None:
         self.assertEqual(self._tokens("echo $?"), ["echo", "0"])
 
+    def test_empty_positional_params_drop_word(self) -> None:
+        # $@ / $* with no positional parameters (e.g. a function called with
+        # zero arguments) contribute nothing at all, exactly like an unset
+        # ordinary variable -- not a phantom empty-string argument.
+        ctx = FakeContext({"@": "", "*": "", "#": "0"})
+        parser = BashParser(ctx)
+
+        statement = parser.parse("echo before $@ after")[0]
+        assert isinstance(statement, Command)
+        self.assertEqual(
+            evaluate_now(parser, statement), ["echo", "before", "after"]
+        )
+
+        statement = parser.parse("echo before $* after")[0]
+        assert isinstance(statement, Command)
+        self.assertEqual(
+            evaluate_now(parser, statement), ["echo", "before", "after"]
+        )
+
+    def test_positional_param_count_not_dropped(self) -> None:
+        # $# is a scalar count where "0" is a real, meaningful value, unlike
+        # $@/$* which represent a list that can legitimately be empty. It
+        # must not be dropped the way an empty $@/$* is.
+        ctx = FakeContext({"@": "", "#": "0"})
+        parser = BashParser(ctx)
+
+        statement = parser.parse("echo count $#")[0]
+        assert isinstance(statement, Command)
+        self.assertEqual(evaluate_now(parser, statement), ["echo", "count", "0"])
+
 
 class BashParseRedirectionTests(unittest.TestCase):
     """Redirection operators are emitted as discrete tokens for runCommand."""
