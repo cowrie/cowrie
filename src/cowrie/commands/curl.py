@@ -277,7 +277,14 @@ class Command_curl(HoneyPotCommand):
         # encoding it as ASCII raised UnicodeEncodeError.
         self.url = url.encode("utf8")
 
-        parsed = parse.urlparse(url)
+        try:
+            parsed = parse.urlparse(url)
+        except ValueError:
+            self.errorWrite(
+                "curl: (3) URL using bad/illegal format or missing URL\n"
+            )
+            self.exit(3)
+            return
         scheme = parsed.scheme
         if scheme != "http" and scheme != "https":
             self.errorWrite(
@@ -291,7 +298,14 @@ class Command_curl(HoneyPotCommand):
             self.errorWrite("curl: (3) URL using bad/illegal format or missing URL\n")
             self.exit(3)
             return
-        self.port = parsed.port or (443 if scheme == "https" else 80)
+        try:
+            self.port = parsed.port or (443 if scheme == "https" else 80)
+        except ValueError:
+            self.errorWrite(
+                "curl: (3) URL using bad/illegal format or missing URL\n"
+            )
+            self.exit(3)
+            return
 
         # Check rate limit before proceeding
         if not curl_rate_limiter.check(self.host):
