@@ -220,7 +220,12 @@ class Command_wget(HoneyPotCommand):
         if "://" not in url:
             url = f"http://{url}"
 
-        urldata = parse.urlparse(url)
+        try:
+            urldata = parse.urlparse(url)
+        except ValueError:
+            self.print_usage_error("invalid URL")
+            self.exit()
+            return
         self.scheme = (urldata.scheme or "http").lower()
 
         # self.host is required as it will be used as key in rate limiter from this point forward
@@ -232,14 +237,19 @@ class Command_wget(HoneyPotCommand):
             return
 
         # Determine self.port: use explicit port from URL, otherwise use scheme default
-        if urldata.port is not None:
-            self.port = urldata.port
-        elif self.scheme == "https":
-            self.port = 443
-        elif self.scheme == "ftp":
-            self.port = 21
-        else:
-            self.port = 80
+        try:
+            if urldata.port is not None:
+                self.port = urldata.port
+            elif self.scheme == "https":
+                self.port = 443
+            elif self.scheme == "ftp":
+                self.port = 21
+            else:
+                self.port = 80
+        except ValueError:
+            self.print_usage_error("invalid URL")
+            self.exit()
+            return
 
         # Check rate limit before proceeding
         if not wget_rate_limiter.check(self.host):
