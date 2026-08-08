@@ -127,7 +127,7 @@ class UserDB:
         """
         user = self.re_or_bytes(login)
 
-        if passwd[0] == ord("!"):
+        if passwd and passwd[0] == ord("!"):
             policy = False
             passwd = passwd[1:]
         else:
