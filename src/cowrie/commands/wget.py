@@ -222,20 +222,31 @@ class Command_wget(HoneyPotCommand):
         if "://" not in url:
             url = f"http://{url}"
 
-        urldata = parse.urlparse(url)
+        # urlparse() raises on malformed IPv6 brackets, and .port and .hostname
+        # are parsed lazily and raise rather than returning None for a port
+        # that is not a decimal 0-65535. The URL is attacker input.
+        try:
+            urldata = parse.urlparse(url)
+            hostname = urldata.hostname
+            port = urldata.port
+        except ValueError:
+            self.print_usage_error("invalid URL")
+            self.exit()
+            return
+
         self.scheme = (urldata.scheme or "http").lower()
 
         # self.host is required as it will be used as key in rate limiter from this point forward
-        if urldata.hostname:
-            self.host = urldata.hostname
+        if hostname:
+            self.host = hostname
         else:
             self.print_usage_error("invalid URL")
             self.exit()
             return
 
         # Determine self.port: use explicit port from URL, otherwise use scheme default
-        if urldata.port is not None:
-            self.port = urldata.port
+        if port is not None:
+            self.port = port
         elif self.scheme == "https":
             self.port = 443
         elif self.scheme == "ftp":

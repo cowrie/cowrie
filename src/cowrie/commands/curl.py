@@ -251,7 +251,18 @@ class Command_curl(HoneyPotCommand):
 
         if "://" not in url:
             url = "http://" + url
-        urldata = parse.urlparse(url)
+
+        # urlparse() raises on malformed IPv6 brackets, and .port and .hostname
+        # are parsed lazily and raise rather than returning None for a port
+        # that is not a decimal 0-65535. The URL is attacker input.
+        try:
+            urldata = parse.urlparse(url)
+            hostname = urldata.hostname
+            port = urldata.port
+        except ValueError:
+            self.errorWrite("curl: (3) URL using bad/illegal format or missing URL\n")
+            self.exit(3)
+            return
 
         for opt in optlist:
             if opt[0] == "-o":
@@ -278,21 +289,20 @@ class Command_curl(HoneyPotCommand):
         # encoding it as ASCII raised UnicodeEncodeError.
         self.url = url.encode("utf8")
 
-        parsed = parse.urlparse(url)
-        scheme = parsed.scheme
+        scheme = urldata.scheme
         if scheme != "http" and scheme != "https":
             self.errorWrite(
                 f'curl: (1) Protocol "{scheme}" not supported or disabled in libcurl\n'
             )
             self.exit(1)
             return
-        if parsed.hostname:
-            self.host = parsed.hostname
+        if hostname:
+            self.host = hostname
         else:
             self.errorWrite("curl: (3) URL using bad/illegal format or missing URL\n")
             self.exit(3)
             return
-        self.port = parsed.port or (443 if scheme == "https" else 80)
+        self.port = port or (443 if scheme == "https" else 80)
 
         # Check rate limit before proceeding
         if not curl_rate_limiter.check(self.host):
