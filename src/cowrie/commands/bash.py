@@ -26,8 +26,11 @@ class Command_sh(HoneyPotCommand):
             line = " ".join(self.args[1:])
 
             # it might be sh -c 'echo "sometext"', so don't use line.strip('\'\"')
-            if (line[0] == "'" and line[-1] == "'") or (
-                line[0] == '"' and line[-1] == '"'
+            # "-c" with nothing after it leaves line empty, which bash runs as
+            # an empty command.
+            if line and (
+                (line[0] == "'" and line[-1] == "'")
+                or (line[0] == '"' and line[-1] == '"')
             ):
                 line = line[1:-1]
 
@@ -35,7 +38,8 @@ class Command_sh(HoneyPotCommand):
             self.exit()
 
         elif self.input_data:
-            self.execute_commands(self.input_data.decode("utf8"))
+            # Piped stdin is attacker bytes and need not be valid UTF-8.
+            self.execute_commands(self.input_data.decode("utf8", errors="replace"))
             self.exit()
 
         elif self.args and not self.args[0].startswith("-"):
