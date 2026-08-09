@@ -228,6 +228,15 @@ commands["hostname"] = Command_hostname
 
 
 class Command_ps(HoneyPotCommand):
+    def columns(self) -> int:
+        """Width to truncate each line to. COLUMNS is an ordinary shell
+        variable that export sets to anything at all, so fall back to the
+        default width rather than trusting it to be a number."""
+        try:
+            return int(self.environ["COLUMNS"])
+        except (KeyError, ValueError):
+            return 80
+
     def call(self) -> None:
         user = str(self.user["username"])
         args = ""
@@ -795,13 +804,7 @@ class Command_ps(HoneyPotCommand):
                 ]
             s = "".join([output_array[i][x] for x in line])
             if "w" not in args:
-                s = s[
-                    : (
-                        int(self.environ["COLUMNS"])
-                        if "COLUMNS" in self.environ
-                        else 80
-                    )
-                ]
+                s = s[: self.columns()]
             self.write(f"{s}\n")
 
 
