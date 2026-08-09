@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import re
 import secrets
-from datetime import datetime
+from datetime import datetime, timezone
 
 from cowrie.shell.command import HoneyPotCommand
 
@@ -114,7 +114,10 @@ class Command_dig(HoneyPotCommand):
 
         self.write(f";; Query time: {secrets.randbelow(96) + 5} msec\n")
         self.write(";; SERVER: 2001:730:3ef2::10#53(2001:730:3ef2::10)\n")
-        self.write(f";; WHEN: {datetime.now().strftime('%a %b %d %H:%M:%S UTC %Y')}\n")
+        # The line labels itself UTC, so read the clock in UTC rather than
+        # printing the host's local time under that label.
+        when = datetime.now(timezone.utc)
+        self.write(f";; WHEN: {when.strftime('%a %b %d %H:%M:%S UTC %Y')}\n")
         self.write(f";; MSG SIZE  rcvd: {secrets.randbelow(207) + 50}\n")
 
     def display_help(self):
