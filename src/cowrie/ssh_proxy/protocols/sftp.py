@@ -87,29 +87,24 @@ class SFTP(base_protocol.BaseProtocol):
         else:
             raise ValueError
 
-        if self.parentPacket.packetSize == 0:
-            self.parentPacket.packetSize = int(data[:4].hex(), 16) - len(data[4:])
-            data = data[4:]
-            self.parentPacket.data = data
-            data = b""
+        # An SFTP message is a 4-byte big-endian length followed by that many
+        # bytes. The channel splits and joins messages wherever it likes, so
+        # accumulate until a whole one is present and then take every whole
+        # message the buffer holds. Anything left over stays for the next call
+        # rather than being read as though it belonged to this message.
+        packet = self.parentPacket
+        packet.buffer += data
 
-        else:
-            if len(data) > self.parentPacket.packetSize:
-                self.parentPacket.data = (
-                    self.parentPacket.data + data[: self.parentPacket.packetSize]
-                )
-                data = data[self.parentPacket.packetSize :]
-                self.parentPacket.packetSize = 0
-            else:
-                self.parentPacket.packetSize -= len(data)
-                self.parentPacket.data = self.parentPacket.data + data
-                data = b""
+        while len(packet.buffer) >= 4:
+            length = int.from_bytes(packet.buffer[:4], byteorder="big")
+            if len(packet.buffer) - 4 < length:
+                # The body has not all arrived yet.
+                return
 
-        if self.parentPacket.packetSize == 0:
+            packet.data = packet.buffer[4 : 4 + length]
+            packet.packetSize = length
+            packet.buffer = packet.buffer[4 + length :]
             self.handle_packet(parent)
-
-        if len(data) != 0:
-            self.parse_packet(parent, data)
 
     def handle_packet(self, parent: str) -> None:
         self.packetSize: int = self.parentPacket.packetSize
