@@ -52,6 +52,26 @@ class CurlArtifactCleanupTests(unittest.TestCase):
             os.remove(os.path.join(self.tmpdir, name))
         os.rmdir(self.tmpdir)
 
+    def test_malformed_port_does_not_hang(self) -> None:
+        # Seen in production: a dropper built HOST=1.2.3.4:3001 and PORT=80
+        # separately, producing a host part with a non-numeric port. urlparse's
+        # .port raises ValueError rather than returning None.
+        self.proto.lineReceived(b"curl -s 'http://1.2.3.4:3001:80/x'; echo rc=$?")
+        self.assertIn(
+            b"rc=",
+            self.tr.value(),
+            "shell never resumed: the command hung instead of exiting",
+        )
+
+    def test_out_of_range_port_does_not_hang(self) -> None:
+        self.proto.lineReceived(b"curl -s 'http://1.2.3.4:99999/x'; echo rc=$?")
+        self.assertIn(b"rc=", self.tr.value())
+
+    def test_invalid_ipv6_brackets_do_not_hang(self) -> None:
+        # urlparse() itself raises ValueError here, before .port is reached.
+        self.proto.lineReceived(b"curl -s 'http://[::1/x'; echo rc=$?")
+        self.assertIn(b"rc=", self.tr.value())
+
     def test_failed_download_removes_temp_artifact(self) -> None:
         # Bypass HoneyPotCommand.__init__: its stdout/stderr wiring needs a
         # running process protocol (self.protocol.pp), which is irrelevant to

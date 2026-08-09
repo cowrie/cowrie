@@ -68,6 +68,26 @@ class WgetArtifactCleanupTests(unittest.TestCase):
             "shell never resumed: the command hung instead of exiting",
         )
 
+    def test_malformed_port_does_not_hang(self) -> None:
+        # Seen in production: a dropper built HOST=1.2.3.4:3001 and PORT=80
+        # separately, producing a host part with a non-numeric port. urlparse's
+        # .port raises ValueError rather than returning None.
+        self.proto.lineReceived(b"wget -q 'http://1.2.3.4:3001:80/x'; echo rc=$?")
+        self.assertIn(
+            b"rc=",
+            self.tr.value(),
+            "shell never resumed: the command hung instead of exiting",
+        )
+
+    def test_out_of_range_port_does_not_hang(self) -> None:
+        self.proto.lineReceived(b"wget -q 'http://1.2.3.4:99999/x'; echo rc=$?")
+        self.assertIn(b"rc=", self.tr.value())
+
+    def test_invalid_ipv6_brackets_do_not_hang(self) -> None:
+        # urlparse() itself raises ValueError here, before .port is reached.
+        self.proto.lineReceived(b"wget -q 'http://[::1/x'; echo rc=$?")
+        self.assertIn(b"rc=", self.tr.value())
+
     def test_tcp_timeout_reports_connection_timed_out(self) -> None:
         # A TCP connect that times out yields TCPTimedOutError, built by the
         # reactor (so its Failure has no traceback frames). error() must report
