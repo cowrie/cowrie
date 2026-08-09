@@ -29,11 +29,21 @@ class Output(cowrie.core.output.Output):
         Start sqlite3 logging module using Twisted ConnectionPool.
         Need to be started with check_same_thread=False. See
         https://twistedmatrix.com/trac/ticket/3629.
+
+        The pool holds a single connection: SQLite serializes writers at the
+        file level, so concurrent connections to one database file raise
+        "database is locked" instead of gaining throughput, and the
+        LAST_INSERT_ROWID() reads below only mean anything on the same
+        connection as the INSERT they follow.
         """
         sqliteFilename = CowrieConfig.get("output_sqlite", "db_file")
         try:
             self.db = adbapi.ConnectionPool(
-                "sqlite3", database=sqliteFilename, check_same_thread=False
+                "sqlite3",
+                database=sqliteFilename,
+                check_same_thread=False,
+                cp_min=1,
+                cp_max=1,
             )
             self.db.start()
         except sqlite3.OperationalError as e:
