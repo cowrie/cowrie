@@ -478,6 +478,7 @@ class Output(cowrie.core.output.Output):
             vtUrl,
             headers,
             process_response=process_response,
+            valid_codes=[200, 404],
             error_prefix="VT scanurl",
         )
         if d:
