@@ -17,6 +17,7 @@ import socket
 import time
 
 from prometheus_client import Counter, Gauge, Histogram, start_http_server
+from twisted.internet import reactor, task
 from twisted.logger import Logger
 
 import cowrie.core.output
@@ -102,12 +103,17 @@ class Output(cowrie.core.output.Output):
         self._srcip_seen_5m: set[str] = set()
         self._srcip_seen_60m: set[str] = set()
 
-        # Periodic callbacks for event-loop lag & unique-IP gauges
-        # task.LoopingCall(self._report_loop_lag).start(5, now=False)
-        # task.LoopingCall(self._flush_unique_ip_gauges, 300, "5m").start(300, now=False)
-        # task.LoopingCall(self._flush_unique_ip_gauges, 3600, "1h").start(
-        #     3600, now=False
-        # )
+        # Periodic callbacks for event-loop lag & unique-IP gauges. These are
+        # what publish and then reset the rolling windows below: without them
+        # the sets grow for every source IP ever seen and the gauges never
+        # leave their default value.
+        self._loops = [
+            (5, task.LoopingCall(self._report_loop_lag)),
+            (300, task.LoopingCall(self._flush_unique_ip_gauges, 300, "5m")),
+            (3600, task.LoopingCall(self._flush_unique_ip_gauges, 3600, "1h")),
+        ]
+        for interval, loop in self._loops:
+            loop.start(interval, now=False)
 
     def write(self, event: dict) -> None:
         try:
@@ -192,14 +198,17 @@ class Output(cowrie.core.output.Output):
         dst_port = str(ev.get("dst_port", "0"))
         outbound_total.labels(dst_ip, dst_port).inc()
 
-    # def _report_loop_lag(self) -> None:
-    #     before = time.time()
-    #     reactor.callLater(0, lambda: loop_lag_hist.observe(time.time() - before))
-    #
-    # def _flush_unique_ip_gauges(self, interval_sec: int, label: str) -> None:
-    #     s = self._srcip_seen_5m if interval_sec == 300 else self._srcip_seen_60m
-    #     source_ip_card.labels(label).set(len(s))
-    #     s.clear()
+    def _report_loop_lag(self) -> None:
+        before = time.time()
+        reactor.callLater(0, lambda: loop_lag_hist.observe(time.time() - before))
+
+    def _flush_unique_ip_gauges(self, interval_sec: int, label: str) -> None:
+        """Publish the window's unique source-IP count and start a new one."""
+        s = self._srcip_seen_5m if interval_sec == 300 else self._srcip_seen_60m
+        source_ip_card.labels(label).set(len(s))
+        s.clear()
 
     def stop(self):
-        pass
+        for _interval, loop in getattr(self, "_loops", []):
+            if loop.running:
+                loop.stop()
