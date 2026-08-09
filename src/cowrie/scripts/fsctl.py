@@ -723,13 +723,19 @@ class fseditCmd(cmd.Cmd):
         uid = arg_list[0]
         target_path = resolve_reference(self.pwd, arg_list[1])
 
+        try:
+            newuid = int(uid)
+        except ValueError:
+            print("Incorrect uid: " + uid)
+            return
+
         if not exists(self.fs, target_path):
             print(f"File '{target_path}' doesn't exist.")
             return
 
         target_object = getpath(self.fs, target_path)
         olduid = target_object[A_UID]
-        target_object[A_UID] = int(uid)
+        target_object[A_UID] = newuid
         print("former UID: " + str(olduid) + ". New UID: " + str(uid))
         self.save_pickle()
 
@@ -746,13 +752,19 @@ class fseditCmd(cmd.Cmd):
         gid = arg_list[0]
         target_path = resolve_reference(self.pwd, arg_list[1])
 
+        try:
+            newgid = int(gid)
+        except ValueError:
+            print("Incorrect gid: " + gid)
+            return
+
         if not exists(self.fs, target_path):
             print(f"File '{target_path}' doesn't exist.")
             return
 
         target_object = getpath(self.fs, target_path)
         oldgid = target_object[A_GID]
-        target_object[A_GID] = int(gid)
+        target_object[A_GID] = newgid
         print("former GID: " + str(oldgid) + ". New GID: " + str(gid))
         self.save_pickle()
 
