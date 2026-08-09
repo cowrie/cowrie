@@ -186,7 +186,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
     def connect_to_backend(self, ip, port):
         # remember target so we can log consistently on success/failure
-        self.backend_ip = ip
+        self.backend_ip = ip.decode() if isinstance(ip, bytes) else ip
         self.backend_port = port
 
         # connection to the backend starts here
