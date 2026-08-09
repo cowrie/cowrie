@@ -5,8 +5,7 @@
 
 from __future__ import annotations
 
-import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 import rethinkdb as r
 
@@ -15,7 +14,13 @@ from cowrie.core.config import CowrieConfig
 
 
 def iso8601_to_timestamp(value):
-    return time.mktime(datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ").timetuple())
+    """Unix timestamp for an event timestamp.
+
+    The trailing Z marks the value as UTC, so it is read as UTC: the instant
+    stored must not shift with the honeypot host's own timezone.
+    """
+    parsed = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ")
+    return parsed.replace(tzinfo=timezone.utc).timestamp()
 
 
 RETHINK_DB_SEGMENT = "output_rethinkdblog"
