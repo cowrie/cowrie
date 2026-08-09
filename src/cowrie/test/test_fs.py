@@ -10,8 +10,6 @@ from __future__ import annotations
 import copy
 import hashlib
 import os
-import shutil
-import tempfile
 import unittest
 from pathlib import Path
 from typing import Any
@@ -267,19 +265,31 @@ class UploadCloseTests(unittest.TestCase):
 
     def setUp(self) -> None:
         self.fs = fs.HoneyPotFilesystem("arch", "/root")
-        self.download_path = tempfile.mkdtemp()
-        self.addCleanup(shutil.rmtree, self.download_path, ignore_errors=True)
-        CowrieConfig.set("honeypot", "download_path", self.download_path)
+        # A COWRIE_HONEYPOT_DOWNLOAD_PATH set by another test module wins over
+        # CowrieConfig.set, so read back wherever close() will actually store
+        # the upload rather than pinning it here.
+        self.download_path = CowrieConfig.get("honeypot", "download_path")
         self.fs.events = MagicMock()
 
     def _open_upload(self, contents: bytes) -> int:
+        """Start an upload of these bytes; returns its descriptor.
+
+        The caller passes unique contents so the sha256 name cannot collide
+        with a file another test (or an earlier run) left in download_path,
+        which would silently take close()'s duplicate branch instead.
+        """
+        self.addCleanup(
+            lambda: Path(
+                self.download_path, hashlib.sha256(contents).hexdigest()
+            ).unlink(missing_ok=True)
+        )
         self.fs.mkfile("/tmp/payload", 0, 0, 0, 0o644)
         fd = self.fs.open("/tmp/payload", os.O_CREAT | os.O_WRONLY, 0o644)
         os.write(fd, contents)
         return fd
 
     def test_descriptor_is_closed_before_the_rename(self) -> None:
-        fd = self._open_upload(b"payload")
+        fd = self._open_upload(b"payload for the ordering test")
         calls: list[str] = []
         real_close, real_rename = os.close, os.rename
 
@@ -300,7 +310,7 @@ class UploadCloseTests(unittest.TestCase):
         self.assertEqual(calls, ["close", "rename"])
 
     def test_upload_is_stored_under_its_hash(self) -> None:
-        contents = b"payload"
+        contents = b"payload for the storage test"
         fd = self._open_upload(contents)
 
         self.fs.close(fd)
@@ -312,7 +322,7 @@ class UploadCloseTests(unittest.TestCase):
 
     def test_duplicate_upload_removes_the_temp_file(self) -> None:
         """The remove() branch has the same open-handle problem as rename()."""
-        contents = b"seen before"
+        contents = b"payload for the duplicate test"
         shasum = hashlib.sha256(contents).hexdigest()
         (Path(self.download_path) / shasum).write_bytes(contents)
         fd = self._open_upload(contents)
@@ -323,7 +333,7 @@ class UploadCloseTests(unittest.TestCase):
         self.assertFalse(os.path.exists(tempname))
 
     def test_bookkeeping_is_cleared(self) -> None:
-        fd = self._open_upload(b"payload")
+        fd = self._open_upload(b"payload for the bookkeeping test")
 
         self.fs.close(fd)
 
