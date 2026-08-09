@@ -8,10 +8,16 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import os
+import shutil
+import tempfile
 import unittest
+from pathlib import Path
 from typing import Any
+from unittest.mock import MagicMock, patch
 
+from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs, honeyfs
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
@@ -252,6 +258,77 @@ class CopyOnWriteTests(unittest.TestCase):
         a.chmod("/etc/passwd", 0o600)
         a.remove("/tmp/x")
         self.assertEqual(base, snapshot)
+
+
+class UploadCloseTests(unittest.TestCase):
+    """close() finishes an SFTP upload by hashing the temp file and renaming
+    it to its sha256 name. Windows refuses to rename or remove a file that
+    still has an open handle, so the descriptor has to go first."""
+
+    def setUp(self) -> None:
+        self.fs = fs.HoneyPotFilesystem("arch", "/root")
+        self.download_path = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.download_path, ignore_errors=True)
+        CowrieConfig.set("honeypot", "download_path", self.download_path)
+        self.fs.events = MagicMock()
+
+    def _open_upload(self, contents: bytes) -> int:
+        self.fs.mkfile("/tmp/payload", 0, 0, 0, 0o644)
+        fd = self.fs.open("/tmp/payload", os.O_CREAT | os.O_WRONLY, 0o644)
+        os.write(fd, contents)
+        return fd
+
+    def test_descriptor_is_closed_before_the_rename(self) -> None:
+        fd = self._open_upload(b"payload")
+        calls: list[str] = []
+        real_close, real_rename = os.close, os.rename
+
+        def record_close(handle: int) -> None:
+            calls.append("close")
+            real_close(handle)
+
+        def record_rename(src: str, dst: str) -> None:
+            calls.append("rename")
+            real_rename(src, dst)
+
+        with (
+            patch.object(os, "close", record_close),
+            patch.object(os, "rename", record_rename),
+        ):
+            self.fs.close(fd)
+
+        self.assertEqual(calls, ["close", "rename"])
+
+    def test_upload_is_stored_under_its_hash(self) -> None:
+        contents = b"payload"
+        fd = self._open_upload(contents)
+
+        self.fs.close(fd)
+
+        shasum = hashlib.sha256(contents).hexdigest()
+        stored = Path(self.download_path) / shasum
+        self.assertTrue(stored.is_file())
+        self.assertEqual(stored.read_bytes(), contents)
+
+    def test_duplicate_upload_removes_the_temp_file(self) -> None:
+        """The remove() branch has the same open-handle problem as rename()."""
+        contents = b"seen before"
+        shasum = hashlib.sha256(contents).hexdigest()
+        (Path(self.download_path) / shasum).write_bytes(contents)
+        fd = self._open_upload(contents)
+        tempname = self.fs.tempfiles[fd]
+
+        self.fs.close(fd)
+
+        self.assertFalse(os.path.exists(tempname))
+
+    def test_bookkeeping_is_cleared(self) -> None:
+        fd = self._open_upload(b"payload")
+
+        self.fs.close(fd)
+
+        self.assertNotIn(fd, self.fs.tempfiles)
+        self.assertNotIn(fd, self.fs.filenames)
 
 
 if __name__ == "__main__":

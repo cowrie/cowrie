@@ -506,6 +506,10 @@ class HoneyPotFilesystem:
     def close(self, fd: int) -> None:
         if not fd:
             return
+        # Close the descriptor before renaming or removing the temp file.
+        # POSIX allows both while a handle is still open, but Windows refuses
+        # them with PermissionError, which ends the upload.
+        os.close(fd)
         with open(self.tempfiles[fd], "rb") as f:
             shasum: str = hashlib.sha256(f.read()).hexdigest()
         shasumfile: str = CowrieConfig.get("honeypot", "download_path") + "/" + shasum
@@ -523,7 +527,6 @@ class HoneyPotFilesystem:
         )
         del self.tempfiles[fd]
         del self.filenames[fd]
-        os.close(fd)
 
     def lseek(self, fd: int, offset: int, whence: int) -> int:
         if not fd:
