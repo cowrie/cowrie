@@ -78,7 +78,13 @@ class CowrieSFTPFile:
     def __init__(self, sftpserver, filename, flags, attrs):
         self.sftpserver = sftpserver
         self.filename = filename
+        # Bytes that arrived, which is what the transfer quota is about.
         self.bytesReceived: int = 0
+        # The file's size, which is not the same number: SFTP writes are
+        # offset-addressed, so a client can resend a chunk it already sent
+        # (making the sum too large) or seek past the end (too small). The
+        # size is the highest offset ever written to.
+        self.size: int = 0
 
         openFlags = 0
         if flags & FXF_READ == FXF_READ and flags & FXF_WRITE == 0:
@@ -110,8 +116,8 @@ class CowrieSFTPFile:
             self.contents = self.sftpserver.fs.file_contents(self.filename)
 
     def close(self):
-        if self.bytesReceived > 0:
-            self.sftpserver.fs.update_size(self.filename, self.bytesReceived)
+        if self.size > 0:
+            self.sftpserver.fs.update_size(self.filename, self.size)
         return self.sftpserver.fs.close(self.fd)
 
     def readChunk(self, offset: int, length: int) -> bytes:
@@ -119,6 +125,7 @@ class CowrieSFTPFile:
 
     def writeChunk(self, offset: int, data: bytes) -> None:
         self.bytesReceived += len(data)
+        self.size = max(self.size, offset + len(data))
         if self.bytesReceivedLimit and self.bytesReceived > self.bytesReceivedLimit:
             raise filetransfer.SFTPError(filetransfer.FX_FAILURE, "Quota exceeded")
         self.sftpserver.fs.lseek(self.fd, offset, os.SEEK_SET)
