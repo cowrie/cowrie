@@ -1026,6 +1026,12 @@ class HoneyPotShell:
     def handle_TAB(self) -> None:
         """
         lineBuffer is an array of bytes
+
+        These are the raw keystrokes typed so far, so they need not be valid
+        UTF-8: an ordinary multi-byte character is an incomplete sequence
+        until its last byte arrives. Decoding is lossy for the same reason
+        lineReceived's is -- completing on a line must not raise out of the
+        protocol and kill the session.
         """
         if not self.protocol.lineBuffer:
             return
@@ -1034,7 +1040,7 @@ class HoneyPotShell:
         if line[-1:] == b" ":
             clue = ""
         else:
-            clue = line.split()[-1].decode("utf8")
+            clue = line.split()[-1].decode("utf8", errors="replace")
 
         # clue now contains the string to complete or is empty.
         # line contains the buffer as bytes
@@ -1075,7 +1081,10 @@ class HoneyPotShell:
         newbuf = ""
         if len(files) == 1:
             newbuf = " ".join(
-                [*line.decode("utf8").split()[:-1], f"{basedir}{files[0][fs.A_NAME]}"]
+                [
+                    *line.decode("utf8", errors="replace").split()[:-1],
+                    f"{basedir}{files[0][fs.A_NAME]}",
+                ]
             )
             if files[0][fs.A_TYPE] == fs.T_DIR:
                 newbuf += "/"
@@ -1087,7 +1096,7 @@ class HoneyPotShell:
                 prefix = posixpath.commonprefix([x[fs.A_NAME] for x in files])
             else:
                 prefix = ""
-            first = line.decode("utf8").split(" ")[:-1]
+            first = line.decode("utf8", errors="replace").split(" ")[:-1]
             newbuf = " ".join([*first, f"{basedir}{prefix}"])
             newbyt = newbuf.encode("utf8")
             if newbyt == b"".join(self.protocol.lineBuffer):
