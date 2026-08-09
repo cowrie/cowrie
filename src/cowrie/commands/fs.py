@@ -41,9 +41,12 @@ class Command_grep(HoneyPotCommand):
         except Exception:
             self.errorWrite(f"grep: {filename}: No such file or directory\n")
 
-    def grep_application(self, contents: bytes, match: str) -> None:
+    def compile_match(self, match: str) -> re.Pattern[bytes]:
         bmatch = os.path.basename(match).replace('"', "").encode("utf8")
-        matcher = re.compile(bmatch)
+        return re.compile(bmatch)
+
+    def grep_application(self, contents: bytes, match: str) -> None:
+        matcher = self.compile_match(match)
         for line in contents.split(b"\n"):
             if matcher.search(line):
                 self.matched = True
@@ -97,6 +100,16 @@ class Command_grep(HoneyPotCommand):
             return
 
         self.match = args[0]
+
+        # grep validates the pattern before it reads any input, so a malformed
+        # one is reported once rather than per file or per line of stdin.
+        try:
+            self.compile_match(self.match)
+        except re.error:
+            self.errorWrite("grep: Invalid regular expression\n")
+            self.exit(2)
+            return
+
         files = args[1:]
 
         if self.input_data is not None:
@@ -582,9 +595,7 @@ class Command_mkdir(HoneyPotCommand):
                 self.errorWrite(f"mkdir: cannot create directory `{f}': File exists\n")
                 return
             try:
-                self.fs.mkdir(
-                    pname, self.user["uid"], self.user["gid"], 4096, 16877
-                )
+                self.fs.mkdir(pname, self.user["uid"], self.user["gid"], 4096, 16877)
             except fs.FileNotFound:
                 self.errorWrite(
                     f"mkdir: cannot create directory `{f}': No such file or directory\n"
@@ -672,9 +683,7 @@ class Command_touch(HoneyPotCommand):
                 self.errorWrite(f"touch: cannot touch `{pname}`: Permission denied\n")
                 return
 
-            self.fs.mkfile(
-                pname, self.user["uid"], self.user["gid"], 0, 33188
-            )
+            self.fs.mkfile(pname, self.user["uid"], self.user["gid"], 0, 33188)
 
 
 commands["/bin/touch"] = Command_touch
