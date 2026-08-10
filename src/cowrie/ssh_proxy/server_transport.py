@@ -185,6 +185,12 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         )
 
     def connect_to_backend(self, ip, port):
+        # The pool hands the address back as the bytes it read off the wire; a
+        # directly configured backend is already a str. Normalise it here so
+        # the failure log below reports an address rather than a bytes repr.
+        if isinstance(ip, bytes):
+            ip = ip.decode("utf-8", errors="replace")
+
         # remember target so we can log consistently on success/failure
         self.backend_ip = ip
         self.backend_port = port
