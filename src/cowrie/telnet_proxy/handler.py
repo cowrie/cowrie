@@ -248,9 +248,13 @@ class TelnetHandler:
 
         # check if done inputing
         if b"\r" in self.currentData:
-            terminatingChar = chr(
-                self.currentData[self.currentData.index(b"\r") + 1]
-            ).encode()  # usually \n or \x00
+            cr_index = self.currentData.index(b"\r")
+            if cr_index + 1 < len(self.currentData):
+                terminatingChar = chr(
+                    self.currentData[cr_index + 1]
+                ).encode()  # usually \n or \x00
+            else:
+                terminatingChar = b"\n"  # bare CR with no trailing byte
 
             # cleanup
             self.usernameState = process_backspaces(self.usernameState)
@@ -281,9 +285,13 @@ class TelnetHandler:
 
         # check if done inputing
         if b"\r" in self.currentData:
-            terminatingChar = chr(
-                self.currentData[self.currentData.index(b"\r") + 1]
-            ).encode()  # usually \n or \x00
+            cr_index = self.currentData.index(b"\r")
+            if cr_index + 1 < len(self.currentData):
+                terminatingChar = chr(
+                    self.currentData[cr_index + 1]
+                ).encode()  # usually \n or \x00
+            else:
+                terminatingChar = b"\n"  # bare CR with no trailing byte
 
             # cleanup
             self.passwordState = process_backspaces(self.passwordState)
