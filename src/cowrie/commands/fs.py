@@ -460,6 +460,13 @@ class Command_cp(HoneyPotCommand):
             self.errorWrite("Try `cp --help' for more information.\n")
             return
         sources, dest = args[:-1], args[-1]
+        # Quoting reaches the command as an empty argument; there is no such
+        # path, so there is nothing to resolve or index into.
+        if not dest:
+            self.errorWrite(
+                f"cp: cannot create regular file `{dest}': No such file or directory\n"
+            )
+            return
         if len(sources) > 1 and not self.fs.isdir(resolv(dest)):
             self.errorWrite(f"cp: target `{dest}' is not a directory\n")
             return
@@ -532,6 +539,14 @@ class Command_mv(HoneyPotCommand):
             self.errorWrite("Try `mv --help' for more information.\n")
             return
         sources, dest = args[:-1], args[-1]
+        # Quoting reaches the command as an empty argument; there is no such
+        # path, so there is nothing to resolve or index into.
+        if not dest:
+            self.errorWrite(
+                f"mv: cannot move `{sources[0]}' to `{dest}': "
+                "No such file or directory\n"
+            )
+            return
         if len(sources) > 1 and not self.fs.isdir(resolv(dest)):
             self.errorWrite(f"mv: target `{dest}' is not a directory\n")
             return
@@ -582,9 +597,7 @@ class Command_mkdir(HoneyPotCommand):
                 self.errorWrite(f"mkdir: cannot create directory `{f}': File exists\n")
                 return
             try:
-                self.fs.mkdir(
-                    pname, self.user["uid"], self.user["gid"], 4096, 16877
-                )
+                self.fs.mkdir(pname, self.user["uid"], self.user["gid"], 4096, 16877)
             except fs.FileNotFound:
                 self.errorWrite(
                     f"mkdir: cannot create directory `{f}': No such file or directory\n"
@@ -672,9 +685,7 @@ class Command_touch(HoneyPotCommand):
                 self.errorWrite(f"touch: cannot touch `{pname}`: Permission denied\n")
                 return
 
-            self.fs.mkfile(
-                pname, self.user["uid"], self.user["gid"], 0, 33188
-            )
+            self.fs.mkfile(pname, self.user["uid"], self.user["gid"], 0, 33188)
 
 
 commands["/bin/touch"] = Command_touch
