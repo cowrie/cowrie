@@ -19,7 +19,9 @@ from twisted.cred.checkers import (
 from twisted.cred.portal import Portal
 from twisted.internet import defer
 from twisted.internet import reactor as _reactor
+from twisted.internet.error import ConnectionDone
 from twisted.protocols.ftp import FTPFactory, FTPRealm
+from twisted.python.failure import Failure
 
 from cowrie.commands import ftpget as ftpget_module
 from cowrie.commands.ftpget import (
@@ -179,6 +181,89 @@ class FtpGetArtifactCleanupTests(unittest.TestCase):
         self.assertFalse(
             os.path.exists(temp_name), "aborted transfer left its temp file behind"
         )
+
+
+class FtpGetCtrlCKeepsDownloadingTests(unittest.TestCase):
+    """CTRL-C returns the attacker to their prompt but must not cost us the
+    sample: the transfer keeps running and is still captured and logged."""
+
+    def _mid_transfer(self) -> Command_ftpget:
+        """A command whose data transfer is under way."""
+        cmd = Command_ftpget.__new__(Command_ftpget)
+        cmd.exited = False
+        cmd.exit_code = 0
+        cmd.protocol = mock.Mock()
+        cmd.fs = mock.Mock()
+        cmd.user = {"uid": 0, "gid": 0}
+        cmd.write = mock.Mock()  # type: ignore[method-assign]
+        cmd.errorWrite = mock.Mock()  # type: ignore[method-assign]
+        cmd.url_log = "ftp://evil.example/payload"
+        cmd.local_file = "payload"
+        cmd.fakeoutfile = "/root/payload"
+        cmd.artifactFile = Artifact("ftpget-test")
+        self.addCleanup(cmd.artifactFile.close)
+        cmd.receiver = FTPFileReceiver(cmd.artifactFile)
+        cmd.receiver.makeConnection(mock.Mock())
+        cmd.transfer_running = True
+        return cmd
+
+    def _ctrl_c(self, cmd: Command_ftpget) -> None:
+        with mock.patch.object(HoneyPotCommand, "exit"):
+            cmd.handle_CTRL_C()
+        cmd.exited = True
+
+    def test_data_connection_is_left_open(self) -> None:
+        cmd = self._mid_transfer()
+
+        self._ctrl_c(cmd)
+
+        cast("mock.Mock", cmd.receiver.transport).loseConnection.assert_not_called()
+
+    def test_the_rest_of_the_sample_is_still_written(self) -> None:
+        """exit() must not close the artifact out from under the transfer, or
+        the capture is truncated to whatever had arrived by then."""
+        cmd = self._mid_transfer()
+        cmd.receiver.dataReceived(b"first half ")
+
+        self._ctrl_c(cmd)
+        cmd.receiver.dataReceived(b"second half")
+
+        cmd.artifactFile.fp.flush()
+        with open(cmd.artifactFile.fp.name, "rb") as f:
+            self.assertEqual(f.read(), b"first half second half")
+
+    def test_completion_after_ctrl_c_still_reports_the_download(self) -> None:
+        cmd = self._mid_transfer()
+        cmd.receiver.dataReceived(b"malware")
+        self._ctrl_c(cmd)
+
+        with mock.patch.object(HoneyPotCommand, "exit"):
+            cmd._download_success(None)
+
+        eventids = [
+            call.args[0] for call in cmd.protocol.events.dispatch.call_args_list
+        ]
+        self.assertIn("cowrie.session.file_download", eventids)
+        cmd.fs.mkfile.assert_called_once()
+
+    def test_no_terminal_output_after_ctrl_c(self) -> None:
+        """The attacker has their prompt back; a late error must not inject
+        text into whatever they are doing now."""
+        cmd = self._mid_transfer()
+        self._ctrl_c(cmd)
+
+        with mock.patch.object(HoneyPotCommand, "exit"):
+            cmd._download_error(Failure(ConnectionDone()))
+
+        cmd.errorWrite.assert_not_called()
+
+    def test_error_is_reported_while_the_command_is_still_running(self) -> None:
+        cmd = self._mid_transfer()
+
+        with mock.patch.object(HoneyPotCommand, "exit"):
+            cmd._download_error(Failure(ConnectionDone()))
+
+        cmd.errorWrite.assert_called_once()
 
 
 class FTPFileReceiverSizeLimitTests(unittest.TestCase):
