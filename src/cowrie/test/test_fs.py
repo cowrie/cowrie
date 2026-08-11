@@ -285,6 +285,7 @@ class UploadCloseTests(unittest.TestCase):
         )
         self.fs.mkfile("/tmp/payload", 0, 0, 0, 0o644)
         fd = self.fs.open("/tmp/payload", os.O_CREAT | os.O_WRONLY, 0o644)
+        assert fd is not None
         os.write(fd, contents)
         return fd
 
