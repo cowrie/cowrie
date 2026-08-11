@@ -46,7 +46,7 @@ class PlaylogDecodeTests(unittest.TestCase):
     def _convert(self, *chunks: bytes) -> dict:
         asciinema.playlog(_ttylog(*chunks), {"colorify": False, "output": self.outfile})
         with open(self.outfile) as f:
-            return cast(dict, json.load(f))
+            return cast("dict", json.load(f))
 
     def test_plain_output_is_converted(self) -> None:
         log = self._convert(b"hello\n")
