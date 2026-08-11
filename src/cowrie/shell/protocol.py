@@ -372,10 +372,10 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         Before this, execcmd is 'bytes'. Here it converts to 'string' and
         commands work with string rather than bytes.
         """
-        try:
-            self.execcmd = execcmd.decode("utf8")
-        except UnicodeDecodeError:
-            self._log.error("Unusual execcmd: {execcmd!r}", execcmd=execcmd)
+        # The exec command is attacker input and need not be valid UTF-8.
+        # Every caller reads execcmd right after construction, so it must
+        # always be set.
+        self.execcmd = execcmd.decode("utf8", errors="replace")
 
         # When the exec'd command is a shell reading commands from the channel
         # (`ssh host bash`), stdin is delivered to the cmdstack line by line
