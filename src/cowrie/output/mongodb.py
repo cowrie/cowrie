@@ -6,7 +6,9 @@
 from __future__ import annotations
 
 import pymongo
+from twisted.internet import reactor, threads
 from twisted.logger import Logger
+from twisted.python.threadpool import ThreadPool
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
@@ -18,6 +20,7 @@ class Output(cowrie.core.output.Output):
     """
 
     _log = Logger()
+    pool: ThreadPool | None = None
 
     def insert_one(self, collection, event):
         try:
@@ -40,7 +43,14 @@ class Output(cowrie.core.output.Output):
         db_name = CowrieConfig.get("output_mongodb", "database")
 
         try:
-            self.mongo_client = pymongo.MongoClient(db_addr)
+            # Bound worst-case blocking time per call so an unreachable host
+            # can't hang the worker thread (or reactor shutdown) forever.
+            self.mongo_client = pymongo.MongoClient(
+                db_addr,
+                serverSelectionTimeoutMS=5000,
+                connectTimeoutMS=5000,
+                socketTimeoutMS=5000,
+            )
             self.mongo_db = self.mongo_client[db_name]
             # Define Collections.
             self.col_sensors = self.mongo_db["sensors"]
@@ -54,14 +64,29 @@ class Output(cowrie.core.output.Output):
             self.col_event = self.mongo_db["event"]
             self.col_ipforwards = self.mongo_db["ipforwards"]
             self.col_ipforwardsdata = self.mongo_db["ipforwardsdata"]
+
+            # Dedicated single-worker pool: keeps writes off the reactor
+            # thread while guaranteeing they execute in the order they were
+            # logged, so the find/update pairs below can't race each other.
+            self.pool = ThreadPool(
+                minthreads=1, maxthreads=1, name="MongoDBOutputPool"
+            )
+            self.pool.start()
         except Exception as e:
             self._log.info("output_mongodb: Error: {error}", error=e)
 
     def stop(self):
+        if self.pool:
+            self.pool.stop()
         if hasattr(self, "mongo_client"):
             self.mongo_client.close()
 
     def write(self, event):
+        d = threads.deferToThreadPool(reactor, self.pool, self._write_sync, event)
+        d.addErrback(lambda f: self._log.failure("mongodb output error", f))
+        return d
+
+    def _write_sync(self, event):
         for i in list(event):
             # Remove twisted 15 legacy keys
             if i.startswith("log_"):
@@ -92,22 +117,25 @@ class Output(cowrie.core.output.Output):
                 self.insert_one(self.col_downloads, event)
 
             case "cowrie.client.version":
-                doc = self.col_sessions.find_one({"session": event["session"]})
-                if doc:
-                    doc["sshversion"] = event["version"]
-                    self.update_one(self.col_sessions, event["session"], doc)
+                self.update_one(
+                    self.col_sessions,
+                    event["session"],
+                    {"sshversion": event["version"]},
+                )
 
             case "cowrie.client.size":
-                doc = self.col_sessions.find_one({"session": event["session"]})
-                if doc:
-                    doc["termsize"] = f"{event['width']}x{event['height']}"
-                    self.update_one(self.col_sessions, event["session"], doc)
+                self.update_one(
+                    self.col_sessions,
+                    event["session"],
+                    {"termsize": f"{event['width']}x{event['height']}"},
+                )
 
             case "cowrie.session.closed":
-                doc = self.col_sessions.find_one({"session": event["session"]})
-                if doc:
-                    doc["endtime"] = event["timestamp"]
-                    self.update_one(self.col_sessions, event["session"], doc)
+                self.update_one(
+                    self.col_sessions,
+                    event["session"],
+                    {"endtime": event["timestamp"]},
+                )
 
             case "cowrie.log.closed":
                 # ToDo Compress to opimise the space and if your sending to remote db
