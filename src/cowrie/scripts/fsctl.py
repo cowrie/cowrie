@@ -729,7 +729,11 @@ class fseditCmd(cmd.Cmd):
 
         target_object = getpath(self.fs, target_path)
         olduid = target_object[A_UID]
-        target_object[A_UID] = int(uid)
+        try:
+            target_object[A_UID] = int(uid)
+        except ValueError:
+            print("Incorrect uid: " + uid)
+            return
         print("former UID: " + str(olduid) + ". New UID: " + str(uid))
         self.save_pickle()
 
@@ -752,7 +756,11 @@ class fseditCmd(cmd.Cmd):
 
         target_object = getpath(self.fs, target_path)
         oldgid = target_object[A_GID]
-        target_object[A_GID] = int(gid)
+        try:
+            target_object[A_GID] = int(gid)
+        except ValueError:
+            print("Incorrect gid: " + gid)
+            return
         print("former GID: " + str(oldgid) + ". New GID: " + str(gid))
         self.save_pickle()
 
