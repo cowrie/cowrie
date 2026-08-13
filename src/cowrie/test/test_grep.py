@@ -74,6 +74,28 @@ class ShellGrepCommandTests(unittest.TestCase):
         self.proto.lineReceived(b"echo $?\n")
         self.assertEqual(self.tr.value(), PROMPT + b"1\n" + PROMPT)
 
+    def test_grep_invalid_pattern_piped(self) -> None:
+        """A pattern that is not a valid regex is an error, not a wedged
+        shell: the pattern is attacker input on every grep path."""
+        self.proto.lineReceived(b"echo hello | grep '['; echo $?\n")
+        self.assertEqual(
+            self.tr.value(), b"grep: Invalid regular expression\n2\n" + PROMPT
+        )
+
+    def test_grep_invalid_pattern_file(self) -> None:
+        self.proto.lineReceived(b"grep 'a(' /etc/passwd\n")
+        value = self.tr.value()
+        self.assertIn(b"grep: Invalid regular expression", value)
+        self.assertTrue(value.endswith(PROMPT))
+
+    def test_grep_invalid_pattern_stdin(self) -> None:
+        """The stdin path must reject the pattern up front rather than
+        waiting for a line to fail on."""
+        self.proto.lineReceived(b"grep '['\n")
+        self.assertEqual(
+            self.tr.value(), b"grep: Invalid regular expression\n" + PROMPT
+        )
+
     def test_grep_no_args_shows_usage(self) -> None:
         self.proto.lineReceived(b"grep\n")
         value = self.tr.value()
