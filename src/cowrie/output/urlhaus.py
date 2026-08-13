@@ -25,6 +25,16 @@ COWRIE_USER_AGENT = "Cowrie Honeypot"
 
 SUBMIT_URL = b"https://urlhaus.abuse.ch/api/"
 
+# ResponseFailed (its subclass ResponseNeverReceived wraps the CancelledError
+# treq raises on a request timeout) would otherwise escape as an unhandled
+# Deferred error (issue #1711).
+REQUEST_FAILURES = (
+    defer.CancelledError,
+    error.ConnectingCancelledError,
+    error.DNSLookupError,
+    ResponseFailed,
+)
+
 
 class Output(cowrie.core.output.Output):
     """
@@ -68,74 +78,79 @@ class Output(cowrie.core.output.Output):
         self.submitted_urls.add(url)
         self.submit(event)
 
+    def _payload(self, url):
+        return {
+            "anonymous": self.anonymous,
+            "submission": [
+                {"url": url, "threat": "malware_download", "tags": self.tags}
+            ],
+        }
+
+    def _headers(self):
+        return {
+            b"Content-Type": [b"application/json"],
+            b"Auth-Key": [self.api_key.encode("utf-8")],
+            b"User-Agent": [COWRIE_USER_AGENT.encode("ascii")],
+        }
+
+    def _report(self, event, url, result, message, http_status=None):
+        extra = {"http_status": http_status} if http_status is not None else {}
+        self.dispatch(
+            eventid="cowrie.urlhaus.submitted",
+            format=message,
+            session=event["session"],
+            src_ip=event["src_ip"],
+            url=url,
+            result=result,
+            **extra,
+        )
+
     @defer.inlineCallbacks
     def submit(self, event):
         """
         Submit a URL to URLhaus
         """
         url = event["url"]
-
-        payload = {
-            "anonymous": self.anonymous,
-            "submission": [
-                {"url": url, "threat": "malware_download", "tags": self.tags}
-            ],
-        }
-        headers = {
-            b"Content-Type": [b"application/json"],
-            b"Auth-Key": [self.api_key.encode("utf-8")],
-            b"User-Agent": [COWRIE_USER_AGENT.encode("ascii")],
-        }
+        request_body = json.dumps(self._payload(url)).encode("utf-8")
+        headers = self._headers()
 
         try:
             response = yield treq.post(
                 url=SUBMIT_URL,
                 headers=headers,
-                data=json.dumps(payload).encode("utf-8"),
+                data=request_body,
                 timeout=HTTP_TIMEOUT,
                 allow_redirects=False,
             )
-            body = yield response.text()
-        except (
-            defer.CancelledError,
-            error.ConnectingCancelledError,
-            error.DNSLookupError,
-            ResponseFailed,
-        ) as e:
-            # ResponseFailed (its subclass ResponseNeverReceived wraps the
-            # CancelledError treq raises on a request timeout) would otherwise
-            # escape as an unhandled Deferred error (issue #1711).
+            response_text = yield response.text()
+        except REQUEST_FAILURES as e:
             self._log.info("urlhaus: request failed: {error}", error=e)
-            self.dispatch(
-                eventid="cowrie.urlhaus.submitted",
-                format="URLhaus submission failed for URL: %(url)s",
-                session=event["session"],
-                src_ip=event["src_ip"],
-                url=url,
-                result="error",
+            self._report(
+                event,
+                url,
+                "error",
+                "URLhaus submission failed for URL: %(url)s",
             )
             return
 
         if 200 <= response.code < 300:
             self._log.info("urlhaus: submitted {url}", url=url)
-            self.dispatch(
-                eventid="cowrie.urlhaus.submitted",
-                format="URLhaus submission succeeded for URL: %(url)s",
-                session=event["session"],
-                src_ip=event["src_ip"],
-                url=url,
-                result="success",
+            self._report(
+                event,
+                url,
+                "success",
+                "URLhaus submission succeeded for URL: %(url)s",
             )
         else:
             self._log.error(
-                "urlhaus: error status {code}: {body}", code=response.code, body=body
+                "urlhaus: error status {code}: {body}",
+                code=response.code,
+                body=response_text,
             )
-            self.dispatch(
-                eventid="cowrie.urlhaus.submitted",
-                format="URLhaus submission failed for URL: %(url)s (HTTP %(http_status)s)",
-                session=event["session"],
-                src_ip=event["src_ip"],
-                url=url,
-                result="error",
+            self._report(
+                event,
+                url,
+                "error",
+                "URLhaus submission failed for URL: %(url)s (HTTP %(http_status)s)",
                 http_status=response.code,
             )

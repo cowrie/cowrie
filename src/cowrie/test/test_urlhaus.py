@@ -72,20 +72,22 @@ class UrlhausWriteTests(unittest.TestCase):
         self.output.anonymous = "0"
         self.output.tags = ["cowrie", "honeypot"]
         self.output.submitted_urls = set()
-        self.output.submit = Mock()  # type: ignore[method-assign]
 
     def test_ignores_non_download_events(self) -> None:
-        self.output.write({"eventid": "cowrie.session.connect"})
-        self.output.submit.assert_not_called()
+        with patch.object(self.output, "submit") as mock_submit:
+            self.output.write({"eventid": "cowrie.session.connect"})
+            mock_submit.assert_not_called()
 
     def test_submits_download_url_once(self) -> None:
-        self.output.write(DOWNLOAD_EVENT)
-        self.output.write(DOWNLOAD_EVENT)
-        self.output.submit.assert_called_once_with(DOWNLOAD_EVENT)
+        with patch.object(self.output, "submit") as mock_submit:
+            self.output.write(DOWNLOAD_EVENT)
+            self.output.write(DOWNLOAD_EVENT)
+            mock_submit.assert_called_once_with(DOWNLOAD_EVENT)
 
     def test_ignores_download_without_url(self) -> None:
-        self.output.write({"eventid": "cowrie.session.file_download"})
-        self.output.submit.assert_not_called()
+        with patch.object(self.output, "submit") as mock_submit:
+            self.output.write({"eventid": "cowrie.session.file_download"})
+            mock_submit.assert_not_called()
 
 
 class UrlhausSubmitTests(unittest.TestCase):
