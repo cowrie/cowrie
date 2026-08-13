@@ -126,8 +126,7 @@ class FlowControlTests(unittest.TestCase):
     def test_break_stops_loop(self) -> None:
         self.assertEqual(
             self._run(
-                "for i in 1 2 3 4 5; do echo $i; "
-                "if [ $i -eq 3 ]; then break; fi; done"
+                "for i in 1 2 3 4 5; do echo $i; if [ $i -eq 3 ]; then break; fi; done"
             ),
             b"1\n2\n3\n",
         )
@@ -135,8 +134,7 @@ class FlowControlTests(unittest.TestCase):
     def test_continue_skips_iteration(self) -> None:
         self.assertEqual(
             self._run(
-                "for i in 1 2 3 4; do if [ $i -eq 2 ]; then continue; fi; "
-                "echo $i; done"
+                "for i in 1 2 3 4; do if [ $i -eq 2 ]; then continue; fi; echo $i; done"
             ),
             b"1\n3\n4\n",
         )
@@ -200,6 +198,27 @@ class FlowControlTests(unittest.TestCase):
             b"from_f\n",
         )
 
+    def test_function_forwards_all_arguments(self) -> None:
+        self.assertEqual(
+            self._run("f() { echo before $@ after; }; f one two"),
+            b"before one two after\n",
+        )
+
+    def test_function_with_no_arguments_expands_at_to_nothing(self) -> None:
+        """$@ with no positional parameters contributes no words at all, so
+        the extra separator a phantom empty argument produces must not
+        appear."""
+        self.assertEqual(
+            self._run("f() { echo before $@ after; }; f"),
+            b"before after\n",
+        )
+
+    def test_function_with_no_arguments_expands_star_to_nothing(self) -> None:
+        self.assertEqual(
+            self._run("f() { echo before $* after; }; f"),
+            b"before after\n",
+        )
+
     # -- exit status propagation -------------------------------------------
 
     def test_status_after_if(self) -> None:
@@ -215,8 +234,7 @@ class FlowControlTests(unittest.TestCase):
         # for a downloader; the first success breaks the loop.
         self.assertEqual(
             self._run(
-                "for url in http://a/x http://b/x; do "
-                "echo fetch $url && break; done"
+                "for url in http://a/x http://b/x; do echo fetch $url && break; done"
             ),
             b"fetch http://a/x\n",
         )
