@@ -109,6 +109,11 @@ class Output(cowrie.core.output.Output):
                     "banner": state["banner"],
                 }
             )
+            # The state has been consumed into the batch entry above and the
+            # session is over, so drop it rather than carrying one entry per
+            # session ever seen for the life of the process.
+            self.session_state.pop(session, None)
+
             if self.debug:
                 self._log.info(
                     "dshield: log appended, batch size {batch_len} max size {batch_size}",
