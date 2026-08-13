@@ -11,6 +11,7 @@ import json
 import os
 import tempfile
 import unittest
+from typing import Any
 from unittest.mock import Mock, patch
 
 from twisted.internet import defer, error
@@ -32,8 +33,8 @@ DOWNLOAD_EVENT = {
 }
 
 
-class UrlhausRequestFailureTests(unittest.TestCase):
-    """A failed URLhaus submission must be handled, not left unhandled."""
+class UrlhausTestCase(unittest.TestCase):
+    """Shared setup: a plugin instance pointed at URLhaus test values."""
 
     def setUp(self) -> None:
         self.output = Output()
@@ -42,36 +43,36 @@ class UrlhausRequestFailureTests(unittest.TestCase):
         self.output.tags = ["cowrie", "honeypot"]
         self.output.submitted_urls = set()
 
-    def _assert_handled(self, failure: Exception) -> None:
-        with patch("cowrie.output.urlhaus.treq.post", return_value=defer.fail(failure)):
-            d = self.output.submit(DOWNLOAD_EVENT)
+    def _assert_resolved(self, d: Any) -> None:
+        """The Deferred fired, and not with a lingering Failure."""
         results: list = []
         d.addBoth(results.append)
-        # The Deferred fired, and not with a lingering Failure.
         self.assertEqual(len(results), 1)
         self.assertNotIsInstance(results[0], Failure)
 
-    def test_response_never_received_is_handled(self) -> None:
+
+class UrlhausRequestFailureTests(UrlhausTestCase):
+    """A failed URLhaus submission must be handled, not left unhandled."""
+
+    def test_request_failures_are_handled(self) -> None:
         # treq wraps a request timeout as ResponseNeverReceived([CancelledError]);
         # this is the exact failure reported in issue #1711.
-        self._assert_handled(ResponseNeverReceived([Failure(defer.CancelledError())]))
+        failures = (
+            ResponseNeverReceived([Failure(defer.CancelledError())]),
+            defer.CancelledError(),
+            error.DNSLookupError(),
+        )
+        for failure in failures:
+            with self.subTest(failure=type(failure).__name__):
+                with patch(
+                    "cowrie.output.urlhaus.treq.post",
+                    return_value=defer.fail(failure),
+                ):
+                    self._assert_resolved(self.output.submit(DOWNLOAD_EVENT))
 
-    def test_cancelled_error_is_handled(self) -> None:
-        self._assert_handled(defer.CancelledError())
 
-    def test_dns_lookup_error_is_handled(self) -> None:
-        self._assert_handled(error.DNSLookupError())
-
-
-class UrlhausWriteTests(unittest.TestCase):
+class UrlhausWriteTests(UrlhausTestCase):
     """write() only submits download URLs, deduplicated."""
-
-    def setUp(self) -> None:
-        self.output = Output()
-        self.output.api_key = "test-key"
-        self.output.anonymous = "0"
-        self.output.tags = ["cowrie", "honeypot"]
-        self.output.submitted_urls = set()
 
     def test_ignores_non_download_events(self) -> None:
         with patch.object(self.output, "submit") as mock_submit:
@@ -90,15 +91,8 @@ class UrlhausWriteTests(unittest.TestCase):
             mock_submit.assert_not_called()
 
 
-class UrlhausSubmitTests(unittest.TestCase):
+class UrlhausSubmitTests(UrlhausTestCase):
     """submit() posts the expected JSON payload with the Auth-Key header."""
-
-    def setUp(self) -> None:
-        self.output = Output()
-        self.output.api_key = "test-key"
-        self.output.anonymous = "0"
-        self.output.tags = ["cowrie", "honeypot"]
-        self.output.submitted_urls = set()
 
     def test_posts_payload_and_headers(self) -> None:
         response = Mock()
@@ -107,12 +101,7 @@ class UrlhausSubmitTests(unittest.TestCase):
 
         with patch("cowrie.output.urlhaus.treq.post") as treq_post:
             treq_post.return_value = defer.succeed(response)
-            d = self.output.submit(DOWNLOAD_EVENT)
-
-        results: list = []
-        d.addBoth(results.append)
-        self.assertEqual(len(results), 1)
-        self.assertNotIsInstance(results[0], Failure)
+            self._assert_resolved(self.output.submit(DOWNLOAD_EVENT))
 
         kwargs = treq_post.call_args.kwargs
         self.assertEqual(kwargs["url"], b"https://urlhaus.abuse.ch/api/")
