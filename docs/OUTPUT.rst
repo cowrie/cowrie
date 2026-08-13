@@ -545,6 +545,17 @@ Attributes:
 
     * `data`: the payload
 
+cowrie.urlhaus.submitted
+========================
+
+The URLhaus output plugin finished submitting a malware download URL.
+
+Attributes:
+
+    * `url`: the submitted URL
+    * `result`: ``success`` or ``error``
+    * `http_status`: HTTP status code (on HTTP errors)
+
 cowrie.virustotal.scanfile
 ==========================
 
