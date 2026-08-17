@@ -39,7 +39,7 @@ dependencies = [
         "hyperlink==21.0.0",
         "idna==3.18",
         "lark==1.3.1",
-        "packaging==26.2",
+        "packaging==26.3",
         "pyasn1_modules==0.4.2",
         "service_identity==26.1.0",
         "treq==26.7.0",
