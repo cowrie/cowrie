@@ -8,10 +8,11 @@ import json
 import os
 import tempfile
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from twisted.internet import defer
 
+from cowrie.output import virustotal
 from cowrie.output.virustotal import Output
 
 
@@ -138,7 +139,6 @@ class VirusTotalOutputTests(unittest.TestCase):
         file's sha256, not the analysis id the upload returns."""
         self.output.comment = True
         self.output.commenttext = "Test comment"
-        self.output.collection_name = "test-collection"
         self.output.collection_id = "test-collection-id"
 
         captured: dict = {}
@@ -158,7 +158,9 @@ class VirusTotalOutputTests(unittest.TestCase):
             self.output.postfile(tmp_path, "payload.exe", "HASH256")
             # The v3 upload response carries an analysis id, not the file hash.
             captured["process_response"](
-                json.dumps({"data": {"id": "analysis-xyz", "type": "analysis"}}).encode()
+                json.dumps(
+                    {"data": {"id": "analysis-xyz", "type": "analysis"}}
+                ).encode()
             )
         finally:
             os.unlink(tmp_path)
@@ -333,82 +335,29 @@ class VirusTotalOutputTests(unittest.TestCase):
                 # Reset mock for next test
                 self.output.agent.request.reset_mock()
 
-    def test_create_collection_request(self) -> None:
-        """Creating a collection POSTs the v3 collection body."""
-        output = Output()
-        output.apiKey = "test-api-key"
-        output.debug = True
-        output.collection_name = "test-collection"
+    def _started(self, config: Mock) -> Output:
+        """Construct the plugin and run start() against the given config."""
+        with patch.object(virustotal.Output, "start", lambda self: None):
+            output = virustotal.Output()
+        with patch.object(virustotal, "CowrieConfig", config):
+            output.start()
+        return output
 
-        mock_agent = Mock()
-        output.agent = mock_agent
+    def test_start_reads_collection_id_from_config(self) -> None:
+        """start() must load collection_id from config and create nothing."""
+        config = Mock()
+        config.get.side_effect = lambda section, option, fallback=None: {
+            "collection_id": "EXISTING-ID",
+        }.get(option, fallback)
+        config.getboolean.side_effect = lambda section, option, fallback=False: fallback
 
-        output._create_collection()
+        output = self._started(config)
 
-        self.assertTrue(mock_agent.request.called)
-        method, url, _headers, body = mock_agent.request.call_args[0]
-        self.assertEqual(method, b"POST")
-        self.assertEqual(url, b"https://www.virustotal.com/api/v3/collections")
-        collection_data = json.loads(body.body.decode())
-        self.assertEqual(collection_data["data"]["type"], "collection")
-        self.assertEqual(
-            collection_data["data"]["attributes"]["name"], "test-collection"
-        )
-
-    def test_init_collection_reuses_existing(self) -> None:
-        """An existing collection found by name is reused without creating."""
-        self.output.collection_name = "cowrie"
-
-        captured: dict = {}
-
-        def fake_make_request(method, *args, **kwargs):
-            captured["method"] = method
-            captured["process_response"] = kwargs.get("process_response")
-            return defer.succeed(None)
-
-        self.output._make_request = fake_make_request  # type: ignore[method-assign]
-        self.output._create_collection = Mock()  # type: ignore[method-assign]
-
-        self.output._init_collection()
-        # The lookup is a GET against /collections.
-        self.assertEqual(captured["method"], b"GET")
-        captured["process_response"](
-            json.dumps(
-                {"data": [{"id": "EXISTING-ID", "attributes": {"name": "cowrie"}}]}
-            ).encode()
-        )
-
-        self.assertEqual(self.output.collection_id, "EXISTING-ID")
-        self.output._create_collection.assert_not_called()
-
-    def test_init_collection_creates_when_absent(self) -> None:
-        """When no collection matches the name, one is created."""
-        self.output.collection_name = "cowrie"
-
-        captured: dict = {}
-
-        def fake_make_request(method, *args, **kwargs):
-            captured["process_response"] = kwargs.get("process_response")
-            return defer.succeed(None)
-
-        self.output._make_request = fake_make_request  # type: ignore[method-assign]
-        self.output._create_collection = Mock()  # type: ignore[method-assign]
-
-        self.output._init_collection()
-        # A different collection is returned; the name does not match.
-        captured["process_response"](
-            json.dumps(
-                {"data": [{"id": "OTHER-ID", "attributes": {"name": "something-else"}}]}
-            ).encode()
-        )
-
-        self.assertIsNone(self.output.collection_id)
-        self.output._create_collection.assert_called_once()
+        self.assertEqual(output.collection_id, "EXISTING-ID")
 
     def test_add_file_to_collection(self) -> None:
         """Test adding a file to a collection"""
         # Setup output with collection
-        self.output.collection_name = "test-collection"
         self.output.collection_id = "test-collection-id"
 
         # Mock agent request
@@ -426,7 +375,8 @@ class VirusTotalOutputTests(unittest.TestCase):
         # Check method and URL
         self.assertEqual(method, b"POST")
         self.assertEqual(
-            url, b"https://www.virustotal.com/api/v3/collections/test-collection-id/files"
+            url,
+            b"https://www.virustotal.com/api/v3/collections/test-collection-id/files",
         )
 
         # Check body format
@@ -438,7 +388,6 @@ class VirusTotalOutputTests(unittest.TestCase):
     def test_add_url_to_collection(self) -> None:
         """Test adding a URL to a collection"""
         # Setup output with collection
-        self.output.collection_name = "test-collection"
         self.output.collection_id = "test-collection-id"
 
         # Mock agent request
@@ -456,7 +405,8 @@ class VirusTotalOutputTests(unittest.TestCase):
         # Check method and URL
         self.assertEqual(method, b"POST")
         self.assertEqual(
-            url, b"https://www.virustotal.com/api/v3/collections/test-collection-id/urls"
+            url,
+            b"https://www.virustotal.com/api/v3/collections/test-collection-id/urls",
         )
 
         # Check body format
@@ -468,7 +418,6 @@ class VirusTotalOutputTests(unittest.TestCase):
     def test_no_collection_when_not_configured(self) -> None:
         """Test that collection operations are skipped when not configured"""
         # Ensure no collection is configured
-        self.output.collection_name = None
         self.output.collection_id = None
 
         # Mock agent request
