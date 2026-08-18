@@ -274,9 +274,10 @@ Operational considerations
 **************************
 
 No configuration changes
-    Plugin selection, loading, and configuration are untouched;
-    ``cowrie_plugin.py`` builds the same plugin list and hands it to the
-    dispatcher. An upgrade is a restart.
+    Plugin selection and configuration are untouched;
+    ``cowrie.core.output.load_plugins()`` builds the same plugin list and
+    the application container hands it to the dispatcher. An upgrade is a
+    restart.
 
 Plugin failure handling
     ``write()`` exceptions are caught per plugin and rate-limited (first
@@ -290,7 +291,10 @@ Shutdown
     (``cowrie.session.closed``, the ttylog-closed record) deliver before a
     sink's backend (a database pool, an hpfeeds client) is closed. The
     dispatcher tolerates dispatch-after-stop (drop and count) so a late
-    deferred firing during teardown cannot raise into the reactor.
+    deferred firing during teardown cannot raise into the reactor. Only a
+    plugin that started is stopped: the loader registers a plugin's
+    ``stop()`` once its ``start()`` has returned, so a plugin that failed
+    to load is not torn down reaching for what it never acquired.
 
 Blocking plugins
     ``write()`` is called synchronously in the reactor thread -- a plugin
