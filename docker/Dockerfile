@@ -11,8 +11,15 @@ FROM debian:trixie-slim AS builder
 
 WORKDIR /
 
+# 999 is the id useradd -r has been allocating here all along, so an
+# existing bind-mounted var/ keeps its owner across an upgrade. Pinning it
+# means a rebuild cannot silently move it, and lets USER name the account
+# numerically, which is the only form a host can resolve without this
+# image's passwd file (Kubernetes runAsNonRoot, hadolint DL3066).
 ENV COWRIE_GROUP=cowrie \
     COWRIE_USER=cowrie \
+    COWRIE_UID=999 \
+    COWRIE_GID=999 \
     COWRIE_HOME=/cowrie
 
 # Set locale to UTF-8, otherwise upstream libraries have bytes/string conversion issues
@@ -20,8 +27,10 @@ ENV LC_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8 \
     LANGUAGE=en_US.UTF-8
 
-RUN groupadd -r ${COWRIE_GROUP} && \
-    useradd -r -d ${COWRIE_HOME} -m -g ${COWRIE_GROUP} ${COWRIE_USER}
+# -l keeps useradd from sizing the lastlog and faillog databases to the
+# uid, which would add a large sparse file to the image.
+RUN groupadd -r -g ${COWRIE_GID} ${COWRIE_GROUP} && \
+    useradd -r -l -u ${COWRIE_UID} -d ${COWRIE_HOME} -m -g ${COWRIE_GROUP} ${COWRIE_USER}
 
 # Set up Debian prereqs
 RUN export DEBIAN_FRONTEND=noninteractive; \
@@ -43,7 +52,10 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
       rustc && \
     rm -rf /var/lib/apt/lists/*
 
-USER ${COWRIE_USER}
+# Spelled out rather than ${COWRIE_UID}, so that what the image declares
+# it runs as is readable without resolving this build's variables. Keep in
+# step with COWRIE_UID and COWRIE_GID above.
+USER 999:999
 WORKDIR ${COWRIE_HOME}
 
 # Copy requirements first to use Docker caching better
@@ -85,8 +97,8 @@ ENV COWRIE_GROUP=cowrie \
     COWRIE_USER=cowrie \
     COWRIE_HOME=/cowrie
 
-#RUN groupadd -r ${COWRIE_GROUP} && \
-#    useradd -r -d ${COWRIE_HOME} -m -g ${COWRIE_GROUP} ${COWRIE_USER}
+# The account comes over from the builder: distroless carries no shell for
+# useradd to run in, and the id must resolve for the COPY --chown below.
 COPY --from=builder --chown=0:0 /etc/passwd /etc/group /etc/
 
 #RUN export DEBIAN_FRONTEND=noninteractive; \
@@ -113,7 +125,8 @@ RUN [ "python3", "-c", "import sys, compileall; v=str(sys.version_info.major)+'.
 
 VOLUME [ "/cowrie/cowrie-git/var", "/cowrie/cowrie-git/etc" ]
 
-USER ${COWRIE_USER}
+# The uid the builder stage created, numeric for the same reason.
+USER 999:999
 WORKDIR ${COWRIE_HOME}/cowrie-git
 
 ENV PATH=${COWRIE_HOME}/cowrie-env/bin:${PATH}
