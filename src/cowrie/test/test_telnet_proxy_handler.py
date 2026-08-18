@@ -49,10 +49,17 @@ class TerminatingCharTests(unittest.TestCase):
             h.processUsernameInput()
         return h
 
-    def _password(self, data: bytes) -> Any:
+    def _password(self, data: bytes, *, valid: bool = False) -> Any:
+        """Before forwarding a password the handler asks the honeypot's own
+        auth whether the credentials are valid. Pin that answer: it decides
+        which password is forwarded, and left to itself it reads the
+        operator's etc/userdb.txt, which is not part of the repository."""
         h = _handler()
         h.currentData = data
-        h.processPasswordInput()
+        checker = MagicMock()
+        checker.return_value.checkUserPass.return_value = valid
+        with patch.object(telnet_handler, "HoneypotPasswordChecker", checker):
+            h.processPasswordInput()
         return h
 
     def test_username_with_crlf(self) -> None:
@@ -85,6 +92,14 @@ class TerminatingCharTests(unittest.TestCase):
 
         self.assertEqual(h.currentData, b"secretfake\r")
         self.assertFalse(h.inputingPassword)
+
+    def test_valid_password_forwards_the_backend_password(self) -> None:
+        """Credentials the honeypot accepts send the backend its real
+        password; only rejected ones get the deliberately wrong one."""
+        h = self._password(b"hunter2\r\n", valid=True)
+
+        self.assertEqual(h.currentData, b"secret\r\n")
+        self.assertTrue(h.authDone)
 
 
 if __name__ == "__main__":
