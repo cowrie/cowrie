@@ -6,10 +6,11 @@ from __future__ import annotations
 
 import abc
 import socket
+from importlib import import_module
 from os import environ
 from typing import TYPE_CHECKING, Any
 
-from twisted.internet import reactor
+from twisted.logger import Logger
 
 from cowrie.core.config import CowrieConfig
 
@@ -17,12 +18,15 @@ if TYPE_CHECKING:
     from cowrie.core.events import EventDispatcher
 
 # ABOUTME: Base class for output plugins: config wiring, sensor naming, and
-# ABOUTME: the write()/dispatch() contract every plugin implements.
+# ABOUTME: the write()/dispatch() contract every plugin implements. Also
+# ABOUTME: loads the configured plugins and owns their lifecycle.
 # The event ids and their attributes are documented in docs/OUTPUT.rst.
 
 # The time is available in two formats in each event, as key 'time'
 # in epoch format and in key 'timestamp' as a ISO compliant string
 # in UTC.
+
+_log = Logger()
 
 
 def convert(data):
@@ -69,10 +73,6 @@ class Output(metaclass=abc.ABCMeta):
         else:
             self.timeFormat = "%Y-%m-%dT%H:%M:%S.%f%z"
 
-        # Stop only after reactor teardown, so the final events of sessions
-        # closed during shutdown deliver before the sink's resources close.
-        reactor.addSystemEventTrigger("after", "shutdown", self.stop)
-
         self.start()
 
     def dispatch(self, **event: Any) -> None:
@@ -101,3 +101,49 @@ class Output(metaclass=abc.ABCMeta):
         Handle a general event within the output plugin
         """
         pass
+
+
+def load_plugins(reactor: Any, log: Logger = _log) -> list[Output]:
+    """
+    Construct the output plugins enabled in the configuration.
+
+    A plugin is wired into shutdown only once it has started: one whose
+    start() raised never acquired the resources its stop() releases, and
+    calling stop() on it would raise into reactor teardown. A plugin that
+    cannot be loaded is skipped -- the honeypot runs without it rather
+    than not at all.
+
+    Plugins stop after reactor teardown, so the final events of sessions
+    closed during shutdown deliver before a sink's resources close.
+
+    ``log`` names the diagnostic emitter so tests can capture the
+    load failures they provoke instead of printing them.
+    """
+    plugins: list[Output] = []
+
+    for section in CowrieConfig.sections():
+        if not section.startswith("output_"):
+            continue
+        if CowrieConfig.getboolean(section, "enabled", fallback=False) is False:
+            continue
+
+        engine: str = section.split("_")[1]
+        try:
+            plugin: Output = import_module(f"cowrie.output.{engine}").Output()
+        except ImportError:
+            log.failure(
+                "Failed to load output engine: {engine} due to ImportError",
+                engine=engine,
+            )
+            log.info(
+                "Please install the dependencies for {engine} listed in requirements-output.txt",
+                engine=engine,
+            )
+        except Exception:
+            log.failure("Failed to load output engine: {engine}", engine=engine)
+        else:
+            plugins.append(plugin)
+            reactor.addSystemEventTrigger("after", "shutdown", plugin.stop)
+            log.info("Loaded output engine: {engine}", engine=engine)
+
+    return plugins
