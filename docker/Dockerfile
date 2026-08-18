@@ -29,8 +29,8 @@ ENV LC_ALL=en_US.UTF-8 \
 
 # -l keeps useradd from sizing the lastlog and faillog databases to the
 # uid, which would add a large sparse file to the image.
-RUN groupadd -r -g ${COWRIE_GID} ${COWRIE_GROUP} && \
-    useradd -r -l -u ${COWRIE_UID} -d ${COWRIE_HOME} -m -g ${COWRIE_GROUP} ${COWRIE_USER}
+RUN groupadd -r -g "${COWRIE_GID}" "${COWRIE_GROUP}" && \
+    useradd -r -l -u "${COWRIE_UID}" -d "${COWRIE_HOME}" -m -g "${COWRIE_GROUP}" "${COWRIE_USER}"
 
 # Set up Debian prereqs
 RUN export DEBIAN_FRONTEND=noninteractive; \
