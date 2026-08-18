@@ -355,6 +355,20 @@ class VirusTotalOutputTests(unittest.TestCase):
 
         self.assertEqual(output.collection_id, "EXISTING-ID")
 
+    def test_start_warns_when_deprecated_collection_set(self) -> None:
+        """A configured 'collection' is ignored and must emit a warning."""
+        log = Mock()
+        config = Mock()
+        config.get.side_effect = lambda section, option, fallback=None: {
+            "collection": "cowrie",
+        }.get(option, fallback)
+        config.getboolean.side_effect = lambda section, option, fallback=False: fallback
+
+        with patch.object(virustotal.Output, "_log", log):
+            self._started(config)
+
+        log.warn.assert_called_once()
+
     def test_add_file_to_collection(self) -> None:
         """Test adding a file to a collection"""
         # Setup output with collection
