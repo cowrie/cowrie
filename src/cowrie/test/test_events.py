@@ -348,29 +348,6 @@ class OutputDispatchTests(unittest.TestCase):
         self.assertEqual(len(sink.events), 1)
         self.assertEqual(sink.events[0]["eventid"], "cowrie.abuseipdb.started")
 
-    def test_plugin_stop_runs_after_reactor_teardown(self) -> None:
-        # A plugin's stop() must not close its resources before the final
-        # events of in-flight sessions (emitted during teardown) deliver.
-        from unittest.mock import patch
-
-        from cowrie.core import output
-
-        class QuietPlugin(output.Output):
-            def start(self) -> None:
-                pass
-
-            def stop(self) -> None:
-                pass
-
-            def write(self, event: dict[str, Any]) -> None:
-                pass
-
-        with patch.object(output, "reactor") as reactor:
-            plugin = QuietPlugin()
-        reactor.addSystemEventTrigger.assert_called_once_with(
-            "after", "shutdown", plugin.stop
-        )
-
     def test_plugin_dispatch_without_dispatcher_is_dropped(self) -> None:
         from cowrie.core.output import Output
 

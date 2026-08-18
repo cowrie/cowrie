@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import os
 import sys
-from importlib import import_module
 from typing import ClassVar
 
 from twisted._version import __version__ as __twisted_version__
@@ -28,7 +27,7 @@ from cowrie import __version__ as __cowrie_version__
 from cowrie.core import checkers, uuid
 from cowrie.core.config import CowrieConfig
 from cowrie.core.events import ConsoleRenderer, EventDispatcher
-from cowrie.core.output import Output
+from cowrie.core.output import Output, load_plugins
 from cowrie.core.utils import create_endpoint_services, get_endpoints_from_section
 from cowrie.pool_interface.handler import PoolHandler
 
@@ -150,28 +149,7 @@ Makes a Cowrie SSH/Telnet honeypot.
         Output.dispatcher = self.dispatcher
 
         # Load output modules
-        self.output_plugins = []
-        for x in CowrieConfig.sections():
-            if not x.startswith("output_"):
-                continue
-            if CowrieConfig.getboolean(x, "enabled", fallback=False) is False:
-                continue
-            engine: str = x.split("_")[1]
-            try:
-                output = import_module(f"cowrie.output.{engine}").Output()
-                self.output_plugins.append(output)
-                _log.info("Loaded output engine: {engine}", engine=engine)
-            except ImportError:
-                _log.failure(
-                    "Failed to load output engine: {engine} due to ImportError",
-                    engine=engine,
-                )
-                _log.info(
-                    "Please install the dependencies for {engine} listed in requirements-output.txt",
-                    engine=engine,
-                )
-            except Exception:
-                _log.failure("Failed to load output engine: {engine}", engine=engine)
+        self.output_plugins = load_plugins(reactor)
 
         self.dispatcher.sinks = [*self.output_plugins, renderer]
 
