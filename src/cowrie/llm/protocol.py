@@ -230,9 +230,14 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         )
         try:
             context = template.format_map(substitutions)
-        except ValueError:
-            # An unbalanced brace in the operator's template. Use it as
-            # written rather than breaking every command in the session.
+        except (ValueError, KeyError, IndexError, AttributeError, TypeError):
+            # A typo in the operator's template. _LenientFormat only covers an
+            # unknown placeholder that is a plain name; a field spec that adds
+            # index or attribute access raises from the format machinery
+            # instead -- {hostname[10]} with IndexError, {username.title} with
+            # AttributeError, an unbalanced brace with ValueError. Use the
+            # template as written rather than breaking every command in the
+            # session.
             self._log.warn(
                 "Malformed [llm] {config_key} template, using it unsubstituted",
                 config_key=config_key,
