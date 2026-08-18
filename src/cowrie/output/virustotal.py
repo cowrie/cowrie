@@ -102,6 +102,11 @@ class Output(cowrie.core.output.Output):
         self.collection_id = CowrieConfig.get(
             "output_virustotal", "collection_id", fallback=None
         )
+        if CowrieConfig.get("output_virustotal", "collection", fallback=None):
+            self._log.warn(
+                "virustotal: 'collection' is no longer supported and is ignored; "
+                "set 'collection_id' instead (see docs/virustotal/README.rst)."
+            )
         self.agent = client.Agent(reactor)
 
     def stop(self) -> None:
