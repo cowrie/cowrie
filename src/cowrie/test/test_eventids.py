@@ -27,10 +27,24 @@ DOCS = SOURCE_ROOT.parent.parent / "docs" / "OUTPUT.rst"
 FORWARDING_SITES = {"core/events.py", "core/output.py"}
 
 
+def module_name(path: pathlib.Path) -> str:
+    """The module's path within the package, e.g. ``output/mysql.py``.
+
+    Relative to the package and always slash-separated, so neither the
+    directory Cowrie is checked out in nor the platform's separator can
+    change what a scan sees.
+    """
+    return path.relative_to(SOURCE_ROOT).as_posix()
+
+
 def production_sources() -> list[pathlib.Path]:
     """Every module attackers' activity is observed in -- the test package
     emits synthetic ids of its own and is deliberately not scanned."""
-    return [p for p in sorted(SOURCE_ROOT.rglob("*.py")) if "test" not in p.parts]
+    return [
+        path
+        for path in sorted(SOURCE_ROOT.rglob("*.py"))
+        if not module_name(path).startswith("test/")
+    ]
 
 
 def string_constants(node: ast.AST) -> set[str]:
@@ -131,8 +145,7 @@ def scan() -> tuple[dict[str, str], dict[str, str], list[str]]:
     consumed: dict[str, str] = {}
     unnamed: list[str] = []
     for path in production_sources():
-        relative = str(path.relative_to(SOURCE_ROOT))
-        scanner = EventIdScanner(relative)
+        scanner = EventIdScanner(module_name(path))
         scanner.visit(ast.parse(path.read_text(), str(path)))
         for eventid, site in scanner.emitted.items():
             emitted.setdefault(eventid, site)
@@ -158,6 +171,15 @@ class EventIdRegistryTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.emitted, cls.consumed, cls.unnamed = scan()
+
+    def test_the_scan_reaches_the_production_tree(self) -> None:
+        """Every assertion below is vacuous if the scan finds nothing, so
+        check it reached the emitters and skipped the test package."""
+        scanned = {module_name(path) for path in production_sources()}
+
+        self.assertIn("core/events.py", scanned)
+        self.assertIn("output/mysql.py", scanned)
+        self.assertEqual([name for name in scanned if name.startswith("test/")], [])
 
     def test_emitted_ids_are_registered(self) -> None:
         unregistered = {
