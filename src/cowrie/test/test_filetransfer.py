@@ -97,7 +97,8 @@ class UploadSizeTests(unittest.TestCase):
         handle.close()
         node = self.server.fs.getfile("/tmp/up.bin")
         assert node is not None
-        return node[fs.A_SIZE]
+        size: int = node[fs.A_SIZE]
+        return size
 
     def test_sequential_write(self) -> None:
         self.assertEqual(self._upload([(0, b"0123456789")]), 10)

@@ -207,6 +207,13 @@ class FtpGetCtrlCKeepsDownloadingTests(unittest.TestCase):
         cmd.transfer_running = True
         return cmd
 
+    def _receiver(self, cmd: Command_ftpget) -> FTPFileReceiver:
+        """The receiver the mid-transfer fixture installed. The command
+        declares it optional, since it only exists once a transfer has
+        started."""
+        assert cmd.receiver is not None
+        return cmd.receiver
+
     def _ctrl_c(self, cmd: Command_ftpget) -> None:
         with mock.patch.object(HoneyPotCommand, "exit"):
             cmd.handle_CTRL_C()
@@ -217,16 +224,18 @@ class FtpGetCtrlCKeepsDownloadingTests(unittest.TestCase):
 
         self._ctrl_c(cmd)
 
-        cast("mock.Mock", cmd.receiver.transport).loseConnection.assert_not_called()
+        cast(
+            "mock.Mock", self._receiver(cmd).transport
+        ).loseConnection.assert_not_called()
 
     def test_the_rest_of_the_sample_is_still_written(self) -> None:
         """exit() must not close the artifact out from under the transfer, or
         the capture is truncated to whatever had arrived by then."""
         cmd = self._mid_transfer()
-        cmd.receiver.dataReceived(b"first half ")
+        self._receiver(cmd).dataReceived(b"first half ")
 
         self._ctrl_c(cmd)
-        cmd.receiver.dataReceived(b"second half")
+        self._receiver(cmd).dataReceived(b"second half")
 
         cmd.artifactFile.fp.flush()
         with open(cmd.artifactFile.fp.name, "rb") as f:
@@ -234,7 +243,7 @@ class FtpGetCtrlCKeepsDownloadingTests(unittest.TestCase):
 
     def test_completion_after_ctrl_c_still_reports_the_download(self) -> None:
         cmd = self._mid_transfer()
-        cmd.receiver.dataReceived(b"malware")
+        self._receiver(cmd).dataReceived(b"malware")
         self._ctrl_c(cmd)
 
         with mock.patch.object(HoneyPotCommand, "exit"):
@@ -255,7 +264,7 @@ class FtpGetCtrlCKeepsDownloadingTests(unittest.TestCase):
         with mock.patch.object(HoneyPotCommand, "exit"):
             cmd._download_error(Failure(ConnectionDone()))
 
-        cmd.errorWrite.assert_not_called()
+        cast("mock.Mock", cmd.errorWrite).assert_not_called()
 
     def test_error_is_reported_while_the_command_is_still_running(self) -> None:
         cmd = self._mid_transfer()
@@ -263,7 +272,7 @@ class FtpGetCtrlCKeepsDownloadingTests(unittest.TestCase):
         with mock.patch.object(HoneyPotCommand, "exit"):
             cmd._download_error(Failure(ConnectionDone()))
 
-        cmd.errorWrite.assert_called_once()
+        cast("mock.Mock", cmd.errorWrite).assert_called_once()
 
 
 class FTPFileReceiverSizeLimitTests(unittest.TestCase):
