@@ -12,6 +12,7 @@ import itertools
 import pathlib
 import re
 import unittest
+from typing import ClassVar
 
 import cowrie
 from cowrie.core.eventids import ALL
@@ -167,6 +168,11 @@ def documented_ids() -> set[str]:
 
 class EventIdRegistryTests(unittest.TestCase):
     """Every event id in the tree is in the catalogue, and vice versa."""
+
+    # One scan of the tree, shared by every assertion below.
+    emitted: ClassVar[dict[str, str]]
+    consumed: ClassVar[dict[str, str]]
+    unnamed: ClassVar[list[str]]
 
     @classmethod
     def setUpClass(cls) -> None:
