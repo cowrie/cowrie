@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import ipaddress
 from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import urljoin, urlparse
 
@@ -36,6 +37,14 @@ class BlockedAddress(Exception):
 
     def __init__(self, host: str) -> None:
         super().__init__(f"blocked address for host {host}")
+        self.host = host
+
+
+class UnreachableAddress(Exception):
+    """The requested host has no route the honeypot can take."""
+
+    def __init__(self, host: str) -> None:
+        super().__init__(f"no route to host {host}")
         self.host = host
 
 
@@ -127,6 +136,13 @@ def fetch(
         address = yield resolve_allowed(host)
         if address is None:
             raise BlockedAddress(host)
+        if ipaddress.ip_address(address).version == 6:
+            # Fetching over IPv6 is out of reach twice over: the outbound
+            # source address is an IPv4 one, and treq cannot even render a URL
+            # whose host is an IPv6 literal (hyperlink IDNA-encodes the host,
+            # which rejects the colons). Report what a host without an IPv6
+            # route reports.
+            raise UnreachableAddress(host)
 
         response = yield getattr(treq, method)(
             url=url,

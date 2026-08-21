@@ -56,12 +56,34 @@ class WgetArtifactCleanupTests(unittest.TestCase):
 
     def test_embedded_ipv6_url_does_not_hang(self) -> None:
         # An IPv4-embedded IPv6 URL literal such as [::ffff:8.8.8.8] passes the
-        # network guard (globally routable) but makes treq.get() raise
-        # idna.core.InvalidCodepoint synchronously. That raise must be caught so
-        # the command exits, instead of orphaning it on the cmdstack (a session
-        # hang / DoS) until the session times out.
-        self.proto.lineReceived(b"wget -q 'http://[::ffff:8.8.8.8]/'; echo rc=$?")
+        # network guard (globally routable), so the download reaches the
+        # outbound path. That path is IPv4-only, and the command must report the
+        # network failure and exit rather than being orphaned on the cmdstack (a
+        # session hang / DoS) until the session times out.
+        self.proto.lineReceived(b"wget 'http://[::ffff:8.8.8.8]/'; echo rc=$?")
         out = self.tr.value()
+        self.assertIn(
+            b"rc=",
+            out,
+            "shell never resumed: the command hung instead of exiting",
+        )
+        self.assertIn(b"failed: Network is unreachable.", out)
+
+    def test_ipv6_url_reports_network_unreachable(self) -> None:
+        # Every IPv6 destination takes the same route as the embedded-IPv4 one
+        # above: reported as unreachable, never as an unhandled error.
+        self.proto.lineReceived(b"wget 'http://[2606:4700:4700::1111]/x'; echo rc=$?")
+        out = self.tr.value()
+        self.assertIn(b"failed: Network is unreachable.", out)
+        self.assertIn(b"rc=", out)
+
+    def test_ipv6_ftp_url_reports_network_unreachable(self) -> None:
+        # The FTP transfer has its own connection path; an IPv6 host is just as
+        # unreachable there, and must not leave the command waiting on a
+        # connection attempt that can never succeed.
+        self.proto.lineReceived(b"wget 'ftp://[2606:4700:4700::1111]/x'; echo rc=$?")
+        out = self.tr.value()
+        self.assertIn(b"failed: Network is unreachable.", out)
         self.assertIn(
             b"rc=",
             out,

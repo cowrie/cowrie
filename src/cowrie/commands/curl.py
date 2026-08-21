@@ -20,6 +20,7 @@ from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
 from cowrie.core.download import (
     BlockedAddress,
+    UnreachableAddress,
     capture_download,
     fetch,
     outbound_rate_limiter,
@@ -482,6 +483,13 @@ class Command_curl(HoneyPotCommand):
         if response.check(BlockedAddress) is not None:
             self.errorWrite(
                 f"curl: (6) Could not resolve host: {response.value.host}\n"
+            )
+            self.exit()
+            return
+
+        if response.check(UnreachableAddress) is not None:
+            self.errorWrite(
+                f"curl: (7) Failed to connect to {self.host} port {self.port}: Network is unreachable\n"
             )
             self.exit()
             return
