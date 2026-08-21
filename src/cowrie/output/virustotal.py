@@ -13,7 +13,7 @@ import datetime
 import json
 import os
 from typing import TYPE_CHECKING, Any
-from urllib.parse import quote, urlencode, urlparse
+from urllib.parse import urlencode, urlparse
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -72,7 +72,6 @@ class Output(cowrie.core.output.Output):
     scan_url: bool
     scan_file: bool
     url_cache: dict[str, datetime.datetime]  # url and last time succesfully submitted
-    collection_name: str | None = None
     collection_id: str | None = None
 
     def start(self) -> None:
@@ -100,14 +99,15 @@ class Output(cowrie.core.output.Output):
         self.commenttext = CowrieConfig.get(
             "output_virustotal", "commenttext", fallback=COMMENT
         )
-        self.collection_name = CowrieConfig.get(
-            "output_virustotal", "collection", fallback=None
+        self.collection_id = CowrieConfig.get(
+            "output_virustotal", "collection_id", fallback=None
         )
+        if CowrieConfig.get("output_virustotal", "collection", fallback=None):
+            self._log.warn(
+                "virustotal: 'collection' is no longer supported and is ignored; "
+                "set 'collection_id' instead (see docs/virustotal/README.rst)."
+            )
         self.agent = client.Agent(reactor)
-
-        # Initialize collection if configured
-        if self.collection_name:
-            self._init_collection()
 
     def stop(self) -> None:
         """
@@ -359,7 +359,7 @@ class Output(cowrie.core.output.Output):
                 data = j["data"]
                 if data.get("id"):
                     self._log.info("VT: File uploaded successfully")
-                    if self.collection_name:
+                    if self.collection_id:
                         self._add_to_collection("files", sha256, f"file {sha256}")
                     if self.comment:
                         return self._post_comment("files", sha256, "Comment")
@@ -527,7 +527,7 @@ class Output(cowrie.core.output.Output):
                         .decode()
                         .rstrip("=")
                     )
-                    if self.collection_name:
+                    if self.collection_id:
                         self._add_to_collection("urls", url_id, f"URL {url_id}")
                     if self.comment:
                         return self._post_comment("urls", url_id, "URL comment")
@@ -605,100 +605,6 @@ class Output(cowrie.core.output.Output):
             error_prefix=f"VT post{comment_type.lower()}",
         )
 
-    def _init_collection(self) -> None:
-        """
-        Resolve the collection id: look up an existing collection with this name
-        and reuse it, otherwise create one. Called during start() if a
-        collection is configured.
-
-        Looking up by name first reuses the server-assigned id across restarts
-        (it is not derivable from the name) and avoids creating a duplicate
-        collection on every start.
-        """
-        query = quote(f"name:{self.collection_name} owner:me")
-        vtUrl = f"{VTAPI_URL}collections?filter={query}&limit=40".encode()
-        headers = self._build_headers()
-
-        def process_response(body_bytes):
-            if self.debug:
-                self._log.info("VT find collection result: {body}", body=body_bytes)
-            j = json.loads(body_bytes.decode("utf8"))
-            # The name filter may be loose, so match the name exactly.
-            if "error" not in j:
-                for item in j.get("data", []):
-                    attributes = item.get("attributes", {})
-                    if attributes.get("name") == self.collection_name and item.get(
-                        "id"
-                    ):
-                        self.collection_id = item["id"]
-                        self._log.info(
-                            "VT: Using existing collection '{collection}' with ID: {collection_id}",
-                            collection=self.collection_name,
-                            collection_id=item["id"],
-                        )
-                        return
-            # No existing collection found (or the search errored): create it.
-            self._create_collection()
-
-        self._make_request(
-            b"GET",
-            vtUrl,
-            headers,
-            process_response=process_response,
-            error_prefix="VT find collection",
-        )
-
-    def _create_collection(self) -> None:
-        """Create the configured collection and store its server-assigned id."""
-        vtUrl = f"{VTAPI_URL}collections".encode()
-        collection_data = {
-            "data": {
-                "type": "collection",
-                "attributes": {
-                    "name": self.collection_name,
-                    "description": f"Cowrie honeypot artifacts - {self.collection_name}",
-                },
-            }
-        }
-        headers = self._build_headers(content_type="application/json")
-        body = StringProducer(json.dumps(collection_data).encode("utf-8"))
-
-        def process_response(body_bytes):
-            if self.debug:
-                self._log.info("VT create collection result: {body}", body=body_bytes)
-            j = json.loads(body_bytes.decode("utf8"))
-
-            if "error" in j:
-                self._log.info(
-                    "VT: Collection creation error - {code}: {msg}",
-                    code=j["error"].get("code"),
-                    msg=j["error"].get("message", "Unknown error"),
-                )
-                return
-
-            if "data" in j:
-                collection_id = j["data"].get("id")
-                if collection_id:
-                    self.collection_id = collection_id
-                    self._log.info(
-                        "VT: Collection '{collection}' created with ID: {collection_id}",
-                        collection=self.collection_name,
-                        collection_id=collection_id,
-                    )
-                else:
-                    self._log.info("VT: Collection created but no ID returned")
-            else:
-                self._log.info("VT: unexpected collection creation response format")
-
-        self._make_request(
-            b"POST",
-            vtUrl,
-            headers,
-            body=body,
-            process_response=process_response,
-            error_prefix="VT create collection",
-        )
-
     def _add_to_collection(
         self, resource_type: str, resource_id: str, resource_descriptor: str
     ) -> defer.Deferred[Any]:
@@ -710,13 +616,7 @@ class Output(cowrie.core.output.Output):
             resource_id: The file hash or URL ID
             resource_descriptor: Human-readable description for logging
         """
-        if not self.collection_name or not self.collection_id:
-            # Collection not configured or not initialized yet
-            if self.debug and self.collection_name:
-                self._log.info(
-                    "VT: Cannot add {resource} to collection - collection ID not yet available",
-                    resource=resource_descriptor,
-                )
+        if not self.collection_id:
             return defer.succeed(None)
 
         vtUrl = f"{VTAPI_URL}collections/{self.collection_id}/{resource_type}".encode()
@@ -749,7 +649,7 @@ class Output(cowrie.core.output.Output):
             self._log.info(
                 "VT: Added {resource} to collection '{collection}'",
                 resource=resource_descriptor,
-                collection=self.collection_name,
+                collection=self.collection_id,
             )
             return True
 
