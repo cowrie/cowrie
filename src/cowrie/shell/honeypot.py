@@ -1004,8 +1004,11 @@ class HoneyPotShell:
             else:
                 prompt += "$ "  # "Non-Root" user
 
-        self.protocol.terminal.write(prompt.encode("ascii"))
-        self.protocol.ps = (prompt.encode("ascii"), b"> ")
+        # The username is attacker input from SSH/Telnet auth and is decoded
+        # with errors="replace" rather than restricted to ASCII, so the prompt
+        # goes to the terminal as UTF-8, the way a real shell writes it.
+        self.protocol.terminal.write(prompt.encode("utf-8"))
+        self.protocol.ps = (prompt.encode("utf-8"), b"> ")
 
     def eofReceived(self) -> None:
         """
