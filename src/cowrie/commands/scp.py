@@ -55,7 +55,10 @@ class Command_scp(HoneyPotCommand):
 
         for opt in optlist:
             if opt[0] == "-d":
-                self.out_dir = args[0]
+                # `scp -d` may be given with no positional target directory;
+                # guard against indexing an empty args list (IndexError).
+                if args:
+                    self.out_dir = args[0]
                 break
 
         if self.out_dir:
