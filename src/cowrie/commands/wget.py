@@ -24,6 +24,7 @@ from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
 from cowrie.core.download import (
     BlockedAddress,
+    UnreachableAddress,
     capture_download,
     fetch,
     outbound_rate_limiter,
@@ -33,6 +34,7 @@ from cowrie.core.network import (
     DownloadLimitExceeded,
     abort_body,
     communication_allowed,
+    is_ip_address,
     outbound_bind_address,
 )
 from cowrie.shell.command import HoneyPotCommand
@@ -298,10 +300,10 @@ class Command_wget(HoneyPotCommand):
             )
             self.errorWrite(f"{proto_label} request sent, awaiting response... ")
 
-        # treq.get() can raise synchronously before returning a Deferred (e.g.
-        # idna.core.InvalidCodepoint for an IPv4-embedded IPv6 URL literal such
-        # as [::ffff:8.8.8.8]). Route that raise through error() so the command
-        # exits instead of being orphaned on the cmdstack until session timeout.
+        # Starting the transfer can raise synchronously before any Deferred
+        # exists: connectTCP rejects an FTP host it cannot build a connection
+        # for. Route that raise through error() so the command exits instead of
+        # being orphaned on the cmdstack until session timeout.
         try:
             if self.scheme == "ftp":
                 self.deferred = self.ftpDownload(urldata)
@@ -348,6 +350,14 @@ class Command_wget(HoneyPotCommand):
 
         if not self.ftp_remote_file:
             self.errorWrite("wget: missing remote filename in FTP URL\n")
+            self.exit(1)
+            return None
+
+        ip = is_ip_address(self.host)
+        if ip is not None and ip.version == 6:
+            # The outbound source address is an IPv4 one, so an IPv6 server is
+            # as unreachable here as it is on the HTTP path.
+            self.errorWrite("failed: Network is unreachable.\n")
             self.exit(1)
             return None
 
@@ -648,6 +658,11 @@ class Command_wget(HoneyPotCommand):
             self.errorWrite(
                 f"wget: unable to resolve host address ‘{response.value.host}’\n"
             )
+            self.exit()
+            return
+
+        if response.check(UnreachableAddress) is not None:
+            self.errorWrite("failed: Network is unreachable.\n")
             self.exit()
             return
 
