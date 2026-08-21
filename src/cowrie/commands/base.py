@@ -193,7 +193,11 @@ class Command_printf(HoneyPotCommand):
                 if s.endswith("\\c"):
                     s = s[:-2]
 
-                data: bytes = codecs.escape_decode(s)[0]
+                try:
+                    data: bytes = codecs.escape_decode(s)[0]
+                except ValueError:
+                    self._log.info("printf command received Python incorrect hex escape")
+                    return
                 self.writeBytes(data)
 
 
