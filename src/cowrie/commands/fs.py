@@ -596,9 +596,13 @@ class Command_mkdir(HoneyPotCommand):
                 continue
             try:
                 self.fs.mkdir(pname, self.user["uid"], self.user["gid"], 4096, 16877)
-            except (fs.FileNotFound, OSError):
+            except fs.FileNotFound:
                 self.errorWrite(
                     f"mkdir: cannot create directory `{f}': No such file or directory\n"
+                )
+            except OSError as e:
+                self.errorWrite(
+                    f"mkdir: cannot create directory `{f}': {e.strerror}\n"
                 )
 
 
