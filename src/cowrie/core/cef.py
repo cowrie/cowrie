@@ -10,6 +10,23 @@
 from __future__ import annotations
 
 
+def escapeCefValue(value: str) -> str:
+    """
+    Escape a CEF extension value.
+
+    Pairs in the extension are delimited by a space and a key is separated
+    from its value by "=", so a literal "=" in a value would read as the start
+    of the next pair. CEF escapes it as "\\=", the backslash itself as "\\\\",
+    and a newline as "\\n" / "\\r" so one event stays on one line.
+    """
+    return (
+        value.replace("\\", "\\\\")
+        .replace("=", "\\=")
+        .replace("\r", "\\r")
+        .replace("\n", "\\n")
+    )
+
+
 def formatCef(logentry: dict[str, str]) -> str:
     """
     Take logentry and turn into CEF string
@@ -54,7 +71,7 @@ def formatCef(logentry: dict[str, str]) -> str:
 
     cefList = []
     for key in cefExtensions:
-        value = str(cefExtensions[key])
+        value = escapeCefValue(str(cefExtensions[key]))
         cefList.append(f"{key}={value}")
 
     cefExtension = " ".join(cefList)

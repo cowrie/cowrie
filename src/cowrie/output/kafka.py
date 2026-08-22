@@ -76,8 +76,8 @@ class Output(cowrie.core.output.Output):
 
         # Flush before reactor shutdown: Twisted waits for Deferreds from
         # "before" shutdown triggers while the asyncio loop still runs. By
-        # the time the base class calls stop() (after shutdown) the loop no
-        # longer executes tasks, so nothing can be delivered there.
+        # the time stop() runs (after shutdown) the loop no longer executes
+        # tasks, so nothing can be delivered there.
         reactor.addSystemEventTrigger("before", "shutdown", self._flush)
 
         # Producer initialization must be delayed - it requires an asyncio

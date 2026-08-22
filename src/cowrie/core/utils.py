@@ -78,10 +78,13 @@ def durationHuman(duration: float) -> str:
     minutes, seconds = divmod(seconds, 60)
     hours: int
     hours, minutes = divmod(minutes, 60)
-    days: float
+    days: int
     days, hours = divmod(hours, 24)
-    years: float
-    years, days = divmod(days, 365.242199)
+    # The fractional year length keeps the count leap-accurate. divmod()
+    # promotes both of its results to float against it, but whole years and
+    # days are what gets reported.
+    years: int = int(days // 365.242199)
+    days = int(days % 365.242199)
 
     syears: str = str(years)
     sseconds: str = str(seconds).rjust(2, "0")

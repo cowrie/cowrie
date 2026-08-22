@@ -261,6 +261,12 @@ class Output(cowrie.core.output.Output):
                         )
                         self.session_tracking[session_id]["event_created"] = True
 
+                # The session is over and anything reportable about it has
+                # been submitted, so drop it rather than carrying one entry
+                # per session ever seen for the life of the process. What
+                # stop() still walks is the sessions that never closed.
+                del self.session_tracking[session_id]
+
     def find_attribute(self, attribute_type, searchterm):
         """
         Returns a matching attribute or None if nothing was found.

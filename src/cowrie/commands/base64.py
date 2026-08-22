@@ -148,7 +148,7 @@ Try 'base64 --help' for more information.
             input=line,
         )
 
-        self.dojob(line.encode("ascii"))
+        self.dojob(line.encode("utf-8"))
 
     def eofReceived(self) -> None:
         self.exit()

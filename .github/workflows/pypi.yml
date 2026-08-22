@@ -12,13 +12,6 @@ on:  # yamllint disable-line rule:truthy
       - 'v[0-9]+.[0-9]+.[0-9]+'
 
   workflow_dispatch:
-    inputs:
-      logLevel:
-        description: 'Log level'
-        required: true
-        default: 'warning'
-      tags:
-        description: 'pypi upload'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -46,8 +39,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install build setuptools==80.9.0 setuptools-scm==9.2.0 twine==6.2.0 wheel==0.45.1 packaging==25.0
+          python -m pip install build==1.5.0 setuptools==83.0.0 setuptools-scm==9.2.0 twine==6.2.0 wheel==0.45.1 packaging==26.2
 
       - name: Build and check
         run: |
@@ -56,7 +48,7 @@ jobs:
 
       - name: Publish package distributions to PyPI
         if: ${{ github.repository == 'cowrie/cowrie' }}
-        uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33
         with:
           verbose: true
           print-hash: true
@@ -69,7 +61,11 @@ jobs:
         if: ${{ github.repository == 'cowrie/cowrie' }}
         run: |
           set -eu
-          python -m pip install cowrie
+          # Install exactly the version this run built; a plain
+          # 'pip install cowrie' can silently test the previous release
+          # when the index has not propagated yet.
+          EXPECTED=$(python -c "from setuptools_scm import get_version; print(get_version(local_scheme='no-local-version'))")
+          python -m pip install "cowrie==${EXPECTED}"
 
           # entry point is registered and on PATH
           which cowrie
@@ -91,4 +87,4 @@ jobs:
 
           # cowrie start refuses to run from uninitialised dirs
           rm -rf /tmp/cowrie-empty && mkdir /tmp/cowrie-empty && cd /tmp/cowrie-empty
-          cowrie start 2>&1 | grep -q "not initialised"
+          cowrie start 2>&1 | grep -q "not initialized"

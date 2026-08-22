@@ -15,6 +15,7 @@ from unittest import mock
 
 from twisted.internet import defer, error
 from twisted.python.failure import Failure
+from twisted.web.client import URI
 from twisted.web.http_headers import Headers
 
 from cowrie.commands.curl import Command_curl
@@ -50,6 +51,26 @@ class CurlArtifactCleanupTests(unittest.TestCase):
         for name in os.listdir(self.tmpdir):
             os.remove(os.path.join(self.tmpdir, name))
         os.rmdir(self.tmpdir)
+
+    def test_malformed_port_does_not_hang(self) -> None:
+        # Seen in production: a dropper built HOST=1.2.3.4:3001 and PORT=80
+        # separately, producing a host part with a non-numeric port. urlparse's
+        # .port raises ValueError rather than returning None.
+        self.proto.lineReceived(b"curl -s 'http://1.2.3.4:3001:80/x'; echo rc=$?")
+        self.assertIn(
+            b"rc=",
+            self.tr.value(),
+            "shell never resumed: the command hung instead of exiting",
+        )
+
+    def test_out_of_range_port_does_not_hang(self) -> None:
+        self.proto.lineReceived(b"curl -s 'http://1.2.3.4:99999/x'; echo rc=$?")
+        self.assertIn(b"rc=", self.tr.value())
+
+    def test_invalid_ipv6_brackets_do_not_hang(self) -> None:
+        # urlparse() itself raises ValueError here, before .port is reached.
+        self.proto.lineReceived(b"curl -s 'http://[::1/x'; echo rc=$?")
+        self.assertIn(b"rc=", self.tr.value())
 
     def test_failed_download_removes_temp_artifact(self) -> None:
         # Bypass HoneyPotCommand.__init__: its stdout/stderr wiring needs a
@@ -127,17 +148,26 @@ class CurlArtifactCleanupTests(unittest.TestCase):
 
     def test_embedded_ipv6_url_does_not_hang(self) -> None:
         # An IPv4-embedded IPv6 URL literal such as [::ffff:8.8.8.8] passes the
-        # network guard (globally routable) but makes treq.get() raise
-        # idna.core.InvalidCodepoint synchronously. That raise must be caught so
-        # the command exits, instead of orphaning it on the cmdstack (a session
-        # hang / DoS) until the session times out.
-        self.proto.lineReceived(b"curl -s 'http://[::ffff:8.8.8.8]/'; echo rc=$?")
+        # network guard (globally routable), so the download reaches the
+        # outbound path. That path is IPv4-only, and the command must report the
+        # network failure and exit rather than being orphaned on the cmdstack (a
+        # session hang / DoS) until the session times out.
+        self.proto.lineReceived(b"curl 'http://[::ffff:8.8.8.8]/'; echo rc=$?")
         out = self.tr.value()
         self.assertIn(
             b"rc=",
             out,
             "shell never resumed: the command hung instead of exiting",
         )
+        self.assertIn(b"Network is unreachable", out)
+
+    def test_ipv6_url_reports_network_unreachable(self) -> None:
+        # Every IPv6 destination takes the same route as the embedded-IPv4 one
+        # above: reported as unreachable, never as an unhandled error.
+        self.proto.lineReceived(b"curl 'http://[2606:4700:4700::1111]/x'; echo rc=$?")
+        out = self.tr.value()
+        self.assertIn(b"curl: (7) Failed to connect to", out)
+        self.assertIn(b"Network is unreachable", out)
 
     def test_late_download_callbacks_after_exit_are_inert(self) -> None:
         # The command can exit while treq is still delivering the body (size
@@ -180,7 +210,8 @@ class CurlOutboundBindTests(unittest.TestCase):
     def tearDown(self) -> None:
         CowrieConfig.remove_option("honeypot", "out_addr")
 
-    def _capture_agent(self, head_request: bool, verb: str) -> Any:
+    def _capture_bind_address(self, head_request: bool, verb: str) -> Any:
+        """Return the source address the connection curl builds would bind to."""
         cmd = Command_curl.__new__(Command_curl)
         cmd.head_request = head_request
 
@@ -188,26 +219,40 @@ class CurlOutboundBindTests(unittest.TestCase):
 
         def fake_verb(url: str, agent: Any = None, **kwargs: Any) -> Any:
             captured["agent"] = agent
-            return defer.succeed(None)
+            return defer.succeed(mock.Mock(code=200, headers=Headers()))
 
-        with mock.patch(f"cowrie.commands.curl.treq.{verb}", fake_verb):
+        with (
+            mock.patch(f"cowrie.core.download.treq.{verb}", fake_verb),
+            mock.patch(
+                "cowrie.core.download.resolve_allowed",
+                lambda _host: defer.succeed("198.51.100.1"),
+            ),
+        ):
             cmd.treqDownload("http://198.51.100.1/x")
 
-        return captured["agent"]
+        endpoint = captured["agent"]._endpointFactory.endpointForURI(
+            URI.fromBytes(b"http://198.51.100.1/x")
+        )
+        return endpoint._bindAddress
 
     def test_get_binds_agent_to_out_addr(self) -> None:
         CowrieConfig.set("honeypot", "out_addr", "127.0.0.1")
-        agent = self._capture_agent(head_request=False, verb="get")
-        self.assertEqual(agent._endpointFactory._bindAddress, ("127.0.0.1", 0))
+        self.assertEqual(
+            self._capture_bind_address(head_request=False, verb="get"),
+            ("127.0.0.1", 0),
+        )
 
     def test_head_binds_agent_to_out_addr(self) -> None:
         CowrieConfig.set("honeypot", "out_addr", "127.0.0.1")
-        agent = self._capture_agent(head_request=True, verb="head")
-        self.assertEqual(agent._endpointFactory._bindAddress, ("127.0.0.1", 0))
+        self.assertEqual(
+            self._capture_bind_address(head_request=True, verb="head"),
+            ("127.0.0.1", 0),
+        )
 
     def test_default_bind_is_wildcard(self) -> None:
-        agent = self._capture_agent(head_request=False, verb="get")
-        self.assertEqual(agent._endpointFactory._bindAddress, ("0.0.0.0", 0))
+        self.assertEqual(
+            self._capture_bind_address(head_request=False, verb="get"), ("0.0.0.0", 0)
+        )
 
 
 class CurlStdoutOutputTests(unittest.TestCase):

@@ -17,6 +17,7 @@ from urllib.parse import urlparse
 
 from twisted.internet import defer, error
 from twisted.python.failure import Failure
+from twisted.web.client import URI
 from twisted.web.http_headers import Headers
 
 from cowrie.commands.wget import Command_wget
@@ -55,17 +56,59 @@ class WgetArtifactCleanupTests(unittest.TestCase):
 
     def test_embedded_ipv6_url_does_not_hang(self) -> None:
         # An IPv4-embedded IPv6 URL literal such as [::ffff:8.8.8.8] passes the
-        # network guard (globally routable) but makes treq.get() raise
-        # idna.core.InvalidCodepoint synchronously. That raise must be caught so
-        # the command exits, instead of orphaning it on the cmdstack (a session
-        # hang / DoS) until the session times out.
-        self.proto.lineReceived(b"wget -q 'http://[::ffff:8.8.8.8]/'; echo rc=$?")
+        # network guard (globally routable), so the download reaches the
+        # outbound path. That path is IPv4-only, and the command must report the
+        # network failure and exit rather than being orphaned on the cmdstack (a
+        # session hang / DoS) until the session times out.
+        self.proto.lineReceived(b"wget 'http://[::ffff:8.8.8.8]/'; echo rc=$?")
         out = self.tr.value()
         self.assertIn(
             b"rc=",
             out,
             "shell never resumed: the command hung instead of exiting",
         )
+        self.assertIn(b"failed: Network is unreachable.", out)
+
+    def test_ipv6_url_reports_network_unreachable(self) -> None:
+        # Every IPv6 destination takes the same route as the embedded-IPv4 one
+        # above: reported as unreachable, never as an unhandled error.
+        self.proto.lineReceived(b"wget 'http://[2606:4700:4700::1111]/x'; echo rc=$?")
+        out = self.tr.value()
+        self.assertIn(b"failed: Network is unreachable.", out)
+        self.assertIn(b"rc=", out)
+
+    def test_ipv6_ftp_url_reports_network_unreachable(self) -> None:
+        # The FTP transfer has its own connection path; an IPv6 host is just as
+        # unreachable there, and must not leave the command waiting on a
+        # connection attempt that can never succeed.
+        self.proto.lineReceived(b"wget 'ftp://[2606:4700:4700::1111]/x'; echo rc=$?")
+        out = self.tr.value()
+        self.assertIn(b"failed: Network is unreachable.", out)
+        self.assertIn(
+            b"rc=",
+            out,
+            "shell never resumed: the command hung instead of exiting",
+        )
+
+    def test_malformed_port_does_not_hang(self) -> None:
+        # Seen in production: a dropper built HOST=1.2.3.4:3001 and PORT=80
+        # separately, producing a host part with a non-numeric port. urlparse's
+        # .port raises ValueError rather than returning None.
+        self.proto.lineReceived(b"wget -q 'http://1.2.3.4:3001:80/x'; echo rc=$?")
+        self.assertIn(
+            b"rc=",
+            self.tr.value(),
+            "shell never resumed: the command hung instead of exiting",
+        )
+
+    def test_out_of_range_port_does_not_hang(self) -> None:
+        self.proto.lineReceived(b"wget -q 'http://1.2.3.4:99999/x'; echo rc=$?")
+        self.assertIn(b"rc=", self.tr.value())
+
+    def test_invalid_ipv6_brackets_do_not_hang(self) -> None:
+        # urlparse() itself raises ValueError here, before .port is reached.
+        self.proto.lineReceived(b"wget -q 'http://[::1/x'; echo rc=$?")
+        self.assertIn(b"rc=", self.tr.value())
 
     def test_tcp_timeout_reports_connection_timed_out(self) -> None:
         # A TCP connect that times out yields TCPTimedOutError, built by the
@@ -193,28 +236,37 @@ class WgetOutboundBindTests(unittest.TestCase):
     def tearDown(self) -> None:
         CowrieConfig.remove_option("honeypot", "out_addr")
 
-    def _captured_agent(self) -> Any:
-        """Run httpDownload with treq.get stubbed and return the agent it used.
-        The agent's endpoint factory carries the source address it binds to."""
+    def _captured_bind_address(self) -> Any:
+        """Run httpDownload with the HTTP call stubbed and return the source
+        address the connection it built would bind to."""
         cmd = Command_wget.__new__(Command_wget)
+        cmd.wget_version = "1.21"
         captured: dict[str, Any] = {}
 
         def fake_get(url: str, agent: Any = None, **kwargs: Any) -> Any:
             captured["agent"] = agent
-            return defer.succeed(None)
+            return defer.succeed(mock.Mock(code=200, headers=Headers()))
 
-        with mock.patch("cowrie.commands.wget.treq.get", fake_get):
+        with (
+            mock.patch("cowrie.core.download.treq.get", fake_get),
+            mock.patch(
+                "cowrie.core.download.resolve_allowed",
+                lambda _host: defer.succeed("198.51.100.1"),
+            ),
+        ):
             cmd.httpDownload("http://198.51.100.1/x")
-        return captured["agent"]
+
+        endpoint = captured["agent"]._endpointFactory.endpointForURI(
+            URI.fromBytes(b"http://198.51.100.1/x")
+        )
+        return endpoint._bindAddress
 
     def test_http_download_binds_agent_to_out_addr(self) -> None:
         CowrieConfig.set("honeypot", "out_addr", "127.0.0.1")
-        agent = self._captured_agent()
-        self.assertEqual(agent._endpointFactory._bindAddress, ("127.0.0.1", 0))
+        self.assertEqual(self._captured_bind_address(), ("127.0.0.1", 0))
 
     def test_http_download_default_bind_is_wildcard(self) -> None:
-        agent = self._captured_agent()
-        self.assertEqual(agent._endpointFactory._bindAddress, ("0.0.0.0", 0))
+        self.assertEqual(self._captured_bind_address(), ("0.0.0.0", 0))
 
     def test_ftp_download_binds_to_out_addr(self) -> None:
         CowrieConfig.set("honeypot", "out_addr", "127.0.0.1")

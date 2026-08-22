@@ -1112,6 +1112,16 @@ force = 0
 api_key = 130928309823098
 enabled = false
 
+# Submit malware download URLs to URLhaus.
+# Register at https://auth.abuse.ch/ to get your Auth-Key
+[output_urlhaus]
+enabled = false
+api_key = yourkeyhere
+# Set to 1 to submit anonymously
+anonymous = 0
+# Comma-separated list of tags to attach to each submission
+tags = cowrie,honeypot
+
 # Sends Cowrie event notifications to a Slack channel.
 # Warning: This will produce a _lot_ of messages unless `simplified = true` 
 #          and `verbose = false` are set.

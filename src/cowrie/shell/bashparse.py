@@ -829,6 +829,12 @@ class BashParser:
             if only.data in ("dollar_var", "dollar_brace"):
                 special = self._special_param(only)
                 if special is not None:
+                    # A function called with no arguments leaves $@ / $* set
+                    # but empty. Unquoted and alone in a word, they expand to
+                    # no words at all -- not to one empty argument -- the same
+                    # as the empty ordinary variable handled just below.
+                    if special == "" and self._var_name(only)[1] in ("@", "*"):
+                        return None
                     return special
                 value = self.context.get_variable(self._var_name(only)[0])
                 if not value:

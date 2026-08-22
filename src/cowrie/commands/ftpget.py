@@ -19,8 +19,8 @@ from twisted.protocols.ftp import CommandFailed, FTPClient
 
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
-from cowrie.core.network import communication_allowed, outbound_bind_address
-from cowrie.core.rate_limiter import RateLimiter
+from cowrie.core.download import outbound_rate_limiter
+from cowrie.core.network import outbound_bind_address, resolve_allowed
 from cowrie.shell.command import HoneyPotCommand
 
 if TYPE_CHECKING:
@@ -29,16 +29,7 @@ if TYPE_CHECKING:
 commands = {}
 
 # Per-host limiter on outbound FTP connections, matching wget/curl.
-ftpget_rate_limiter = RateLimiter(
-    enabled=CowrieConfig.getboolean(
-        "shell", "ftpget_rate_limit_enabled", fallback=True
-    ),
-    max_requests=CowrieConfig.getint("shell", "ftpget_rate_limit_requests", fallback=5),
-    window_seconds=CowrieConfig.getint(
-        "shell", "ftpget_rate_limit_window", fallback=60
-    ),
-    max_keys=CowrieConfig.getint("shell", "ftpget_rate_limit_max_hosts", fallback=1000),
-)
+ftpget_rate_limiter = outbound_rate_limiter("ftpget")
 
 
 class FTPFileReceiver(Protocol):
@@ -172,8 +163,11 @@ Download a file via FTP
             self.exit(1)
             return
 
-        allowed = yield communication_allowed(self.host)
-        if not allowed:
+        # Connect to this exact address rather than the hostname: resolving
+        # again at connect time lets a malicious DNS server answer the check
+        # and the connection differently.
+        self.resolved_host = yield resolve_allowed(self.host)
+        if self.resolved_host is None:
             self.exit(1)
             return
 
@@ -191,6 +185,10 @@ Download a file via FTP
         self.artifactFile = Artifact(self.local_file)
         self.ftp_client = None
         self.fakeoutfile = fakeoutfile
+        # True from the moment the data transfer starts until one of the
+        # download callbacks fires. While it is set, the artifact belongs to
+        # the transfer rather than to the command: see exit().
+        self.transfer_running = False
 
         # Start async download
         d = self.ftp_download_async()
@@ -216,7 +214,7 @@ Download a file via FTP
             self.write(f"Connecting to {self.host}\n")
 
         d = creator.connectTCP(
-            self.host,
+            self.resolved_host,
             self.port,
             timeout=30,
             bindAddress=(outbound_bind_address(), 0),
@@ -263,6 +261,7 @@ Download a file via FTP
 
         # Retrieve file
         if self.ftp_client:
+            self.transfer_running = True
             d: defer.Deferred[None] = self.ftp_client.retrieveFile(
                 self.remote_file, receiver
             )
@@ -297,12 +296,51 @@ Download a file via FTP
             size=size,
             limit=self.limit_size,
         )
-        self.errorWrite("ftpget: file exceeds download size limit\n")
+        self.lateErrorWrite("ftpget: file exceeds download size limit\n")
+
+    def lateErrorWrite(self, msg: str) -> None:
+        """Report an error to the attacker, unless they already have their
+        prompt back.
+
+        A transfer that outlives its command (CTRL-C) still finishes and is
+        still logged, but writing its outcome to the terminal now would inject
+        text into whatever the attacker is doing instead.
+        """
+        if not self.exited:
+            self.errorWrite(msg)
+
+    def handle_CTRL_C(self) -> None:
+        # The transfer is deliberately left running; see exit().
+        self.write("^C\n")
+        self.exit()
+
+    def exit(self, code: int | None = None) -> None:
+        # CTRL-C returns the attacker to their prompt but deliberately does not
+        # stop the transfer: the point of the honeypot is the sample, and an
+        # attacker who mistypes or gets bored should not be able to withhold
+        # it. The download runs to completion and _download_success() records
+        # it, so while it is in flight the artifact must stay open -- closing
+        # it here would truncate the capture to whatever had arrived so far.
+        #
+        # With no transfer running there is nothing to wait for, so close the
+        # artifact: that keeps an aborted-before-transfer command from leaving
+        # its empty temp file behind. close() is idempotent and removes an
+        # empty artifact, so the normal completion paths are unaffected.
+        artifact = getattr(self, "artifactFile", None)
+        if artifact is not None and not getattr(self, "transfer_running", False):
+            artifact.close()
+        HoneyPotCommand.exit(self, code)
 
     def _download_success(self, result: None) -> None:
         """
         Called when download completes successfully
+
+        This runs whether or not the command has already exited: a transfer
+        interrupted with CTRL-C keeps going, so the sample is still captured
+        and reported. Only output to the attacker's terminal is suppressed
+        once they have their prompt back.
         """
+        self.transfer_running = False
         self.artifactFile.close()
 
         if self.receiver is not None and self.receiver.limit_exceeded:
@@ -340,6 +378,7 @@ Download a file via FTP
         """
         Called when download fails
         """
+        self.transfer_running = False
         self.artifactFile.close()
 
         # Aborting the transfer at the size limit surfaces here as a connection
@@ -366,7 +405,7 @@ Download a file via FTP
             error=error_msg,
         )
 
-        self.errorWrite(f"ftpget: {error_msg}\n")
+        self.lateErrorWrite(f"ftpget: {error_msg}\n")
         self.exit()
 
 

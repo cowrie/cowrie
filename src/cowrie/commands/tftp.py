@@ -15,6 +15,7 @@ from twisted.logger import Logger
 
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
+from cowrie.core.download import outbound_rate_limiter
 from cowrie.core.network import (
     DownloadLimitExceeded,
     communication_allowed,
@@ -22,7 +23,6 @@ from cowrie.core.network import (
     is_valid_port,
     outbound_bind_address,
 )
-from cowrie.core.rate_limiter import RateLimiter
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.customparser import CustomParser, ExitException, OptionNotFound
 
@@ -34,12 +34,7 @@ commands = {}
 
 # Bound how many outbound TFTP transfers per destination a session can trigger,
 # so the honeypot cannot be used to flood a victim host.
-tftp_rate_limiter = RateLimiter(
-    enabled=CowrieConfig.getboolean("shell", "tftp_rate_limit_enabled", fallback=True),
-    max_requests=CowrieConfig.getint("shell", "tftp_rate_limit_requests", fallback=5),
-    window_seconds=CowrieConfig.getint("shell", "tftp_rate_limit_window", fallback=60),
-    max_keys=CowrieConfig.getint("shell", "tftp_rate_limit_max_hosts", fallback=1000),
-)
+tftp_rate_limiter = outbound_rate_limiter("tftp")
 
 # TFTP Opcodes (RFC 1350)
 OPCODE_RRQ = 1  # Read request

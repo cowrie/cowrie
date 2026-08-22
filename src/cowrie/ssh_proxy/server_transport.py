@@ -185,8 +185,14 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         )
 
     def connect_to_backend(self, ip, port):
+        # The pool hands the address back as the bytes it read off the wire; a
+        # directly configured backend is already a str. Normalise it here so
+        # the failure log below reports an address rather than a bytes repr.
+        if isinstance(ip, bytes):
+            ip = ip.decode("utf-8", errors="replace")
+
         # remember target so we can log consistently on success/failure
-        self.backend_ip = ip
+        self.backend_ip = ip.decode() if isinstance(ip, bytes) else ip
         self.backend_port = port
 
         # connection to the backend starts here
@@ -234,7 +240,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                     "Remote SSH version: %(version)s",
                     version=escape_nonprintable(self.otherVersionString),
                 )
-            m = re.match(rb"SSH-(\d+.\d+)-(.*)", self.otherVersionString)
+            m = re.match(rb"SSH-(\d+\.\d+)-(.*)", self.otherVersionString)
             if m is None:
                 self._log.info(
                     "Bad protocol version identification: {version!r}",
@@ -281,12 +287,14 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         Override because OpenSSH pads with 0 on KEXINIT
         """
+        if self.transport is None:
+            return
         if self._keyExchangeState != self._KEY_EXCHANGE_NONE:
             if not self._allowedKeyExchangeMessageType(messageType):
                 self._blockedByKeyExchange.append((messageType, payload))
                 return
 
-        payload = chr(messageType).encode() + payload
+        payload = bytes((messageType,)) + payload
         if self.outgoingCompression:
             payload = self.outgoingCompression.compress(
                 payload
@@ -421,7 +429,8 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             # With python >= 3 we can use super?
             transport.SSHServerTransport.sendDisconnect(self, reason, desc)
         else:
-            self.transport.write(b"Packet corrupt\n")
+            # this message is used to detect Cowrie behaviour
+            # self.transport.write(b"Packet corrupt\n")
             self._log.info(
                 "Disconnecting with error, code {code}\nreason: {desc}",
                 code=reason,

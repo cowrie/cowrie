@@ -10,6 +10,8 @@ from __future__ import annotations
 class BaseProtocol:
     data: bytes = b""
     packetSize: int = 0
+    # Bytes received on this stream that do not yet make up a whole message.
+    buffer: bytes = b""
     name: str = ""
     uuid: str = ""
     ttylog_file: str | None = None

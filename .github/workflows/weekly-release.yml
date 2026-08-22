@@ -27,9 +27,13 @@ concurrency:
 
 jobs:
   test:
+    # Guard forks: without this the schedule also fires on clones and mints
+    # its own tag series there, which poisons setuptools-scm versioning.
+    if: github.repository == 'cowrie/cowrie'
     uses: ./.github/workflows/tox.yml
 
   weekly-release:
+    if: github.repository == 'cowrie/cowrie'
     needs: test
     runs-on: ubuntu-latest
     permissions:
