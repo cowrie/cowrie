@@ -82,6 +82,8 @@ ALL: frozenset[str] = frozenset(
         "cowrie.telnet.exploit_attempt",
         "cowrie.telnet.exploit_success",
         "cowrie.telnet.option",
+        # URLhaus submissions
+        "cowrie.urlhaus.submitted",
         # VirusTotal lookups
         "cowrie.virustotal.scanfile",
         "cowrie.virustotal.scanurl",
