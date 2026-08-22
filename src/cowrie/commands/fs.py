@@ -593,14 +593,13 @@ class Command_mkdir(HoneyPotCommand):
             pname = self.fs.resolve_path(f, self.cwd)
             if self.fs.exists(pname):
                 self.errorWrite(f"mkdir: cannot create directory `{f}': File exists\n")
-                return
+                continue
             try:
                 self.fs.mkdir(pname, self.user["uid"], self.user["gid"], 4096, 16877)
-            except fs.FileNotFound:
+            except (fs.FileNotFound, OSError):
                 self.errorWrite(
                     f"mkdir: cannot create directory `{f}': No such file or directory\n"
                 )
-            return
 
 
 commands["/bin/mkdir"] = Command_mkdir
