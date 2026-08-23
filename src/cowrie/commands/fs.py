@@ -473,6 +473,13 @@ class Command_cp(HoneyPotCommand):
             self.errorWrite("Try `cp --help' for more information.\n")
             return
         sources, dest = args[:-1], args[-1]
+        # Quoting reaches the command as an empty argument; there is no such
+        # path, so there is nothing to resolve or index into.
+        if not dest:
+            self.errorWrite(
+                f"cp: cannot create regular file `{dest}': No such file or directory\n"
+            )
+            return
         if len(sources) > 1 and not self.fs.isdir(resolv(dest)):
             self.errorWrite(f"cp: target `{dest}' is not a directory\n")
             return
@@ -545,6 +552,14 @@ class Command_mv(HoneyPotCommand):
             self.errorWrite("Try `mv --help' for more information.\n")
             return
         sources, dest = args[:-1], args[-1]
+        # Quoting reaches the command as an empty argument; there is no such
+        # path, so there is nothing to resolve or index into.
+        if not dest:
+            self.errorWrite(
+                f"mv: cannot move `{sources[0]}' to `{dest}': "
+                "No such file or directory\n"
+            )
+            return
         if len(sources) > 1 and not self.fs.isdir(resolv(dest)):
             self.errorWrite(f"mv: target `{dest}' is not a directory\n")
             return
