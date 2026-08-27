@@ -52,6 +52,7 @@ class OutputMysqlHardeningTests(unittest.TestCase):
     def test_start_failure_with_argless_exception_is_logged(self) -> None:
         """A pool construction error without two args must not raise IndexError."""
         out = _make()
+        out._log = Mock()
         config = Mock()
         config.getboolean.return_value = False
         config.getint.return_value = 3306
@@ -65,6 +66,10 @@ class OutputMysqlHardeningTests(unittest.TestCase):
             ),
         ):
             out.start()
+
+        # The argless TypeError is caught, logged, and leaves no half-built pool.
+        self.assertTrue(out._log.info.called, "start() failure was not logged")
+        self.assertFalse(hasattr(out, "db"))
 
     def test_stop_without_successful_start(self) -> None:
         """stop() must not raise when start() never created the pool."""

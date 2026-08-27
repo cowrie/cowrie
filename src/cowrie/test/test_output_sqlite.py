@@ -32,8 +32,9 @@ def _make() -> Any:
 
 class OutputSqliteHardeningTests(unittest.TestCase):
     def test_start_failure_is_logged(self) -> None:
-        """A pool construction error must not raise from start() itself."""
+        """A pool construction error must be caught, logged, and leave no db."""
         out = _make()
+        out._log = Mock()
         config = Mock()
         config.get.return_value = "/nonexistent/cowrie.db"
         with (
@@ -45,6 +46,11 @@ class OutputSqliteHardeningTests(unittest.TestCase):
             ),
         ):
             out.start()
+
+        # The failure is swallowed (no raise), recorded, and leaves no
+        # half-built pool behind for stop()/write() to trip over.
+        self.assertTrue(out._log.info.called, "start() failure was not logged")
+        self.assertFalse(hasattr(out, "db"))
 
     def test_stop_without_successful_start(self) -> None:
         """stop() must not raise when start() never created the pool."""
