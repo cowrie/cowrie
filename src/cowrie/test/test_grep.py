@@ -102,6 +102,16 @@ class ShellGrepCommandTests(unittest.TestCase):
         self.assertIn(b"usage: grep", value)
         self.assertTrue(value.endswith(PROMPT))
 
+    def test_grep_m1_is_accepted(self) -> None:
+        # GNU grep treats -m1 as --max-count=1. Attackers use this in recon
+        # (e.g. grep -m1 -E '^model name' /proc/cpuinfo).
+        self.proto.lineReceived(b"echo hello | grep -m1 hell\n")
+        self.assertEqual(self.tr.value(), b"hello\n" + PROMPT)
+
+    def test_grep_m1_stops_after_first_match(self) -> None:
+        self.proto.lineReceived(b"echo hello > gtxt; echo hello >> gtxt; grep -m1 hello gtxt\n")
+        self.assertEqual(self.tr.value(), b"hello\n" + PROMPT)
+
 
 if __name__ == "__main__":
     unittest.main()
