@@ -33,6 +33,8 @@ class Command_grep(HoneyPotCommand):
 
     interactive: bool = False
     matched: bool = False
+    max_count: int | None = None
+    match_count: int = 0
 
     def grep_get_contents(self, filename: str, match: str) -> None:
         try:
@@ -48,8 +50,11 @@ class Command_grep(HoneyPotCommand):
     def grep_application(self, contents: bytes, match: str) -> None:
         matcher = self.compile_match(match)
         for line in contents.split(b"\n"):
+            if self.max_count is not None and self.match_count >= self.max_count:
+                break
             if matcher.search(line):
                 self.matched = True
+                self.match_count += 1
                 self.writeBytes(line + b"\n")
 
     def help(self) -> None:
@@ -73,7 +78,7 @@ class Command_grep(HoneyPotCommand):
         try:
             optlist, args = getopt.getopt(
                 self.args,
-                "abcDEFGHhIiJLlmnOoPqRSsUVvwxZA:B:C:e:f:",
+                "abcDEFGHhIiJLlnOoPqRSsUVvwxZA:B:C:e:f:m:",
                 [
                     "binary-files=",
                     "color=",
@@ -90,9 +95,19 @@ class Command_grep(HoneyPotCommand):
             self.exit()
             return
 
-        for opt, _arg in optlist:
+        for opt, arg in optlist:
             if opt == "-h":
                 self.help()
+            elif opt == "-m":
+                try:
+                    n = int(arg)
+                except ValueError:
+                    n = -1
+                if n < 0:
+                    self.errorWrite("grep: invalid max count\n")
+                    self.exit(2)
+                    return
+                self.max_count = n
 
         if not args:
             # Options only, no pattern (e.g. `grep -h`).
