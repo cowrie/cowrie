@@ -53,7 +53,7 @@ redis==8.1.0
 # oci==2.129.2
 
 # rabbitmq
-pika==1.4.2
+pika==1.4.4
 
 # prometheus
 prometheus_client==0.26.0
