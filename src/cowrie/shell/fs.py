@@ -254,10 +254,18 @@ class HoneyPotFilesystem:
         ):
             f[A_REALFILE] = realfile
 
-    def getfile(self, path: str, follow_symlinks: bool = True) -> Node | None:
+    def getfile(
+        self, path: str, follow_symlinks: bool = True, _depth: int = 0
+    ) -> Node | None:
         """
         This returns the Cowrie file system object for a path
+
+        Following a T_LINK recurses, so the hop count is capped the same way
+        honeyfs._find caps it: a symlink loop resolves to a broken link
+        instead of exhausting the stack.
         """
+        if _depth > honeyfs.MAX_SYMLINK_DEPTH:
+            return None
         if path == "/":
             return self.fs
         pieces: list[str] = [piece for piece in path.strip("/").split("/") if piece]
@@ -278,24 +286,22 @@ class HoneyPotFilesystem:
                             # Empty target (e.g. a /proc/<pid>/cwd link
                             # captured with no destination): a broken link.
                             return None
-                        if x[A_TARGET][0] == "/":
-                            # Absolute link
-                            fileobj = self.getfile(
-                                x[A_TARGET], follow_symlinks=follow_symlinks
-                            )
-                        else:
-                            # Relative link
-                            fileobj = self.getfile(
-                                "/".join((cwd, x[A_TARGET])),
-                                follow_symlinks=follow_symlinks,
-                            )
+                        # A_TARGET is the literal target: absolute, or
+                        # relative to the directory holding the link.
+                        fileobj = self.getfile(
+                            honeyfs.resolve_link_target(x[A_TARGET], cwd or "/"),
+                            follow_symlinks=follow_symlinks,
+                            _depth=_depth + 1,
+                        )
                         if not fileobj:
                             # Broken link
                             return None
                         p = fileobj
                     else:
                         p = x
-            # cwd = '/'.join((cwd, piece))
+            # Path walked so far, so the next piece's link target can be
+            # resolved against the directory that holds it.
+            cwd = "/".join((cwd, piece))
         return p
 
     def file_contents(self, target: str) -> bytes:

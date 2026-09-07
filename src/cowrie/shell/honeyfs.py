@@ -10,6 +10,7 @@ from __future__ import annotations
 import configparser
 import functools
 import pickle
+import posixpath
 from pathlib import Path
 from typing import Any
 
@@ -28,7 +29,21 @@ T_DIR = 1
 T_FILE = 2
 
 # Cap on how many T_LINK hops we follow before declaring a loop.
-_MAX_SYMLINK_DEPTH = 16
+# Shared with cowrie.shell.fs, which resolves the same links.
+MAX_SYMLINK_DEPTH = 16
+
+
+def resolve_link_target(target: str, link_dir: str) -> str:
+    """Absolute in-filesystem path a symlink points at.
+
+    A_TARGET holds the literal target as readlink(2) reports it, so it is
+    either absolute or relative to the directory holding the link. The result
+    is normalised so ".." components resolve before the tree walk, which knows
+    nothing about them.
+    """
+    if target.startswith("/"):
+        return posixpath.normpath(target)
+    return posixpath.normpath(posixpath.join(link_dir, target))
 
 
 def _find(
@@ -36,18 +51,22 @@ def _find(
 ) -> list[Any] | None:
     """Walk the cached tree to find the entry at virtual_path.
 
-    Follows T_LINK entries (both intermediate and terminal) up to a
-    fixed depth, treating link targets as absolute paths from the tree
-    root. Returns None for missing paths, broken links, or symlink loops.
+    Follows T_LINK entries (both intermediate and terminal) up to a fixed
+    depth, resolving each literal target against the directory holding the
+    link. Returns None for missing paths, broken links, or symlink loops.
     """
-    if _depth > _MAX_SYMLINK_DEPTH:
+    if _depth > MAX_SYMLINK_DEPTH:
         return None
 
     parts = [p for p in virtual_path.split("/") if p]
     node: list[Any] = tree
+    # Directory holding `node`, so a relative target can be resolved.
+    parent = "/"
     for part in parts:
         if node[A_TYPE] == T_LINK:
-            resolved = _find(tree, node[A_TARGET], _depth + 1)
+            resolved = _find(
+                tree, resolve_link_target(node[A_TARGET], parent), _depth + 1
+            )
             if resolved is None:
                 return None
             node = resolved
@@ -57,10 +76,11 @@ def _find(
         match = next((c for c in children if c[A_NAME] == part), None)
         if match is None:
             return None
+        parent = posixpath.dirname(posixpath.join(parent, part)) or "/"
         node = match
 
     if node[A_TYPE] == T_LINK:
-        return _find(tree, node[A_TARGET], _depth + 1)
+        return _find(tree, resolve_link_target(node[A_TARGET], parent), _depth + 1)
     return node
 
 
