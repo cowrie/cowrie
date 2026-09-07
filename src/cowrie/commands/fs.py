@@ -639,7 +639,7 @@ class Command_rmdir(HoneyPotCommand):
                         self.errorWrite(
                             f"rmdir: failed to remove '{f}': Not a directory\n"
                         )
-                        return
+                        continue
                     directory.remove(i)
                     break
 
@@ -677,14 +677,14 @@ class Command_touch(HoneyPotCommand):
                 self.errorWrite(
                     f"touch: cannot touch `{pname}`: No such file or directory\n"
                 )
-                return
+                continue
             if self.fs.exists(pname):
                 # FIXME: modify the timestamp here
                 continue
             # can't touch in special directories
             if any([pname.startswith(_p) for _p in fs.SPECIAL_PATHS]):
                 self.errorWrite(f"touch: cannot touch `{pname}`: Permission denied\n")
-                return
+                continue
 
             self.fs.mkfile(pname, self.user["uid"], self.user["gid"], 0, 33188)
 
