@@ -14,6 +14,7 @@ import unittest
 from typing import Any
 
 from twisted.web.http_headers import Headers
+from twisted.web.iweb import UNKNOWN_LENGTH
 
 from cowrie.commands.curl import Command_curl
 from cowrie.commands.wget import Command_wget
@@ -40,7 +41,7 @@ class FakeBodyTransport:
 class FakeResponse:
     """Minimal treq response: headers, length, and a recordable body."""
 
-    def __init__(self, length: int) -> None:
+    def __init__(self, length: Any) -> None:
         self.length = length
         self.code = 200
         self.phrase = b"OK"
@@ -118,6 +119,22 @@ class DownloadSizeLimitTests(unittest.TestCase):
                 self.assertTrue(cmd.exited)
                 self.assertIsNotNone(response.delivered_to)
                 self.assertTrue(response.transport.stopped)
+
+    def test_curl_unknown_content_length_does_not_crash(self) -> None:
+        cmd = self._make_cmd(
+            Command_curl,
+            silent=True,
+            outfile=None,
+            head_request=False,
+        )
+        response = FakeResponse(length=UNKNOWN_LENGTH)
+
+        cmd.success(response)
+
+        self.assertFalse(cmd.exited)
+        self.assertEqual(cmd.totallength, 0)
+        self.assertIsNotNone(response.delivered_to)
+        self.assertFalse(response.transport.stopped)
 
 
 if __name__ == "__main__":

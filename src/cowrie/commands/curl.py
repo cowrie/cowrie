@@ -15,6 +15,7 @@ from twisted.internet import error, reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.logger import Logger
 from twisted.python import failure
+from twisted.web.iweb import UNKNOWN_LENGTH
 
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
@@ -376,8 +377,8 @@ class Command_curl(HoneyPotCommand):
         """
         successful treq get
         """
-        self.totallength = response.length
-        # TODO possible this is UNKNOWN_LENGTH
+        total_length = None if response.length == UNKNOWN_LENGTH else response.length
+        self.totallength = total_length or 0
 
         if self.head_request:
             reason = responses.get(response.code, "")
@@ -398,7 +399,11 @@ class Command_curl(HoneyPotCommand):
             self.exit()
             return
 
-        if self.limit_size > 0 and self.totallength > self.limit_size:
+        if (
+            total_length is not None
+            and self.limit_size > 0
+            and self.totallength > self.limit_size
+        ):
             self._log.info(
                 "Not saving URL ({url}) (size: {size}) exceeds file size limit ({limit})",
                 url=self.url.decode(),
