@@ -62,15 +62,20 @@ could not handle.
 
 from __future__ import annotations
 
+import contextlib
+import gc
 import re
+import signal
+import threading
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
-    from collections.abc import Awaitable
+    from collections.abc import Awaitable, Iterator
 
 from lark import Lark, Token, Tree
 from lark.exceptions import LarkError
+from twisted.logger import Logger
 
 from cowrie.core.config import CowrieConfig
 
@@ -188,6 +193,72 @@ def max_input_size() -> int:
     page downloaded in place of a payload and run with ``sh x``) could block
     the reactor for hours and exhaust memory."""
     return CowrieConfig.getint("shell", "max_input_size", fallback=16384)
+
+
+def gc_collect_threshold() -> int:
+    """Input length in characters that triggers post-parse garbage collection.
+
+    Lark's Earley parser builds cyclic intermediate structures. CPython's
+    reference counting cannot reclaim those structures promptly, so collect
+    after larger inputs instead of allowing a busy honeypot to accumulate
+    them until a later generation-two collection.
+    """
+    return CowrieConfig.getint("shell", "gc_collect_threshold", fallback=512)
+
+
+class ParseTimeoutError(Exception):
+    """Raised when a shell parse exceeds ``parse_timeout_seconds``."""
+
+
+def parse_timeout_seconds() -> float:
+    """Maximum wall-clock time for one shell parse; zero disables the limit."""
+    return CowrieConfig.getfloat("shell", "parse_timeout_seconds", fallback=10.0)
+
+
+_HAS_PARSE_ALARM = all(
+    hasattr(signal, name)
+    for name in ("SIGALRM", "ITIMER_REAL", "getitimer", "setitimer")
+)
+
+
+def _raise_parse_timeout(signum: int, frame: object) -> None:
+    raise ParseTimeoutError
+
+
+@contextlib.contextmanager
+def _parse_alarm(seconds: float) -> Iterator[None]:
+    """Apply a POSIX wall-clock limit without disturbing an embedding app.
+
+    Signals are process-global and Python only permits changing their handlers
+    in the main thread. Cowrie uses the alarm only when SIGALRM has its default
+    handler and no real-time alarm is already pending; otherwise the caller's
+    signal handling takes precedence and parsing proceeds normally.
+    """
+    if (
+        seconds <= 0
+        or not _HAS_PARSE_ALARM
+        or threading.current_thread() is not threading.main_thread()
+    ):
+        yield
+        return
+
+    if signal.getsignal(signal.SIGALRM) is not signal.SIG_DFL:
+        yield
+        return
+    delay, interval = signal.getitimer(signal.ITIMER_REAL)
+    if delay or interval:
+        yield
+        return
+
+    previous_handler = signal.signal(signal.SIGALRM, _raise_parse_timeout)
+    try:
+        signal.setitimer(signal.ITIMER_REAL, seconds)
+        try:
+            yield
+        finally:
+            signal.setitimer(signal.ITIMER_REAL, 0)
+    finally:
+        signal.signal(signal.SIGALRM, previous_handler)
 
 
 class ShellContext(Protocol):
@@ -382,6 +453,8 @@ class _Cursor:
 class BashParser:
     """Parse a command line into a list of statements for the shell to run."""
 
+    _log = Logger()
+
     def __init__(self, context: ShellContext) -> None:
         self.context = context
 
@@ -394,10 +467,23 @@ class BashParser:
         empty token so the caller can emit the generic message, matching the
         previous "unexpected end of file" fallback.
         """
+        timed_out = False
         try:
-            tree = _parser.parse(line)
+            with _parse_alarm(parse_timeout_seconds()):
+                tree = _parser.parse(line)
         except LarkError:
             return [SyntaxError_(token="")]
+        except ParseTimeoutError:
+            timed_out = True
+            self._log.warn(
+                "Shell parse exceeded {timeout}s (input: {length} characters)",
+                timeout=parse_timeout_seconds(),
+                length=len(line),
+            )
+            return [SyntaxError_(token="")]
+        finally:
+            if timed_out or len(line) >= gc_collect_threshold():
+                gc.collect()
         return self._split_statements(line, tree)
 
     # -- statement splitting ------------------------------------------------

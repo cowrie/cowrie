@@ -639,6 +639,22 @@ ssh_version = OpenSSH_7.9p1, OpenSSL 1.1.1a  20 Nov 2018
 # (default: 16384)
 #max_input_size = 16384
 
+# Length in characters of shell input that triggers a garbage-collection sweep after
+# parsing. Lark's Earley parser creates cyclic intermediate structures, which
+# normal reference counting cannot promptly reclaim. Set to 0 to collect after
+# every parse, or raise this to reduce collection work for larger input. Timed-out
+# parses are always collected, regardless of this threshold.
+# (default: 512)
+#gc_collect_threshold = 512
+
+# Maximum wall-clock seconds spent parsing one shell input. This protects the
+# single-threaded reactor from small but ambiguous commands whose parse cost is
+# much larger than their byte size. Set to 0 to disable it. The limit applies
+# only on POSIX in the main thread, and yields to an existing SIGALRM handler
+# or real-time alarm.
+# (default: 10)
+#parse_timeout_seconds = 10
+
 
 # ============================================================================
 # SSH Specific Options
