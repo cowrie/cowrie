@@ -70,6 +70,8 @@ Options:
 
 
 class Command_sudo(HoneyPotCommand):
+    consumes_stdin = True
+
     def short_help(self) -> None:
         for ln in sudo_shorthelp:
             self.errorWrite(f"{ln}\n")

@@ -25,6 +25,8 @@ class Command_awk(HoneyPotCommand):
     awk command
     """
 
+    consumes_stdin = True
+
     # code is an array of dictionaries contain the regexes to match and the code to execute
     code: list[dict[str, str]]
 

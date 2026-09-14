@@ -66,6 +66,11 @@ class PipelineTests(ShellSessionTests):
         # The group shares one stdin: the second cat sees EOF, like bash.
         self.assertEqual(self.run_line("echo a | (cat; cat)"), b"a\n" + PROMPT)
 
+    def test_command_that_does_not_read_leaves_the_pipe(self) -> None:
+        self.assertEqual(
+            self.run_line("echo a | (whoami; cat)"), b"root\na\n" + PROMPT
+        )
+
     def test_status_is_the_last_stage(self) -> None:
         self.assertEqual(self.run_line("(exit 3) | true; echo $?"), b"0\n" + PROMPT)
         self.assertEqual(self.run_line("true | (exit 3); echo $?"), b"3\n" + PROMPT)

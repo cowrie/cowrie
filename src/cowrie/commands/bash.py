@@ -21,6 +21,8 @@ commands: dict[str, Callable] = {}
 
 
 class Command_sh(HoneyPotCommand):
+    consumes_stdin = True
+
     def start(self) -> None:
         if self.args and self.args[0].strip() == "-c":
             line = " ".join(self.args[1:])
@@ -135,7 +137,6 @@ commands["sh"] = Command_sh
 
 
 class Command_exit(HoneyPotCommand):
-    uses_stdin = False
     def call(self) -> None:
         # `exit [N]` exits with N, or the last command's status ($?) by default.
         shell = self.protocol.cmdstack[-2]

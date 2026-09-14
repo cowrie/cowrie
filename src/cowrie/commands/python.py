@@ -17,6 +17,8 @@ commands = {}
 
 
 class Command_python(HoneyPotCommand):
+    consumes_stdin = True
+
     def version(self) -> None:
         ver = "Python 2.7.11+"
         self.write(ver + "\n")

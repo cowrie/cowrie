@@ -24,6 +24,8 @@ class Command_cat(HoneyPotCommand):
     cat command
     """
 
+    consumes_stdin = True
+
     number = False
     linenumber = 1
 

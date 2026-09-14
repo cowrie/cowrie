@@ -21,6 +21,8 @@ commands = {}
 
 
 class Command_gcc(HoneyPotCommand):
+    consumes_stdin = True
+
     # Name of program. Under OSX, you might consider i686-apple-darwin11-llvm-gcc-X.X
     APP_NAME = "gcc"
 

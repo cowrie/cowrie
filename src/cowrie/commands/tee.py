@@ -25,6 +25,8 @@ class Command_tee(HoneyPotCommand):
     tee command
     """
 
+    consumes_stdin = True
+
     _log = Logger()
 
     append = False

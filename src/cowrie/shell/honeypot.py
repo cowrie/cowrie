@@ -915,12 +915,12 @@ class HoneyPotShell:
             return
 
         self._log.info("Command found: {input}", input=cmd + " " + " ".join(args))
-        # The pipe buffer feeding this shell goes to the first command that
-        # reads stdin, as the first reader of a shared pipe drains it; a stdin
-        # redirection on the command replaces it.
-        stdin = None
-        if cmdclass.uses_stdin:
-            stdin, self.stdin = self.stdin, None
+        # The pipe buffer feeding this shell is offered to every command and
+        # drained by the first one that consumes stdin, as a shared pipe is;
+        # a stdin redirection on the command replaces it.
+        stdin = self.stdin
+        if cmdclass.consumes_stdin:
+            self.stdin = None
         pp = PipeProtocol(
             self.protocol,
             cmdclass,

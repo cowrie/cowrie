@@ -31,6 +31,8 @@ class Command_grep(HoneyPotCommand):
     grep command
     """
 
+    consumes_stdin = True
+
     interactive: bool = False
     matched: bool = False
     max_count: int | None = None
@@ -176,6 +178,8 @@ class Command_tail(HoneyPotCommand):
     tail command
     """
 
+    consumes_stdin = True
+
     n: int = 10
 
     def tail_get_contents(self, filename: str) -> None:
@@ -246,6 +250,8 @@ class Command_head(HoneyPotCommand):
     """
     head command
     """
+
+    consumes_stdin = True
 
     linecount: int = 10
     bytecount: int = 0
@@ -323,7 +329,6 @@ class Command_cd(HoneyPotCommand):
     """
     cd command
     """
-    uses_stdin = False
 
     def call(self) -> None:
         if not self.args or self.args[0] == "~":
@@ -668,7 +673,6 @@ class Command_pwd(HoneyPotCommand):
     """
     pwd command
     """
-    uses_stdin = False
 
     def call(self) -> None:
         self.write(self.cwd + "\n")

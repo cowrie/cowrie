@@ -17,6 +17,8 @@ commands = {}
 
 
 class Command_perl(HoneyPotCommand):
+    consumes_stdin = True
+
     def version(self) -> None:
         output = (
             "",

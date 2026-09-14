@@ -17,6 +17,8 @@ commands = {}
 
 
 class Command_tar(HoneyPotCommand):
+    consumes_stdin = True
+
     _log = Logger()
 
     def mkfullpath(self, path: str, f: tarfile.TarInfo) -> None:

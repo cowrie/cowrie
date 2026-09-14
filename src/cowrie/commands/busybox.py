@@ -64,6 +64,8 @@ class Command_busybox(HoneyPotCommand):
     which then runs in busybox's place with its stdin, stdout and
     redirections."""
 
+    consumes_stdin = True
+
     def help(self) -> None:
         for ln in busybox_help:
             self.errorWrite(f"{ln}\n")

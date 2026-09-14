@@ -104,6 +104,8 @@ class Command_nc(HoneyPotCommand):
     netcat
     """
 
+    consumes_stdin = True
+
     _log = Logger()
 
     CONNECT_TIMEOUT: float = 10.0  # seconds

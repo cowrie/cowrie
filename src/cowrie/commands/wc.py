@@ -24,6 +24,8 @@ class Command_wc(HoneyPotCommand):
     wc command
     """
 
+    consumes_stdin = True
+
     def version(self) -> None:
         self.writeBytes(b"wc (GNU coreutils) 8.30\n")
         self.writeBytes(b"Copyright (C) 2018 Free Software Foundation, Inc.\n")
