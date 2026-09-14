@@ -668,9 +668,12 @@ class BashParser:
             # of a command -- a bash syntax error reported on the "(" token.
             if isinstance(node, Tree) and node.data == "subshell":
                 return SyntaxError_(token=self._error_token(line, node))
-            # Likewise a case clause, which bash rejects at the pattern's ")".
+            # Likewise a case clause, which bash rejects at the pattern's ")",
+            # and a "()" after an argument ("echo f()"), rejected at the "(".
             if isinstance(node, Tree) and node.data == "case_clause":
                 return SyntaxError_(token=")")
+            if self._token_type(node) == "FUNC_PARENS":
+                return SyntaxError_(token="(")
             units.append(cursor.next())
         return self._make_command(line, units, op)
 

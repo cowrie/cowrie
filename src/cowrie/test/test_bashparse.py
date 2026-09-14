@@ -473,6 +473,12 @@ class BashParseCompoundTests(unittest.TestCase):
         node = self._one("(echo a)(echo b)")
         self.assertIsInstance(node, SyntaxError_)
 
+    def test_function_parens_after_argument_is_syntax_error(self) -> None:
+        # bash: "syntax error near unexpected token `('"
+        node = self._one("echo f()")
+        self.assertIsInstance(node, SyntaxError_)
+        self.assertEqual(node.token, "(")  # type: ignore[union-attr]
+
     def test_empty_subshell_alone_is_syntax_error(self) -> None:
         # bash: "syntax error near unexpected token `)'"
         node = self._one("()")
