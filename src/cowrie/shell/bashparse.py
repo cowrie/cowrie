@@ -348,6 +348,7 @@ class Subshell:
 
     statements: list[Statement] = field(default_factory=list)
     op: str | None = None
+    redirections: Command | None = None
 
 
 @dataclass
@@ -356,6 +357,7 @@ class BraceGroup:
 
     statements: list[Statement] = field(default_factory=list)
     op: str | None = None
+    redirections: Command | None = None
 
 
 @dataclass
@@ -370,6 +372,7 @@ class ForClause:
     items: Command | None = None
     body: list[Statement] = field(default_factory=list)
     op: str | None = None
+    redirections: Command | None = None
 
 
 @dataclass
@@ -385,6 +388,7 @@ class IfClause:
     )
     else_body: list[Statement] | None = None
     op: str | None = None
+    redirections: Command | None = None
 
 
 @dataclass
@@ -395,6 +399,7 @@ class WhileClause:
     body: list[Statement] = field(default_factory=list)
     until: bool = False
     op: str | None = None
+    redirections: Command | None = None
 
 
 @dataclass
@@ -408,6 +413,7 @@ class CaseClause:
     word: Command | None = None
     items: list[tuple[list[str], list[Statement]]] = field(default_factory=list)
     op: str | None = None
+    redirections: Command | None = None
 
 
 @dataclass
@@ -443,6 +449,10 @@ Statement = (
     | FunctionDef
     | SyntaxError_
 )
+
+# The compound commands a redirection can follow ("(...) > f", "done 2>&1"),
+# carrying it in their ``redirections`` field.
+REDIRECTABLE = (Subshell, BraceGroup, ForClause, IfClause, WhileClause, CaseClause)
 
 # Reserved words recognised only at a command position (the start of a
 # statement). Anywhere else they are ordinary arguments, so ``echo done`` still
@@ -652,7 +662,19 @@ class BashParser:
         return Pipeline(stages=stages, op=op)
 
     def _parse_command(self, line: str, cursor: _Cursor, op: str | None) -> Statement:
-        """One command: a simple command or a compound command."""
+        """One command: a simple command or a compound command, with any
+        redirection that follows a compound (`(...) > f`, `done 2>&1`)
+        attached to it so the runtime can apply it to the whole group."""
+        statement = self._parse_command_head(line, cursor, op)
+        if isinstance(statement, REDIRECTABLE):
+            redirections = self._collect_redirections(line, cursor)
+            if redirections is not None:
+                statement.redirections = redirections
+        return statement
+
+    def _parse_command_head(
+        self, line: str, cursor: _Cursor, op: str | None
+    ) -> Statement:
         node = cursor.peek()
 
         if isinstance(node, Tree) and node.data == "subshell":
@@ -660,12 +682,12 @@ class BashParser:
             after = cursor.peek()
             if isinstance(after, Tree):
                 # A word or another group directly after ")" -- bash reports
-                # a syntax error near that token.
+                # a syntax error near that token. A redirection ("(a) > f")
+                # is a REDIR/IO_REDIR token, not a Tree, and is collected by
+                # _parse_command instead.
                 if after.data == "subshell":
                     return SyntaxError_(token=self._error_token(line, after))
                 return SyntaxError_(token=self._word_source(line, after))
-            # A redirection after the group is not emulated: it is dropped.
-            self._skip_to_stage_end(cursor)
             return Subshell(statements=self._subshell_statements(line, node), op=op)
 
         if isinstance(node, Tree) and node.data == "case_clause":
@@ -692,6 +714,23 @@ class BashParser:
             return self._parse_function(line, cursor, op)
 
         return self._parse_simple(line, cursor, op)
+
+    def _collect_redirections(self, line: str, cursor: _Cursor) -> Command | None:
+        """Gather the redirections that follow a compound command as a
+        :class:`Command` of operator strings and target words, or None if
+        there are none. The runtime evaluates and applies them like a simple
+        command's own redirections."""
+        items: list[str | Tree] = []
+        while self._token_type(cursor.peek()) in ("REDIR", "IO_REDIR"):
+            operator = cursor.next()
+            assert isinstance(operator, Token)
+            items.append(str(operator.value))
+            target = cursor.peek()
+            if isinstance(target, Tree) and target.data == "word":
+                items.append(cursor.next())
+        if not items:
+            return None
+        return Command(items=items, line=line)
 
     def _parse_simple(self, line: str, cursor: _Cursor, op: str | None) -> Statement:
         """Gather one simple command up to the next ``|`` or statement end."""
@@ -902,14 +941,6 @@ class BashParser:
 
     def _skip_separators(self, cursor: _Cursor) -> None:
         while self._is_separator(cursor.peek()):
-            cursor.next()
-
-    def _skip_to_stage_end(self, cursor: _Cursor) -> None:
-        """Drop tokens up to (not including) the next ``|`` or separator."""
-        while True:
-            node = cursor.peek()
-            if node is None or self._token_type(node) in _STAGE_END:
-                return
             cursor.next()
 
     def _expect(self, cursor: _Cursor, keyword: str) -> Statement | None:

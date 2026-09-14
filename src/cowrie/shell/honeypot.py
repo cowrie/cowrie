@@ -26,9 +26,11 @@ from twisted.python.compat import iterbytes
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
 from cowrie.shell.bashparse import (
+    REDIRECTABLE,
     BashParser,
     BraceGroup,
     CaseClause,
+    Command,
     ForClause,
     FunctionDef,
     IfClause,
@@ -711,19 +713,15 @@ class HoneyPotShell:
             self._advance()
             return
 
+        # A redirection on a compound command ("(...) > f", "done 2>&1")
+        # applies to the whole group. Evaluate its target words, then run the
+        # group with the redirection applied to the shell's fds.
+        if isinstance(command, REDIRECTABLE) and command.redirections is not None:
+            self._run_redirected(command, command.redirections)
+            return
+
         if isinstance(command, Subshell):
-            # A "(...)" group runs in a child shell, so a cd, an assignment or
-            # an exit inside it does not reach this shell. It inherits this
-            # shell's fd table (so it writes where this shell writes, capture
-            # included).
-            stdin, self.stdin = self.stdin, None
-            self.run_child(
-                command.statements,
-                fds=dict(self.fds),
-                capture_buf=self._capture,
-                stdin=stdin,
-                inherits_stdin=True,
-            ).addCallback(self._child_finished)
+            self._run_subshell(command)
             return
 
         if isinstance(command, Pipeline):
@@ -770,12 +768,91 @@ class HoneyPotShell:
         d.addCallback(self._run_expanded)
         d.addErrback(self._statement_failed)
 
+    def _run_subshell(self, command: Subshell) -> None:
+        """Run a "(...)" group in a child shell, so a cd, an assignment or an
+        exit inside it does not reach this shell. It inherits this shell's fd
+        table, so it writes where this shell writes (terminal, file, or the
+        shared capture sink)."""
+        stdin, self.stdin = self.stdin, None
+        self.run_child(
+            command.statements,
+            fds=dict(self.fds),
+            capture_buf=self._capture,
+            stdin=stdin,
+            inherits_stdin=True,
+        ).addCallback(self._child_finished)
+
     def _child_finished(self, child: HoneyPotShell) -> None:
         """A "(...)" group's child shell is done: take its status and carry on.
         Its output went straight to this shell's fds (terminal, file or the
         shared capture sink), so there is nothing to fold in here."""
         self.last_exit_code = child.last_exit_code
         self._advance()
+
+    def _run_redirected(self, command: Statement, redirections: Command) -> None:
+        """Evaluate a compound command's trailing redirection target words,
+        then run the group with the redirection applied to its output."""
+        d = Deferred.fromCoroutine(self.bashparser.evaluate(redirections))
+        d.addCallback(lambda tokens: self._run_with_fds(command, tokens))
+        d.addErrback(self._statement_failed)
+
+    def _run_with_fds(self, command: Statement, tokens: list[str]) -> None:
+        _, ops = self.parser.parse_redirections(tokens)
+        fds, error = self._open_redirection_fds(ops)
+        if error:
+            # bash reports the failure (already written) and skips the command.
+            self.last_exit_code = 1
+            self._advance()
+            return
+
+        if isinstance(command, Subshell):
+            # A subshell forks, so the redirected table goes to the child.
+            stdin, self.stdin = self.stdin, None
+            self.run_child(
+                command.statements, fds=fds, stdin=stdin, inherits_stdin=True
+            ).addCallback(self._child_finished)
+            return
+
+        # A brace group, loop, if or case runs in this shell, so apply the
+        # table to it for the group's duration and restore it afterwards.
+        saved, self.fds = self.fds, fds
+        self.cmdpending[0:0] = [_Continuation(lambda: self._restore_fds(saved))]
+        if isinstance(command, BraceGroup):
+            self.cmdpending[0:0] = command.statements
+            self._advance()
+        elif isinstance(command, ForClause):
+            self._run_for(command)
+        elif isinstance(command, IfClause):
+            self._run_if(command)
+        elif isinstance(command, WhileClause):
+            self._run_while(command)
+        elif isinstance(command, CaseClause):
+            self._run_case(command)
+
+    def _restore_fds(self, saved: dict[int, tuple[str, Any]]) -> None:
+        """Restore the shell's fd table after a redirected group finishes."""
+        self.fds = saved
+        self._advance()
+
+    def _open_redirection_fds(
+        self, ops: list[dict[str, Any]]
+    ) -> tuple[dict[int, tuple[str, Any]], bool]:
+        """Apply redirection ops over this shell's fd table, opening any files
+        once for the whole group, and register their backing files. Returns the
+        new table and whether a redirection failed."""
+        pp = PipeProtocol(
+            self.protocol,
+            None,
+            [],
+            None,
+            dict(self.fds),
+            ops,
+            cwd=self.cwd,
+            user=self.user,
+        )
+        for real_path, virtual_path in pp.redirect_real_files:
+            self.protocol.terminal.redirFiles.add((real_path, virtual_path))
+        return {1: pp.targets[1], 2: pp.targets[2]}, pp.has_redirection_error
 
     def _run_pipeline(self, node: Pipeline) -> None:
         """Run the stages left to right, each in its own child shell, the
