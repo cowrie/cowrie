@@ -97,21 +97,25 @@ _GRAMMAR = r"""
 start: _WS? _line? _WS?
 _line: _run (_WS? _op _WS? _run)*
 _run: (_content (_WS _content)*)?
-_content: subshell | word | _COMMENT
-_op: SEP | PIPE | AMP | IO_REDIR | REDIR | NEWLINE | LPAR | RPAR | DSEMI
+_content: subshell | word | _funcdef | _COMMENT
+// "name()" with no space: the parens are one token rather than an empty subshell
+_funcdef: word FUNC_PARENS
+FUNC_PARENS: /\([ \t]*\)/
+_op: SEP | PIPE | AMP | IO_REDIR | REDIR | NEWLINE | RPAR | DSEMI
 
-// A balanced "(...)" group is preferred over the bare LPAR/RPAR tokens (rule
-// priority), so a command substitution keeps the right extent for "$( (a) )"
-// and a real subshell parses as one unit. A lone ")" with no matching "(" --
-// the close of a case pattern like "x86*)" -- has no subshell parse available
-// and falls back to the RPAR token, which the statement parser consumes.
+// "(" only ever opens a group: a "(...)" is a subshell, and a "(" that never
+// closes is a syntax error. A lone ")" with no matching "(" -- the close of a
+// case pattern like "x86*)" -- is the RPAR token, which the statement parser
+// consumes. Keeping "(" out of _op matters for parse cost: Earley builds every
+// reading of the input, and if "(" could also stand alone every "(...)" and
+// "$(...)" could close at any later ")" on the line (issue #40597).
 subshell.10: LPAR start RPAR
 
 word: _atom+
 _atom: sq | dq | cmdsub | backtick | dollar_brace | dollar_var | ESC | BARE_DOLLAR | LITERAL
 
 // An explicit, high-priority "$(" terminal so command substitution wins over a
-// bare "$" followed by the LPAR token now that "(" is a self-standing operator.
+// bare "$" followed by a "(...)" subshell.
 cmdsub: CMDSUB_OPEN start ")"
 CMDSUB_OPEN.6: "$("
 
@@ -140,18 +144,19 @@ DOLLAR_SPECIAL.2: /\$[?@$#!*]/
 
 ESC: /\\./
 
-// ";;" (case item terminator) must win over a single ";".
+// A single-character operator never matches where a longer one starts
+// (";;", "&&", "||", "&>"), so each operator has exactly one reading; the
+// priorities then only order the terminals against LITERAL.
 DSEMI.7: ";;"
-// Higher priority than the bare AMP so "&&" and "&>" win maximal munch.
-SEP.2: "&&" | "||" | ";"
-PIPE: "|"
-AMP: "&"
+SEP.2: "&&" | "||" | /;(?!;)/
+PIPE: /\|(?!\|)/
+AMP: /&(?![&>])/
 // A redirection with a file descriptor directly attached to it ("2>", "2>&",
 // "1>>"): one high-priority token so the digit is a file descriptor, not an
 // argument. A digit separated by whitespace ("2 >") stays an ordinary word,
 // which is how bash tells the two apart.
 IO_REDIR.5: /\d+(?:>>|>&|>|<)/
-REDIR.2: />>|>&|&>>|&>|>|</
+REDIR.2: />>|>&|&>>|&>|>(?![>&])|</
 
 LPAR: "("
 RPAR: ")"
@@ -489,8 +494,12 @@ class BashParser:
         # it is dropped (see the pipeline TODO below).
         if isinstance(node, Tree) and node.data == "subshell":
             cursor.next()
+            statements = self._subshell_statements(line, node)
+            if not statements:
+                # bash: "syntax error near unexpected token `)'"
+                return SyntaxError_(token=")")
             self._skip_to_statement_end(cursor)
-            return Subshell(statements=self._subshell_statements(line, node), op=op)
+            return Subshell(statements=statements, op=op)
 
         keyword = self._keyword(node)
         if keyword == "for":
@@ -521,8 +530,6 @@ class BashParser:
             # of a command -- a bash syntax error reported on the "(" token.
             if isinstance(node, Tree) and node.data == "subshell":
                 return SyntaxError_(token=self._error_token(line, node))
-            if isinstance(node, Token) and node.type == "LPAR":
-                return SyntaxError_(token=self._error_token_at(line, node))
             units.append(cursor.next())
         return self._make_command(line, units, op)
 
@@ -693,18 +700,15 @@ class BashParser:
         return BraceGroup(statements=body, op=op)
 
     def _looks_like_funcdef(self, cursor: _Cursor) -> bool:
-        """Detect ``name ()`` at command position (the "()" lexes as LPAR RPAR,
-        or as an empty subshell when separated by a space)."""
+        """Detect ``name ()`` at command position (the "()" lexes as FUNC_PARENS
+        when attached to the name, or as an empty subshell after a space)."""
         name = self._word_literal(cursor.peek())
         if name is None or not _NAME_RE.match(name):
             return False
         after = cursor.peek(1)
         if isinstance(after, Tree) and after.data == "subshell":
             return not self._subshell_statements("", after)
-        return (
-            self._token_type(after) == "LPAR"
-            and self._token_type(cursor.peek(2)) == "RPAR"
-        )
+        return self._token_type(after) == "FUNC_PARENS"
 
     def _parse_function(self, line: str, cursor: _Cursor, op: str | None) -> Statement:
         name = self._word_literal(cursor.next())
@@ -727,10 +731,8 @@ class BashParser:
         node = cursor.peek()
         if isinstance(node, Tree) and node.data == "subshell":
             cursor.next()
-        elif self._token_type(node) == "LPAR":
+        elif self._token_type(node) == "FUNC_PARENS":
             cursor.next()
-            if self._token_type(cursor.peek()) == "RPAR":
-                cursor.next()
 
     def _finish_function(
         self, line: str, cursor: _Cursor, name: str, op: str | None
@@ -780,15 +782,6 @@ class BashParser:
             literal = self._word_literal(word)
             return literal if literal is not None else ""
         return line[word.meta.start_pos : word.meta.end_pos]
-
-    def _error_token_at(self, line: str, token: Token) -> str:
-        start = getattr(token, "start_pos", None)
-        if start is None:
-            return "("
-        end = start + 1
-        while end < len(line) and not line[end].isspace() and line[end] != ")":
-            end += 1
-        return line[start:end]
 
     # -- word evaluation ----------------------------------------------------
 

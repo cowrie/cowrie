@@ -9,9 +9,11 @@ from __future__ import annotations
 
 import unittest
 
+from lark import Lark
 from twisted.internet.defer import Deferred, ensureDeferred, succeed
 
 from cowrie.shell.bashparse import (
+    _GRAMMAR,
     BashParser,
     BraceGroup,
     CaseClause,
@@ -379,6 +381,29 @@ class BashParseCompoundTests(unittest.TestCase):
         assert isinstance(node, FunctionDef)
         self.assertEqual(node.name, "g")
 
+    def test_function_paren_spacing_forms(self) -> None:
+        for line in ("f () { echo hi; }", "f( ) { echo hi; }", "f ( ) { echo hi; }"):
+            with self.subTest(line=line):
+                node = self._one(line)
+                assert isinstance(node, FunctionDef)
+                self.assertEqual(node.name, "f")
+
+    def test_nested_subshell(self) -> None:
+        node = self._one("( (echo a) )")
+        assert isinstance(node, Subshell)
+        self.assertEqual(len(node.statements), 1)
+        self.assertIsInstance(node.statements[0], Subshell)
+
+    def test_subshells_joined_by_andor(self) -> None:
+        statements = self.parser.parse("(echo a) && (echo b) || (echo c)")
+        self.assertEqual([type(s) for s in statements], [Subshell] * 3)
+        self.assertEqual([s.op for s in statements], [None, "&&", "||"])  # type: ignore[union-attr]
+
+    def test_empty_subshell_alone_is_syntax_error(self) -> None:
+        # bash: "syntax error near unexpected token `)'"
+        node = self._one("()")
+        self.assertIsInstance(node, SyntaxError_)
+
     def test_newline_separates_statements(self) -> None:
         statements = self.parser.parse("echo a\necho b\necho c")
         self.assertEqual(len(statements), 3)
@@ -398,6 +423,45 @@ class BashParseCompoundTests(unittest.TestCase):
     def test_unterminated_for_is_error(self) -> None:
         node = self._one("for i in 1 2 3; do echo $i")
         self.assertIsInstance(node, SyntaxError_)
+
+
+class BashParseAmbiguityTests(unittest.TestCase):
+    """Balanced parentheses must have exactly one parse.
+
+    Earley builds every reading of the input before priorities pick one, so a
+    grammar in which "(" or ")" can be read either as a group delimiter or as
+    a bare token makes the parse cost grow superlinearly with the number of
+    "(...)" / "$(...)" groups on a line (issue #40597)."""
+
+    explicit: Lark
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.explicit = Lark(
+            _GRAMMAR,
+            start="start",
+            parser="earley",
+            lexer="dynamic",
+            ambiguity="explicit",
+        )
+
+    def _assert_unambiguous(self, line: str) -> None:
+        tree = self.explicit.parse(line)
+        ambiguous = sum(1 for t in tree.iter_subtrees() if t.data == "_ambig")
+        self.assertEqual(ambiguous, 0, f"ambiguous parse for {line!r}")
+
+    def test_subshells(self) -> None:
+        self._assert_unambiguous("(echo a) ; (echo b) && (echo c)")
+
+    def test_command_substitutions(self) -> None:
+        self._assert_unambiguous('echo "$(uname -a) $(id)" ; x=$(hostname)')
+
+    def test_function_definition(self) -> None:
+        self._assert_unambiguous("f() { echo hi; }; f")
+
+    def test_recon_shaped_line(self) -> None:
+        stmt = "echo $(id) ; (ls /proc | head -n 1) ; x=$(cat /etc/hostname)"
+        self._assert_unambiguous(" ; ".join([stmt] * 2))
 
 
 if __name__ == "__main__":
