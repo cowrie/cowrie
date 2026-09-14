@@ -42,7 +42,7 @@ class PipeProtocol:
         cmd: Any,
         cmdargs: list[str],
         input_data: bytes | None,
-        redirect: bool = False,
+        base_targets: dict[int, tuple[str, Any]] | None = None,
         redirections: list[dict[str, Any]] | None = None,
         *,
         cwd: str,
@@ -60,20 +60,20 @@ class PipeProtocol:
         # stage); stdin is then closed (EOF) once it is read, as no terminal
         # will ever feed it.
         self.stdin_from_pipe: bool = False
-        self.redirected_data: bytes = b""
-        self.err_data: bytes = b""
         self.protocol = protocol
-        self.redirect = redirect  # don't send to terminal if enabled
+        # The command inherits its shell's fd table for stdout/stderr (fds 1
+        # and 2), as a forked process inherits its parent's open files, then
+        # applies its own redirections on top. Without one it writes to the
+        # terminal.
+        self.base_targets = base_targets
         self.redirections = redirections or []
 
-        # FD Table: fd -> (type, value)
-        # Types: "file", "capture", "terminal", "devnull"
+        # FD Table: fd -> (type, value). Types: "terminal", "capture" (value
+        # is a bytearray sink), "file" (value is a file_info dict), "devnull".
         self.targets: dict[int, tuple[str, Any]] = {}
 
         self.redirection_error = False
         self.redirect_real_files: list[tuple[str, str]] = []
-        self._stdout_written = 0
-        self._stderr_written = 0
         self._setup_redirections()
         self.has_redirection_error = self.redirection_error
         self.has_redirections = bool(self.redirections)
@@ -96,12 +96,15 @@ class PipeProtocol:
 
     def _setup_redirections(self) -> None:
         """Process redirection operations to build the FD table."""
-        # Initialize default FDs
+        # Inherit the shell's stdout/stderr (fds 1 and 2), or default to the
+        # terminal; then apply this command's own redirections on top.
         self.targets[0] = (FD_STDIN, None)
-        # With redirect (a capture shell: a command substitution, or a
-        # pipeline stage feeding the next) stdout is captured, not shown.
-        self.targets[1] = (FD_CAPTURE, None) if self.redirect else (FD_TERMINAL, None)
-        self.targets[2] = (FD_TERMINAL, None)
+        if self.base_targets is not None:
+            self.targets[1] = self.base_targets.get(1, (FD_TERMINAL, None))
+            self.targets[2] = self.base_targets.get(2, (FD_TERMINAL, None))
+        else:
+            self.targets[1] = (FD_TERMINAL, None)
+            self.targets[2] = (FD_TERMINAL, None)
 
         # Defer stdin reading until after all redirections are processed
         # This ensures that if an output redirection truncates a file also used for input,
@@ -128,10 +131,6 @@ class PipeProtocol:
                         self.targets[fd] = (FD_DEVNULL, None)
                     else:
                         self.targets[fd] = (FD_FILE, file_info)
-                        if fd == 1:
-                            self._stdout_written = file_info.get("start_size", 0)
-                        elif fd == 2:
-                            self._stderr_written = file_info.get("start_size", 0)
 
             elif op["type"] == "stdin":
                 fd = op["fd"]
@@ -201,7 +200,7 @@ class PipeProtocol:
             "virtual": outfile,
             "real": safeoutfile,
             "append": append,
-            "start_size": start_size,
+            "written": start_size,
         }
 
     def _needs_new_backing(self, p: Any) -> bool:
@@ -315,7 +314,6 @@ class PipeProtocol:
         self._write_to_fd(1, data)
 
     def write_stderr(self, data: bytes) -> None:
-        self.err_data = self.err_data + data
         self._write_to_fd(2, data)
 
     def _write_to_fd(self, fd: int, data: bytes) -> None:
@@ -329,15 +327,15 @@ class PipeProtocol:
         if t_type == FD_TERMINAL:
             self._write_to_terminal(data)
         elif t_type == FD_CAPTURE:
-            self.redirected_data += data
+            # The sink is a bytearray shared by every command writing to this
+            # fd (a capture subshell, or a pipeline stage feeding the next).
+            t_val += data
         elif t_type == FD_FILE:
-            self._write_to_file(t_val, data, is_stdout=(fd == 1))
+            self._write_to_file(t_val, data)
         elif t_type == FD_DEVNULL:
             pass
 
-    def _write_to_file(
-        self, file_info: dict[str, Any], data: bytes, is_stdout: bool
-    ) -> None:
+    def _write_to_file(self, file_info: dict[str, Any], data: bytes) -> None:
         real_path = file_info["real"]
         try:
             with open(real_path, "ab") as f:
@@ -346,11 +344,8 @@ class PipeProtocol:
             self._log.info("Failed to write redirected output: {error}", error=e)
             return
 
-        if is_stdout:
-            self._stdout_written += len(data)
-            written = self._stdout_written
-        else:
-            self._stderr_written += len(data)
-            written = self._stderr_written
-
-        self.protocol.fs.update_size(file_info["virtual"], written)
+        # The write offset lives in the shared file record, so several commands
+        # redirected to the same file (a group's `{ ...; } > f`) keep a correct
+        # cumulative size, as they share one inherited fd in a real shell.
+        file_info["written"] += len(data)
+        self.protocol.fs.update_size(file_info["virtual"], file_info["written"])

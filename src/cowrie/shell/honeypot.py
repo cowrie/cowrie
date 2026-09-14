@@ -41,7 +41,7 @@ from cowrie.shell.bashparse import (
 )
 from cowrie.shell.command import process_status
 from cowrie.shell.parser import CommandParser
-from cowrie.shell.pipe import PipeProtocol
+from cowrie.shell.pipe import FD_CAPTURE, FD_TERMINAL, PipeProtocol
 
 # Honeypot safety caps. A loop in an uploaded script must never hang or exhaust
 # the process: bound the number of iterations a single loop runs. Real malware
@@ -88,12 +88,10 @@ class HoneyPotShell:
         self,
         protocol: Any,
         interactive: bool = True,
-        redirect: bool = False,
         reads_stdin: bool = False,
     ) -> None:
         self.protocol = protocol
         self.interactive: bool = interactive
-        self.redirect: bool = redirect  # to support output redirection
         # The shell's commands arrive over a live stdin (an SSH exec channel
         # running `bash`): a drained queue means idle, not done, until EOF.
         self.reads_stdin: bool = reads_stdin
@@ -140,19 +138,27 @@ class HoneyPotShell:
             self.environ["LINES"] = str(protocol.user.windowSize[0])
         self.parser = CommandParser()
         self.bashparser = BashParser(self)
-        # Child-shell state (see run_child): a pipeline stage, a "(...)"
-        # group or a $(...) substitution runs in its own shell, as a forked
-        # child. ``stdin`` is the pipe buffer feeding it, handed to the first
-        # command that runs; with none, an ``inherits_stdin`` child reads
-        # whatever its parent reads. With redirect=True every statement's
-        # stdout accumulates in ``captured`` -- one pipe buffer for the whole
-        # child, like the pipe bash wires a child to. ``done`` fires with the
-        # finished child (buffer and final status) when it leaves the
-        # cmdstack -- its queue drained, or an inner `exit` or `exec` ended
-        # it: the parent's read on the pipe seeing EOF.
+        # The shell's fd table for the commands it runs (stdout=1, stderr=2),
+        # inherited by each command as a forked process inherits its parent's
+        # open files. A command applies its own redirections on top, and a
+        # redirection on a compound command (`{ ...; } > f`) swaps the shell's
+        # own entry for the group's duration. A top-level shell writes to the
+        # terminal; a capture child (see run_child) points fd 1 at a sink.
+        self.fds: dict[int, tuple[str, Any]] = {
+            1: (FD_TERMINAL, None),
+            2: (FD_TERMINAL, None),
+        }
+        # Child-shell state (see run_child): a pipeline stage, a "(...)" group
+        # or a $(...) substitution runs in its own shell, as a forked child.
+        # ``stdin`` is the pipe buffer feeding it, handed to the first command
+        # that reads; with none, an ``inherits_stdin`` child reads whatever its
+        # parent reads. ``_capture`` is the bytearray fd 1 points at when the
+        # child captures its stdout. ``done`` fires with the finished child
+        # when it leaves the cmdstack -- its queue drained, or an inner `exit`
+        # or `exec` ended it: the parent's read on the pipe seeing EOF.
         self.stdin: bytes | None = None
         self.inherits_stdin: bool = False
-        self.captured: bytes = b""
+        self._capture: bytearray | None = None
         self.done: Deferred[HoneyPotShell] | None = None
         # Final status of the most recent command substitution expanded for
         # the current statement: bash makes it the statement's own status
@@ -183,6 +189,11 @@ class HoneyPotShell:
         """Return $? -- the last command's exit status as a string."""
         return str(self.last_exit_code)
 
+    @property
+    def captured(self) -> bytes:
+        """The stdout captured by this child, when fd 1 points at a sink."""
+        return bytes(self._capture) if self._capture is not None else b""
+
     def command_substitution(self, source: str) -> Deferred[str]:
         """Run ``source`` as a command substitution: the returned Deferred
         fires with its captured stdout, trailing newlines stripped, once the
@@ -205,25 +216,38 @@ class HoneyPotShell:
             return subshell.captured.decode(errors="replace").rstrip("\n")
 
         statements = self.bashparser.parse(source)
-        return self.run_child(statements, capture=True).addCallback(finished)
+        fds, buf = self._capture_fds()
+        return self.run_child(statements, fds=fds, capture_buf=buf).addCallback(
+            finished
+        )
+
+    def _capture_fds(self) -> tuple[dict[int, tuple[str, Any]], bytearray]:
+        """An fd table whose stdout is a fresh capture sink; stderr is
+        inherited from this shell, so a substitution's or stage's errors reach
+        the terminal (or the enclosing capture) as bash does."""
+        buf = bytearray()
+        return {1: (FD_CAPTURE, buf), 2: self.fds[2]}, buf
 
     def run_child(
         self,
         statements: list[Statement],
         *,
-        capture: bool,
+        fds: dict[int, tuple[str, Any]],
+        capture_buf: bytearray | None = None,
         stdin: bytes | None = None,
         inherits_stdin: bool = False,
     ) -> Deferred[HoneyPotShell]:
         """Run ``statements`` in a child shell, as a forked process would, and
         return a Deferred that fires with the finished child -- its status in
-        ``last_exit_code`` and, with ``capture``, its stdout in ``captured``.
+        ``last_exit_code`` and, when ``capture_buf`` is its stdout sink, its
+        output in ``captured``.
 
-        ``stdin`` is the pipe buffer the child reads. Without one, an
-        ``inherits_stdin`` child reads whatever this shell reads (a pipeline's
-        first stage, a "(...)" group); any other child sees EOF. The child
-        starts with copies of this shell's environment, working directory and
-        identity, so nothing it changes persists here.
+        ``fds`` is the child's stdout/stderr table. ``stdin`` is the pipe
+        buffer the child reads; without one, an ``inherits_stdin`` child reads
+        whatever this shell reads (a pipeline's first stage, a "(...)" group)
+        and any other child sees EOF. The child starts with copies of this
+        shell's environment, working directory and identity, so nothing it
+        changes persists here.
 
         The child runs its statements through the normal cmdpending /
         _advance machinery, so a command that pauses on a Deferred (wget)
@@ -231,7 +255,9 @@ class HoneyPotShell:
         the parent's blocking read on the pipe. When every statement completes
         synchronously the Deferred has already fired by the time this returns.
         """
-        shell = HoneyPotShell(self.protocol, interactive=False, redirect=capture)
+        shell = HoneyPotShell(self.protocol, interactive=False)
+        shell.fds = fds
+        shell._capture = capture_buf
         shell.stdin = stdin
         shell.inherits_stdin = inherits_stdin
         done: Deferred[HoneyPotShell] = Deferred()
@@ -241,24 +267,11 @@ class HoneyPotShell:
         shell._advance()
         return done
 
-    def _harvest_capture(self) -> None:
-        """Fold the finished statement's captured stdout into this capture
-        subshell's buffer and clear ``protocol.pp`` so a statement that builds
-        no pipe (a bare assignment, or a command-not-found) reads as empty
-        output rather than re-reading the previous statement's capture."""
-        if not self.redirect:
-            return
-        pp = self.protocol.pp
-        if pp is not None:
-            self.captured += pp.redirected_data
-            self.protocol.pp = None
-
     def _complete_child(self) -> None:
         """Fire ``done`` with this finished child shell: it is gone and the
         parent's read on its pipe sees EOF."""
         if self.done is None:
             return
-        self._harvest_capture()
         done, self.done = self.done, None
         done.callback(self)
 
@@ -661,11 +674,6 @@ class HoneyPotShell:
         return True, replaces
 
     def runCommand(self):
-        # A capture subshell folds the statement that just finished into its
-        # output buffer before touching the next one; loop bodies and spliced
-        # groups pass through here too, so every statement is collected.
-        self._harvest_capture()
-
         # A pending break / continue: drop the rest of the current loop body up
         # to the innermost loop continuation, which consumes the signal.
         if self._loop_signal is not None:
@@ -705,11 +713,14 @@ class HoneyPotShell:
 
         if isinstance(command, Subshell):
             # A "(...)" group runs in a child shell, so a cd, an assignment or
-            # an exit inside it does not reach this shell.
+            # an exit inside it does not reach this shell. It inherits this
+            # shell's fd table (so it writes where this shell writes, capture
+            # included).
             stdin, self.stdin = self.stdin, None
             self.run_child(
                 command.statements,
-                capture=self.redirect,
+                fds=dict(self.fds),
+                capture_buf=self._capture,
                 stdin=stdin,
                 inherits_stdin=True,
             ).addCallback(self._child_finished)
@@ -760,11 +771,10 @@ class HoneyPotShell:
         d.addErrback(self._statement_failed)
 
     def _child_finished(self, child: HoneyPotShell) -> None:
-        """A "(...)" group's child shell is done: take its status and, when
-        this shell captures output, its output, then carry on."""
+        """A "(...)" group's child shell is done: take its status and carry on.
+        Its output went straight to this shell's fds (terminal, file or the
+        shared capture sink), so there is nothing to fold in here."""
         self.last_exit_code = child.last_exit_code
-        if self.redirect:
-            self.captured += child.captured
         self._advance()
 
     def _run_pipeline(self, node: Pipeline) -> None:
@@ -792,9 +802,18 @@ class HoneyPotShell:
         def run_from(index: int) -> None:
             while index < len(stages):
                 last = index == len(stages) - 1
+                if last:
+                    # The last stage writes where this shell writes (terminal,
+                    # a file, or the enclosing capture sink).
+                    fds, buf = dict(self.fds), self._capture
+                else:
+                    # An intermediate stage's stdout is captured to feed the
+                    # next; its stderr still reaches this shell.
+                    fds, buf = self._capture_fds()
                 d = self.run_child(
                     [stages[index]],
-                    capture=not last or self.redirect,
+                    fds=fds,
+                    capture_buf=buf,
                     stdin=output,
                     inherits_stdin=index == 0,
                 )
@@ -804,8 +823,6 @@ class HoneyPotShell:
                     # The stage paused on a Deferred; carry on when it ends.
                     finished.addCallback(continue_from, index)
                     return
-            if self.redirect and output is not None:
-                self.captured += output
             self._advance()
 
         run_from(0)
@@ -863,7 +880,7 @@ class HoneyPotShell:
                     None,
                     [],
                     None,
-                    self.redirect,
+                    dict(self.fds),
                     ops,
                     cwd=self.cwd,
                     user=self.user,
@@ -894,7 +911,7 @@ class HoneyPotShell:
                     None,
                     [],
                     None,
-                    self.redirect,
+                    dict(self.fds),
                     ops,
                     cwd=self.cwd,
                     user=self.user,
@@ -926,7 +943,7 @@ class HoneyPotShell:
             cmdclass,
             args,
             stdin,
-            self.redirect,
+            dict(self.fds),
             ops,
             cwd=self.cwd,
             user=self.user,

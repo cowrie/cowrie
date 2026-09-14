@@ -96,8 +96,7 @@ class Command_busybox(HoneyPotCommand):
             cmdclass,
             self.args[1:],
             self.input_data,
-            redirect=self.pp.redirect,
-            redirections=self.pp.redirections,
+            self.pp.targets,
             cwd=self.cwd,
             user=self.user,
         )
