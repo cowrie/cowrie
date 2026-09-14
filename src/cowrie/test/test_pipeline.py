@@ -67,9 +67,7 @@ class PipelineTests(ShellSessionTests):
         self.assertEqual(self.run_line("echo a | (cat; cat)"), b"a\n" + PROMPT)
 
     def test_command_that_does_not_read_leaves_the_pipe(self) -> None:
-        self.assertEqual(
-            self.run_line("echo a | (whoami; cat)"), b"root\na\n" + PROMPT
-        )
+        self.assertEqual(self.run_line("echo a | (whoami; cat)"), b"root\na\n" + PROMPT)
 
     def test_status_is_the_last_stage(self) -> None:
         self.assertEqual(self.run_line("(exit 3) | true; echo $?"), b"0\n" + PROMPT)
@@ -143,6 +141,38 @@ class WrapperCommandTests(ShellSessionTests):
         self.assertEqual(self.run_line("sudo false; echo $?"), b"1\n" + PROMPT)
         self.assertEqual(self.run_line("sudo echo hi > sudofile"), PROMPT)
         self.assertEqual(self.run_line("cat sudofile"), b"hi\n" + PROMPT)
+
+
+class CompoundRedirectionTests(ShellSessionTests):
+    """A redirection after a compound command applies to the whole command,
+    as in bash. Each test asserts what bash does."""
+
+    def test_subshell_stdout_to_file(self) -> None:
+        self.assertEqual(self.run_line("(echo a; echo b) > grpfile"), PROMPT)
+        self.assertEqual(self.run_line("cat grpfile"), b"a\nb\n" + PROMPT)
+
+    def test_brace_group_append_accumulates(self) -> None:
+        self.assertEqual(self.run_line("{ echo one; } >> grpappend"), PROMPT)
+        self.assertEqual(self.run_line("{ echo two; } >> grpappend"), PROMPT)
+        self.assertEqual(self.run_line("cat grpappend"), b"one\ntwo\n" + PROMPT)
+
+    def test_loop_stdout_to_file(self) -> None:
+        self.assertEqual(
+            self.run_line("for i in 1 2; do echo $i; done > loopfile"), PROMPT
+        )
+        self.assertEqual(self.run_line("cat loopfile"), b"1\n2\n" + PROMPT)
+        self.assertEqual(
+            self.run_line("while true; do echo w; break; done > whilefile"), PROMPT
+        )
+        self.assertEqual(self.run_line("cat whilefile"), b"w\n" + PROMPT)
+
+    def test_subshell_stderr_to_devnull(self) -> None:
+        self.assertEqual(self.run_line("(cat /nonexistent) 2> /dev/null"), PROMPT)
+
+    def test_redirected_group_in_pipeline(self) -> None:
+        # The redirection applies to the group stage, not the pipeline.
+        self.assertEqual(self.run_line("(echo a) > pipefile | cat"), PROMPT)
+        self.assertEqual(self.run_line("cat pipefile"), b"a\n" + PROMPT)
 
 
 if __name__ == "__main__":
