@@ -434,7 +434,7 @@ _RESERVED = frozenset(
 
 # Tokens that end a simple command / pipeline (a separator or the close of an
 # enclosing construct).
-_STATEMENT_END = frozenset({"SEP", "NEWLINE", "DSEMI", "RPAR"})
+_STATEMENT_END = frozenset({"SEP", "NEWLINE", "DSEMI"})
 
 _NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
@@ -560,8 +560,12 @@ class BashParser:
                 break
             if self._keyword(node) in stop:
                 break
-            if self._token_type(node) in ("DSEMI", "RPAR"):
+            if self._token_type(node) == "DSEMI":
                 break
+            if self._token_type(node) == "RPAR":
+                # A ")" with no open "(" -- bash: syntax error near `)'.
+                statements.append(SyntaxError_(token=")"))
+                return statements
 
             statement = self._parse_statement(
                 line, cursor, pending_op if seen else None
@@ -584,6 +588,15 @@ class BashParser:
             statements = self._subshell_statements(line, node)
             if not statements:
                 # bash: "syntax error near unexpected token `)'"
+                return SyntaxError_(token=")")
+            after = cursor.peek()
+            if isinstance(after, Tree):
+                # A word or another group directly after ")" -- bash reports
+                # a syntax error near that token.
+                if after.data == "subshell":
+                    return SyntaxError_(token=self._error_token(line, after))
+                return SyntaxError_(token=self._word_source(line, after))
+            if self._token_type(after) == "RPAR":
                 return SyntaxError_(token=")")
             self._skip_to_statement_end(cursor)
             return Subshell(statements=statements, op=op)
@@ -617,6 +630,9 @@ class BashParser:
             # of a command -- a bash syntax error reported on the "(" token.
             if isinstance(node, Tree) and node.data == "subshell":
                 return SyntaxError_(token=self._error_token(line, node))
+            if self._token_type(node) == "RPAR":
+                # A ")" with no open "(" -- bash: syntax error near `)'.
+                return SyntaxError_(token=")")
             units.append(cursor.next())
         return self._make_command(line, units, op)
 
@@ -760,6 +776,12 @@ class BashParser:
     ) -> tuple[list[str], Statement | None]:
         """Read ``pat[|pat]*)`` and return the raw pattern strings."""
         patterns: list[str] = []
+        node = cursor.peek()
+        if isinstance(node, Tree) and node.data == "subshell":
+            # bash allows an opening "(" before the pattern list, so "(a|b)"
+            # lexes as one group holding the patterns.
+            cursor.next()
+            return self._group_patterns(line, node)
         while True:
             node = cursor.peek()
             if node is None:
@@ -775,6 +797,21 @@ class BashParser:
                 cursor.next()
                 continue
             return patterns, SyntaxError_(token=self._unexpected(line, cursor))
+
+    def _group_patterns(
+        self, line: str, group: Tree
+    ) -> tuple[list[str], Statement | None]:
+        """The pattern strings of a ``(pat|pat)`` case pattern list."""
+        patterns: list[str] = []
+        for child in group.children:
+            if not isinstance(child, Tree) or child.data != "start":
+                continue
+            for node in child.children:
+                if isinstance(node, Tree) and node.data == "word":
+                    patterns.append(self._word_source(line, node))
+                elif self._token_type(node) != "PIPE":
+                    return patterns, SyntaxError_(token=self._error_token(line, group))
+        return patterns, None
 
     def _parse_brace_group(
         self, line: str, cursor: _Cursor, op: str | None
