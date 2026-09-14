@@ -87,35 +87,35 @@ from cowrie.core.config import CowrieConfig
 # with no whitespace between them form a single word ("a"$x'b' -> one word).
 #
 # The grammar is a single tokeniser for the whole language: it emits a flat
-# stream of word trees and control tokens (separators, pipes, redirections,
-# parentheses, ";;", newlines). The structure above a simple command --
-# &&/|| lists, pipelines, and the compound commands for/if/while/until/case,
-# brace groups and function definitions -- is recognised by the recursive
-# descent in :meth:`BashParser._parse_list`, which reads reserved words only at
-# a command position, exactly as a real shell does. Keeping one tokeniser means
-# the script-level constructs reuse the same quoting, expansion and redirection
-# lexing as a single interactive line.
+# stream of word trees, "(...)" and case groups, and control tokens
+# (separators, pipes, redirections, newlines). The structure above a simple
+# command -- &&/|| lists, pipelines, and the compound commands
+# for/if/while/until, brace groups and function definitions -- is recognised
+# by the recursive descent in :meth:`BashParser._parse_list`, which reads
+# reserved words only at a command position, exactly as a real shell does.
+# Keeping one tokeniser means the script-level constructs reuse the same
+# quoting, expansion and redirection lexing as a single interactive line.
+#
+# The grammar is unambiguous: every line has exactly one parse. That is what
+# keeps the Earley parse linear in the input size (issue #40597), and
+# test_bashparse asserts it with an explicit-ambiguity parse of sample lines.
 _GRAMMAR = r"""
-// A line is whitespace-separated content (words and subshells) broken up by the
-// control operators. Whitespace is REQUIRED between two content words, so a run
-// of atoms with no spaces is a single word (a"b"$c -> one word) while operators
-// stay self-delimiting (echo a|b is three tokens). Requiring the space is also
-// what keeps "$(...)" one command-substitution word instead of letting it be
-// re-read as a bare "$" next to a "(...)" subshell.
-// A line is contents (words, groups, comments) and operators in any order,
-// with whitespace required between two contents and optional around an
+// A line is contents (words, groups, comments) and operators in any order.
+// Whitespace is REQUIRED between two contents, so a run of atoms with no
+// spaces is a single word (a"b"$c -> one word) while operators stay
+// self-delimiting (echo a|b is three tokens); it is optional around an
 // operator. Two left-recursive sequences -- _after_content and _after_op,
 // named for what they end in -- give every whitespace run exactly one place
-// to attach, so a line has a single parse. (Left recursion: Earley handles
-// it in linear time where a right-recursive list is quadratic.)
+// to attach. (Left recursion: Earley handles it in linear time where a
+// right-recursive list is quadratic.)
 start: _WS? _seq?
 _seq: (_after_content | _after_op) _WS?
 _after_content: _content | _after_content _WS _content | _after_op _WS? _content
 _after_op: _op | _after_content _WS? _op | _after_op _WS? _op
 _content: subshell | word | _funcdef | case_clause | _COMMENT
-// "name()" with no space: the parens are one token rather than an empty
-// subshell, and the body may follow without whitespace ("f(){ ...; }").
-_funcdef: word FUNC_PARENS _content?
+// A function definition's "()" is one token, so "f()", "f ()" and "f ( )"
+// all read the same way, and the body may follow it directly ("f(){ ...; }").
+_funcdef: word _WS? FUNC_PARENS _content?
 FUNC_PARENS: /\([ \t]*\)/
 _op: SEP | PIPE | AMP | IO_REDIR | REDIR | NEWLINE
 
@@ -125,8 +125,10 @@ _op: SEP | PIPE | AMP | IO_REDIR | REDIR | NEWLINE
 // -- is recognised by the case_clause rule below. Keeping the parens out of
 // _op matters for parse cost: Earley builds every reading of the input, and
 // if either could stand alone, every "(...)" and "$(...)" could close at any
-// later ")" on the line (issue #40597).
-subshell.10: LPAR start RPAR
+// later ")" on the line (issue #40597). A subshell has at least one command:
+// "( )" is a syntax error in bash, and an empty "()" is FUNC_PARENS.
+subshell: LPAR body RPAR
+body: _WS? _seq
 
 // "case WORD in [(]PAT[|PAT]...) BODY ;; ... esac". The keywords are only
 // keywords here: elsewhere "case", "in" and "esac" lex as ordinary words.
@@ -134,9 +136,9 @@ case_clause: CASE _WS word _WS IN _blank* case_item* ESAC
 case_item: (LPAR _WS?)? case_patterns _WS? RPAR start (DSEMI _blank*)?
 case_patterns: word (_WS? PIPE _WS? word)*
 _blank: _WS | NEWLINE
-CASE: /case(?=[ \t])/
-IN: /in(?=[ \t\r\n])/
-ESAC: /esac(?![^ \t\r\n;&|<>()])/
+CASE: /case(?=\s)/
+IN: /in(?=\s)/
+ESAC: /esac(?![^\s;&|<>()])/
 
 // A "#" starts a comment only at a word start (see _COMMENT), so a LITERAL
 // never begins with one; inside a word ("a#b", "''#x") it is ordinary text.
@@ -144,10 +146,9 @@ word: _atom (_atom | HASH_LITERAL)*
 _atom: sq | dq | cmdsub | backtick | dollar_brace | dollar_var | ESC | BARE_DOLLAR | LITERAL
 HASH_LITERAL: /#[^ \t\r\n|&;<>()$`'"\\]*/
 
-// An explicit, high-priority "$(" terminal so command substitution wins over a
-// bare "$" followed by a "(...)" subshell.
+// An explicit "$(" terminal: BARE_DOLLAR never matches before a "(".
 cmdsub: CMDSUB_OPEN start ")"
-CMDSUB_OPEN.6: "$("
+CMDSUB_OPEN: "$("
 
 backtick: "`" _bq_atom* "`"
 _bq_atom: dollar_var | dollar_brace | BQ_LITERAL
@@ -164,29 +165,25 @@ SQ: /'[^']*'/
 dollar_brace: "${" BRACE_NAME "}"
 BRACE_NAME: /[_a-zA-Z0-9]+/
 
-// Higher priority than the bare BARE_DOLLAR so a "$" that begins a variable
-// reference is lexed as one "$VAR" token even when it directly follows literal
-// text in the same word ("got=$x", "$PATH:/x"), rather than splitting into a
-// bare "$" plus a "VAR" literal.
 dollar_var: DOLLAR_NAME | DOLLAR_SPECIAL
-DOLLAR_NAME.2: /\$[_a-zA-Z0-9]+/
-DOLLAR_SPECIAL.2: /\$[?@$#!*]/
+DOLLAR_NAME: /\$[_a-zA-Z0-9]+/
+DOLLAR_SPECIAL: /\$[?@$#!*]/
 
 ESC: /\\./
 
 // A single-character operator never matches where a longer one starts
-// (";;", "&&", "||", "&>"), so each operator has exactly one reading; the
-// priorities then only order the terminals against LITERAL.
-DSEMI.7: ";;"
-SEP.2: "&&" | "||" | /;(?!;)/
+// (";;", "&&", "||", "&>"), so each operator has exactly one reading.
+DSEMI: ";;"
+SEP: "&&" | "||" | /;(?!;)/
 PIPE: /\|(?!\|)/
 AMP: /&(?![&>])/
 // A redirection with a file descriptor directly attached to it ("2>", "2>&",
-// "1>>"): one high-priority token so the digit is a file descriptor, not an
-// argument. A digit separated by whitespace ("2 >") stays an ordinary word,
-// which is how bash tells the two apart.
-IO_REDIR.5: /\d+(?:>>|>&|>|<)/
-REDIR.2: />>|>&|&>>|&>|>(?![>&])|</
+// "1>>"): one token, so the digit is a file descriptor, not an argument (a
+// LITERAL never matches digits directly before "<" or ">"). A digit separated
+// by whitespace ("2 >") stays an ordinary word, which is how bash tells the
+// two apart.
+IO_REDIR: /\d+(?:>>|>&|>|<)/
+REDIR: />>|>&|&>>|&>|>(?![>&])|</
 
 LPAR: "("
 RPAR: ")"
@@ -200,7 +197,7 @@ NEWLINE: /\r?\n/
 BARE_DOLLAR: /\$(?![_a-zA-Z0-9{(?@$#!*])/
 // Not a "#" first (that is a comment), and not digits directly before a
 // redirection operator (that is an IO_REDIR file descriptor, "2>&1").
-LITERAL: /(?!\d+[<>])[^ \t\r\n|&;<>()$`'"\\#][^ \t\r\n|&;<>()$`'"\\]*/
+LITERAL: /(?!#|\d+[<>])[^ \t\r\n|&;<>()$`'"\\]+/
 
 // A "#" at a word start begins a comment.
 _COMMENT: /#[^\r\n]*/
@@ -458,8 +455,7 @@ _RESERVED = frozenset(
     }
 )
 
-# Tokens that end a simple command / pipeline (a separator or the close of an
-# enclosing construct).
+# Tokens that end a simple command / pipeline.
 _STATEMENT_END = frozenset({"SEP", "NEWLINE"})
 
 _NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
@@ -618,10 +614,6 @@ class BashParser:
         # it is dropped (see the pipeline TODO below).
         if isinstance(node, Tree) and node.data == "subshell":
             cursor.next()
-            statements = self._subshell_statements(line, node)
-            if not statements:
-                # bash: "syntax error near unexpected token `)'"
-                return SyntaxError_(token=")")
             after = cursor.peek()
             if isinstance(after, Tree):
                 # A word or another group directly after ")" -- bash reports
@@ -630,7 +622,7 @@ class BashParser:
                     return SyntaxError_(token=self._error_token(line, after))
                 return SyntaxError_(token=self._word_source(line, after))
             self._skip_to_statement_end(cursor)
-            return Subshell(statements=statements, op=op)
+            return Subshell(statements=self._subshell_statements(line, node), op=op)
 
         if isinstance(node, Tree) and node.data == "case_clause":
             cursor.next()
@@ -816,15 +808,11 @@ class BashParser:
         return BraceGroup(statements=body, op=op)
 
     def _looks_like_funcdef(self, cursor: _Cursor) -> bool:
-        """Detect ``name ()`` at command position (the "()" lexes as FUNC_PARENS
-        when attached to the name, or as an empty subshell after a space)."""
+        """Detect ``name ()`` at command position."""
         name = self._word_literal(cursor.peek())
         if name is None or not _NAME_RE.match(name):
             return False
-        after = cursor.peek(1)
-        if isinstance(after, Tree) and after.data == "subshell":
-            return not self._subshell_statements("", after)
-        return self._token_type(after) == "FUNC_PARENS"
+        return self._token_type(cursor.peek(1)) == "FUNC_PARENS"
 
     def _parse_function(self, line: str, cursor: _Cursor, op: str | None) -> Statement:
         name = self._word_literal(cursor.next())
@@ -844,10 +832,7 @@ class BashParser:
         return self._finish_function(line, cursor, name, op)
 
     def _consume_empty_parens(self, cursor: _Cursor) -> None:
-        node = cursor.peek()
-        if isinstance(node, Tree) and node.data == "subshell":
-            cursor.next()
-        elif self._token_type(node) == "FUNC_PARENS":
+        if self._token_type(cursor.peek()) == "FUNC_PARENS":
             cursor.next()
 
     def _finish_function(
@@ -1066,9 +1051,9 @@ class BashParser:
     # -- source slicing for substitution / subshells ------------------------
 
     def _subshell_statements(self, line: str, subshell: Tree) -> list[Statement]:
-        """Parse the inner ``start`` tree of a ``(...)`` group into statements."""
+        """Parse the ``body`` tree of a ``(...)`` group into statements."""
         for child in subshell.children:
-            if isinstance(child, Tree) and child.data == "start":
+            if isinstance(child, Tree) and child.data == "body":
                 return self._split_statements(line, child)
         return []
 

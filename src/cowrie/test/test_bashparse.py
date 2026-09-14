@@ -476,8 +476,8 @@ class BashParseCompoundTests(unittest.TestCase):
     def test_function_parens_after_argument_is_syntax_error(self) -> None:
         # bash: "syntax error near unexpected token `('"
         node = self._one("echo f()")
-        self.assertIsInstance(node, SyntaxError_)
-        self.assertEqual(node.token, "(")  # type: ignore[union-attr]
+        assert isinstance(node, SyntaxError_)
+        self.assertEqual(node.token, "(")
 
     def test_empty_subshell_alone_is_syntax_error(self) -> None:
         # bash: "syntax error near unexpected token `)'"
