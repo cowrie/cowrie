@@ -22,7 +22,6 @@ if TYPE_CHECKING:
 # FD target type constants
 FD_STDIN = "stdin"
 FD_TERMINAL = "terminal"
-FD_PIPE = "pipe"
 FD_CAPTURE = "capture"
 FD_FILE = "file"
 FD_FILE_INPUT = "file_input"
@@ -43,7 +42,6 @@ class PipeProtocol:
         cmd: Any,
         cmdargs: list[str],
         input_data: bytes | None,
-        next_command: Any,
         redirect: bool = False,
         redirections: list[dict[str, Any]] | None = None,
         *,
@@ -53,15 +51,14 @@ class PipeProtocol:
         self.cmd = cmd
         self.cmdargs = cmdargs
         self.input_data: bytes | None = input_data
-        self.next_command = next_command
         # Working directory and user identity of the shell that built this
         # pipeline, at the moment it was built: redirection targets resolve
         # against the cwd, and the files they create are owned by the user.
         self.cwd = cwd
         self.user = user
-        # True once an upstream command has been wired to write to this
-        # command's stdin via a pipe; used to decide whether stdin should be
-        # closed (EOF) when no terminal will ever feed it.
+        # True when ``input_data`` came from a pipe (an upstream pipeline
+        # stage); stdin is then closed (EOF) once it is read, as no terminal
+        # will ever feed it.
         self.stdin_from_pipe: bool = False
         self.redirected_data: bytes = b""
         self.err_data: bytes = b""
@@ -70,7 +67,7 @@ class PipeProtocol:
         self.redirections = redirections or []
 
         # FD Table: fd -> (type, value)
-        # Types: "file", "pipe", "terminal", "devnull"
+        # Types: "file", "capture", "terminal", "devnull"
         self.targets: dict[int, tuple[str, Any]] = {}
 
         self.redirection_error = False
@@ -78,11 +75,7 @@ class PipeProtocol:
         self._stdout_written = 0
         self._stderr_written = 0
         self._setup_redirections()
-        self.has_redirection_error = self.redirection_error or (
-            getattr(self.next_command, "has_redirection_error", False)
-            if self.next_command
-            else False
-        )
+        self.has_redirection_error = self.redirection_error
         self.has_redirections = bool(self.redirections)
 
     def _out_of_range_fd(self, op: dict[str, Any]) -> int | None:
@@ -105,14 +98,10 @@ class PipeProtocol:
         """Process redirection operations to build the FD table."""
         # Initialize default FDs
         self.targets[0] = (FD_STDIN, None)
-        self.targets[1] = (FD_PIPE, None) if self.next_command else (FD_TERMINAL, None)
+        # With redirect (a capture shell: a command substitution, or a
+        # pipeline stage feeding the next) stdout is captured, not shown.
+        self.targets[1] = (FD_CAPTURE, None) if self.redirect else (FD_TERMINAL, None)
         self.targets[2] = (FD_TERMINAL, None)
-
-        # If redirect is True (command substitution), the *last* stage's stdout
-        # is captured. An earlier pipe stage must keep writing to the pipe, or
-        # the downstream command gets no input (`$(echo x | cat)` -> "x").
-        if self.redirect and not self.next_command:
-            self.targets[1] = (FD_CAPTURE, None)
 
         # Defer stdin reading until after all redirections are processed
         # This ensures that if an output redirection truncates a file also used for input,
@@ -293,31 +282,11 @@ class PipeProtocol:
         """
         self.write_stdout(data)
 
-    def insert_command(self, command):
-        """
-        Insert the next command into the list.
-        """
-        command.next_command = self.next_command
-        self.next_command = command
-
     def errReceived(self, data: bytes) -> None:
         self.write_stderr(data)
 
     def inConnectionLost(self) -> None:
         pass
-
-    def outConnectionLost(self) -> None:
-        """
-        Called from HoneyPotBaseProtocol.call_command() to run a next command in the chain
-        """
-
-        if self.next_command:
-            npcmd = self.next_command.cmd
-            npcmdargs = self.next_command.cmdargs
-            # This command is done writing, so the downstream command's stdin
-            # is now closed; mark it so call_command delivers EOF.
-            self.next_command.stdin_from_pipe = True
-            self.protocol.call_command(self.next_command, npcmd, *npcmdargs)
 
     def errConnectionLost(self) -> None:
         pass
@@ -335,18 +304,6 @@ class PipeProtocol:
             cmd=self.cmd,
             status=reason.value.exitCode,
         )
-
-    def _pipe_to_next(self, data: bytes) -> bool:
-        """
-        Pass data to the next command in the pipeline if present.
-        """
-        if not self.next_command:
-            return False
-        if self.next_command.input_data is None:
-            self.next_command.input_data = data
-        else:
-            self.next_command.input_data += data
-        return True
 
     def _write_to_terminal(self, data: bytes) -> None:
         if self.protocol is not None and self.protocol.terminal is not None:
@@ -371,8 +328,6 @@ class PipeProtocol:
 
         if t_type == FD_TERMINAL:
             self._write_to_terminal(data)
-        elif t_type == FD_PIPE:
-            self._pipe_to_next(data)
         elif t_type == FD_CAPTURE:
             self.redirected_data += data
         elif t_type == FD_FILE:

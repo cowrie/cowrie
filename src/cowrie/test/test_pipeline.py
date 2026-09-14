@@ -20,7 +20,9 @@ os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 PROMPT = b"root@unitTest:~# "
 
 
-class PipelineTests(unittest.TestCase):
+class ShellSessionTests(unittest.TestCase):
+    """An interactive shell session on a fake transport."""
+
     def setUp(self) -> None:
         self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
         self.tr = FakeTransport("", "31337")
@@ -38,6 +40,8 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(len(self.proto.cmdstack), 1)
         return out
 
+
+class PipelineTests(ShellSessionTests):
     def test_simple_pipeline(self) -> None:
         self.assertEqual(self.run_line("echo a | grep a | cat"), b"a\n" + PROMPT)
 
@@ -106,6 +110,34 @@ class PipelineTests(unittest.TestCase):
 
     def test_long_pipeline_runs_flat(self) -> None:
         self.assertEqual(self.run_line("echo hi" + " | cat" * 600), b"hi\n" + PROMPT)
+
+
+class WrapperCommandTests(ShellSessionTests):
+    """busybox and sudo run their command in their own place, as the real
+    ones exec into it, so it takes part in pipelines and redirections."""
+
+    def test_busybox_applet_in_pipeline(self) -> None:
+        self.assertEqual(self.run_line("busybox echo hi | cat"), b"hi\n" + PROMPT)
+        self.assertEqual(self.run_line("echo hi | busybox cat"), b"hi\n" + PROMPT)
+
+    def test_busybox_applet_status(self) -> None:
+        self.assertEqual(self.run_line("busybox false; echo $?"), b"1\n" + PROMPT)
+        self.assertEqual(self.run_line("busybox true; echo $?"), b"0\n" + PROMPT)
+
+    def test_busybox_unknown_applet(self) -> None:
+        self.assertEqual(
+            self.run_line("busybox nosuchapplet"),
+            b"nosuchapplet: applet not found\n" + PROMPT,
+        )
+
+    def test_sudo_command_in_pipeline(self) -> None:
+        self.assertEqual(self.run_line("sudo echo hi | cat"), b"hi\n" + PROMPT)
+        self.assertEqual(self.run_line("echo hi | sudo cat"), b"hi\n" + PROMPT)
+
+    def test_sudo_command_status_and_redirection(self) -> None:
+        self.assertEqual(self.run_line("sudo false; echo $?"), b"1\n" + PROMPT)
+        self.assertEqual(self.run_line("sudo echo hi > sudofile"), PROMPT)
+        self.assertEqual(self.run_line("cat sudofile"), b"hi\n" + PROMPT)
 
 
 if __name__ == "__main__":

@@ -127,20 +127,20 @@ class Command_sudo(HoneyPotCommand):
             )
 
             if cmdclass:
-                command = PipeProtocol(
+                # sudo execs the command in its own place, with sudo's stdin,
+                # stdout and redirections.
+                pp = PipeProtocol(
                     self.protocol,
                     cmdclass,
                     parsed_arguments[1:],
-                    None,
-                    None,
+                    self.input_data,
+                    redirect=self.pp.redirect,
+                    redirections=self.pp.redirections,
                     cwd=self.cwd,
                     user=self.user,
                 )
-                self.pp.insert_command(command)
-                # this needs to go here so it doesn't write it out....
-                if self.input_data:
-                    self.writeBytes(self.input_data)
-                self.exit()
+                pp.stdin_from_pipe = self.pp.stdin_from_pipe
+                self.exec_command(pp, cmdclass, *parsed_arguments[1:])
             else:
                 self.short_help()
         else:

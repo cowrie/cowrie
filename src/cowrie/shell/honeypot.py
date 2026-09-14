@@ -661,13 +661,6 @@ class HoneyPotShell:
         return True, replaces
 
     def runCommand(self):
-        # Mid-pipeline: an earlier stage just finished but a downstream command
-        # has not run yet. Let the pipe machinery drive the rest before touching
-        # the next statement -- otherwise `a | b; c` would run c before b and
-        # drop b's output.
-        if self.protocol.pp is not None and self.protocol.pp.next_command is not None:
-            return
-
         # A capture subshell folds the statement that just finished into its
         # output buffer before touching the next one; loop bodies and spliced
         # groups pass through here too, so every statement is collected.
@@ -870,7 +863,6 @@ class HoneyPotShell:
                     None,
                     [],
                     None,
-                    None,
                     self.redirect,
                     ops,
                     cwd=self.cwd,
@@ -901,7 +893,6 @@ class HoneyPotShell:
                     self.protocol,
                     None,
                     [],
-                    None,
                     None,
                     self.redirect,
                     ops,
@@ -935,7 +926,6 @@ class HoneyPotShell:
             cmdclass,
             args,
             stdin,
-            None,
             self.redirect,
             ops,
             cwd=self.cwd,

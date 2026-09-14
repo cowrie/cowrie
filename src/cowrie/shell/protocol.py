@@ -51,12 +51,11 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.environ = avatar.environ
         self.hostname: str = self.user.server.hostname
         self.fs = self.user.server.fs
-        # The pipeline being handed to the command now starting, which the
+        # The stdio wiring being handed to the command now starting, which the
         # command keeps as its own (HoneyPotCommand.pp). It stays set to the
-        # most recently started command's pipeline afterwards, which is what
-        # the running shell reads to tell mid-pipeline from statement end and
-        # to collect a substitution's captured output. Only ever one at a time:
-        # commands run strictly in sequence.
+        # most recently started command's afterwards, which is what a capture
+        # shell reads to collect a command's captured output. Only ever one at
+        # a time: commands run strictly in sequence.
         self.pp = None
         self.logintime: float
         self.realClientIP: str
@@ -70,12 +69,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.data = None
         self.password_input = False
         self.cmdstack = []
-        # Trampoline state for call_command. A pipeline stage starts the next
-        # one from its PipeProtocol.outConnectionLost(); that re-entrant call is
-        # queued (see _advancing_pipe) and drained by a flat loop, so a long
-        # pipeline runs without recursing one Python frame per stage (#40352).
-        self._advancing_pipe: bool = False
-        self._call_queue: list = []
 
     def getProtoTransport(self):
         """
@@ -257,59 +250,14 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             self.terminal.transport.processEnded(stat)
 
     def call_command(self, pp, cmd, *args):
-        """
-        Run a command, then drain any pipeline stages it queued.
-
-        A pipeline stage starts the next one from its
-        ``PipeProtocol.outConnectionLost()``, which calls back here. A naive
-        recursive design grows the Python stack by one frame per stage, so a
-        long ``a | b | c | ...`` line overflows it (issue #40352). Only that
-        pipeline advancement is flattened (``_advancing_pipe``): the next stage
-        is queued and run by this flat loop instead of recursed into. A command
-        that runs another synchronously during ``start()`` (``su -c``,
-        ``sh -c``, a nested shell) is not pipeline advancement and still
-        executes inline, draining its own pipeline before returning.
-        """
-        if self._advancing_pipe:
-            self._call_queue.append((pp, cmd, args))
-            return
-
-        # Drain only the stages this call queues. A command run synchronously
-        # here (su -c, sh -c, a nested shell) may itself reach call_command and
-        # drive its own pipeline; scoping to `base` keeps that nested drive from
-        # consuming a stage the enclosing pipeline has already queued.
-        base = len(self._call_queue)
-        self._run_command(pp, cmd, *args)
-        while len(self._call_queue) > base:
-            next_pp, next_cmd, next_args = self._call_queue.pop(base)
-            self._run_command(next_pp, next_cmd, *next_args)
-
-    def _run_command(self, pp, cmd, *args):
+        """Run a command with the stdio wiring ``pp``. A command that runs
+        another synchronously during ``start()`` (``su -c``, ``sh -c``, a
+        nested shell, busybox) reaches back here and executes it inline."""
         self.pp = pp
         obj = cmd(self, *args)
         obj.set_input_data(pp.input_data)
         self.cmdstack.append(obj)
         obj.start()
-
-        if obj.exited:
-            # The command finished as it started, so its stdout is closed and
-            # the next pipeline stage can run. Flatten the callback so a long
-            # pipeline does not recurse (see call_command). This uses the
-            # protocol's current pipe rather than the command's own: a wrapper
-            # like busybox dispatches an applet during start(), and it is that
-            # applet's stdout which just closed.
-            if self.pp:
-                self._advancing_pipe = True
-                try:
-                    self.pp.outConnectionLost()
-                finally:
-                    self._advancing_pipe = False
-        else:
-            # Still running -- an async download, or parked reading stdin. The
-            # next stage must wait for this one's output rather than start on
-            # an empty pipe, so the command advances the pipeline itself when
-            # it finally exits.
-            obj.advance_pipe_on_exit = True
 
         # Mirror ProcessProtocol.transport.closeStdin(): if the command parked
         # waiting for stdin but nothing will ever write to it, signal EOF so it
