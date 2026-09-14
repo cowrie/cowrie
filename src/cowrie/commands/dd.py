@@ -21,6 +21,8 @@ class Command_dd(HoneyPotCommand):
     dd command
     """
 
+    consumes_stdin = True
+
     ddargs: dict[str, str]
 
     def start(self) -> None:

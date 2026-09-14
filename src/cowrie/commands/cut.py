@@ -19,6 +19,8 @@ class Command_cut(HoneyPotCommand):
     cut command
     """
 
+    consumes_stdin = True
+
     def start(self) -> None:
         try:
             optlist, args = getopt.gnu_getopt(

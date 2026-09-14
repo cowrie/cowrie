@@ -70,7 +70,6 @@ class TempFileNamingTests(unittest.TestCase):
             cmd=None,
             cmdargs=[],
             input_data=None,
-            next_command=None,
             cwd="/root",
             user={"uid": 0, "gid": 0, "username": "root", "home": "/root"},
         )

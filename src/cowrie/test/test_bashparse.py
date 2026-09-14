@@ -9,9 +9,11 @@ from __future__ import annotations
 
 import unittest
 
+from lark import Lark
 from twisted.internet.defer import Deferred, ensureDeferred, succeed
 
 from cowrie.shell.bashparse import (
+    _GRAMMAR,
     BashParser,
     BraceGroup,
     CaseClause,
@@ -19,6 +21,7 @@ from cowrie.shell.bashparse import (
     ForClause,
     FunctionDef,
     IfClause,
+    Pipeline,
     Subshell,
     SyntaxError_,
     WhileClause,
@@ -88,9 +91,12 @@ class BashParseTokenTests(unittest.TestCase):
         # bash does not treat \n specially inside double quotes
         self.assertEqual(self._tokens('echo "\\n"'), ["echo", "\\n"])
 
-    def test_pipe_is_its_own_token(self) -> None:
+    def test_pipe_splits_stages(self) -> None:
+        statement = self.parser.parse("echo a | grep b")[0]
+        assert isinstance(statement, Pipeline)
         self.assertEqual(
-            self._tokens("echo a | grep b"), ["echo", "a", "|", "grep", "b"]
+            [evaluate_now(self.parser, s) for s in statement.stages],  # type: ignore[arg-type]
+            [["echo", "a"], ["grep", "b"]],
         )
 
 
@@ -243,6 +249,61 @@ class BashParseStatementTests(unittest.TestCase):
         self.assertEqual(self._eval(statements[0]), ["echo", "<echo $(echo deep)>"])
         self.assertEqual(self.ctx.substitutions, ["echo $(echo deep)"])
 
+    def test_pipeline_stages(self) -> None:
+        statements = self.parser.parse("echo a | tr a b | cat")
+        self.assertEqual(len(statements), 1)
+        node = statements[0]
+        assert isinstance(node, Pipeline)
+        self.assertEqual([type(s) for s in node.stages], [Command] * 3)
+        self.assertEqual(
+            [self._eval(s) for s in node.stages], [["echo", "a"], ["tr", "a", "b"], ["cat"]]
+        )
+        self.assertEqual([s.op for s in node.stages], [None] * 3)  # type: ignore[union-attr]
+
+    def test_pipeline_join_operator(self) -> None:
+        statements = self.parser.parse("true && echo a | cat")
+        self.assertIsInstance(statements[0], Command)
+        assert isinstance(statements[1], Pipeline)
+        self.assertEqual(statements[1].op, "&&")
+
+    def test_pipeline_newline_after_pipe(self) -> None:
+        # bash keeps reading the pipeline on the next line after a "|".
+        node = self.parser.parse("echo a |\n  cat")[0]
+        assert isinstance(node, Pipeline)
+        self.assertEqual(len(node.stages), 2)
+
+    def test_pipeline_with_group_stages(self) -> None:
+        for line, kinds in (
+            ("(echo a) | cat", [Subshell, Command]),
+            ("echo a | (cat)", [Command, Subshell]),
+            ("{ echo a; } | cat", [BraceGroup, Command]),
+            ("while true; do break; done | cat", [WhileClause, Command]),
+            ("(echo a) | (cat) | cat", [Subshell, Subshell, Command]),
+        ):
+            with self.subTest(line=line):
+                node = self.parser.parse(line)[0]
+                assert isinstance(node, Pipeline)
+                self.assertEqual([type(s) for s in node.stages], kinds)
+
+    def test_pipe_without_stage_is_syntax_error(self) -> None:
+        for line, token in (("| cat", "|"), ("echo a | | cat", "|"), ("echo a |", "")):
+            with self.subTest(line=line):
+                node = self.parser.parse(line)[0]
+                assert isinstance(node, SyntaxError_)
+                self.assertEqual(node.token, token)
+
+    def test_lone_dollar_in_double_quotes(self) -> None:
+        # bash keeps a "$" that starts no expansion: echo "cost: 5$" prints it.
+        for line, expected in (
+            ('echo "$"', ["echo", "$"]),
+            ('echo "a $ b"', ["echo", "a $ b"]),
+            ('echo "cost: 5$"', ["echo", "cost: 5$"]),
+        ):
+            with self.subTest(line=line):
+                statements = self.parser.parse(line)
+                self.assertIsInstance(statements[0], Command)
+                self.assertEqual(self._eval(statements[0]), expected)
+
     def test_subshell_alone(self) -> None:
         statements = self.parser.parse("(echo one; echo two)")
         self.assertEqual(len(statements), 1)
@@ -293,6 +354,14 @@ class BashParseStatementTests(unittest.TestCase):
 
 class BashParseCommentTests(unittest.TestCase):
     """A "#" starts a comment only at a word boundary, like bash."""
+
+    def test_hash_after_quoted_atom_is_literal(self) -> None:
+        # bash: echo ''#x prints "#x": the "#" is not at a word start.
+        ctx = FakeContext()
+        parser = BashParser(ctx)
+        statements = parser.parse("echo ''#x")
+        self.assertIsInstance(statements[0], Command)
+        self.assertEqual(evaluate_now(parser, statements[0]), ["echo", "#x"])  # type: ignore[arg-type]
 
     def setUp(self) -> None:
         self.parser = BashParser(FakeContext())
@@ -364,6 +433,46 @@ class BashParseCompoundTests(unittest.TestCase):
         assert isinstance(node, CaseClause)
         self.assertEqual([pats for pats, _ in node.items], [["a"], ["b", "c"], ["*"]])
 
+    def test_case_inside_subshell(self) -> None:
+        node = self._one("(case a in a) echo one;; esac)")
+        assert isinstance(node, Subshell)
+        self.assertEqual(len(node.statements), 1)
+        inner = node.statements[0]
+        assert isinstance(inner, CaseClause)
+        self.assertEqual([pats for pats, _ in inner.items], [["a"]])
+
+    def test_case_inside_command_substitution(self) -> None:
+        node = self._one("x=$(case a in a) echo one;; esac)")
+        assert isinstance(node, Command)
+        self._eval(node)
+        self.assertEqual(self.ctx.substitutions, ["case a in a) echo one;; esac"])
+
+    def test_case_multiline(self) -> None:
+        node = self._one("case $x in\n  a)\n    echo 1\n    ;;\n  *) echo 2;;\nesac")
+        assert isinstance(node, CaseClause)
+        self.assertEqual([pats for pats, _ in node.items], [["a"], ["*"]])
+        self.assertEqual(self._eval(node.items[0][1][0]), ["echo", "1"])
+
+    def test_case_body_may_use_esac_as_word(self) -> None:
+        node = self._one("case a in a) echo esac;; esac")
+        assert isinstance(node, CaseClause)
+        self.assertEqual(self._eval(node.items[0][1][0]), ["echo", "esac"])
+
+    def test_case_last_item_without_terminator(self) -> None:
+        node = self._one("case a in a) echo 1; esac")
+        assert isinstance(node, CaseClause)
+        self.assertEqual(self._eval(node.items[0][1][0]), ["echo", "1"])
+
+    def test_case_item_with_empty_body(self) -> None:
+        node = self._one("case a in a) ;; *) echo 2;; esac")
+        assert isinstance(node, CaseClause)
+        self.assertEqual(node.items[0], (["a"], []))
+
+    def test_double_semicolon_outside_case_is_error(self) -> None:
+        # bash: "syntax error near unexpected token `;;'"
+        node = self._one("echo a ;; echo b")
+        self.assertIsInstance(node, SyntaxError_)
+
     def test_brace_group(self) -> None:
         node = self._one("{ echo a; echo b; }")
         assert isinstance(node, BraceGroup)
@@ -378,6 +487,45 @@ class BashParseCompoundTests(unittest.TestCase):
         node = self._one("function g { echo g; }")
         assert isinstance(node, FunctionDef)
         self.assertEqual(node.name, "g")
+
+    def test_function_paren_spacing_forms(self) -> None:
+        for line in (
+            "f () { echo hi; }",
+            "f( ) { echo hi; }",
+            "f ( ) { echo hi; }",
+            "f(){ echo hi; }",
+        ):
+            with self.subTest(line=line):
+                node = self._one(line)
+                assert isinstance(node, FunctionDef)
+                self.assertEqual(node.name, "f")
+
+    def test_nested_subshell(self) -> None:
+        node = self._one("( (echo a) )")
+        assert isinstance(node, Subshell)
+        self.assertEqual(len(node.statements), 1)
+        self.assertIsInstance(node.statements[0], Subshell)
+
+    def test_subshells_joined_by_andor(self) -> None:
+        statements = self.parser.parse("(echo a) && (echo b) || (echo c)")
+        self.assertEqual([type(s) for s in statements], [Subshell] * 3)
+        self.assertEqual([s.op for s in statements], [None, "&&", "||"])  # type: ignore[union-attr]
+
+    def test_adjacent_subshells_are_syntax_error(self) -> None:
+        # bash: "syntax error near unexpected token `('"
+        node = self._one("(echo a)(echo b)")
+        self.assertIsInstance(node, SyntaxError_)
+
+    def test_function_parens_after_argument_is_syntax_error(self) -> None:
+        # bash: "syntax error near unexpected token `('"
+        node = self._one("echo f()")
+        assert isinstance(node, SyntaxError_)
+        self.assertEqual(node.token, "(")
+
+    def test_empty_subshell_alone_is_syntax_error(self) -> None:
+        # bash: "syntax error near unexpected token `)'"
+        node = self._one("()")
+        self.assertIsInstance(node, SyntaxError_)
 
     def test_newline_separates_statements(self) -> None:
         statements = self.parser.parse("echo a\necho b\necho c")
@@ -398,6 +546,86 @@ class BashParseCompoundTests(unittest.TestCase):
     def test_unterminated_for_is_error(self) -> None:
         node = self._one("for i in 1 2 3; do echo $i")
         self.assertIsInstance(node, SyntaxError_)
+
+
+class BashParseBashDeviationTests(unittest.TestCase):
+    """Places where the parser disagrees with bash; each test asserts what
+    bash does."""
+
+    def setUp(self) -> None:
+        self.parser = BashParser(FakeContext())
+
+    def test_words_after_subshell_are_syntax_error(self) -> None:
+        # bash: "syntax error near unexpected token `echo'"; the words after
+        # the ")" are currently dropped without a word.
+        statements = self.parser.parse("(echo a) echo b")
+        self.assertIsInstance(statements[0], SyntaxError_)
+        self.assertEqual(statements[0].token, "echo")  # type: ignore[union-attr]
+
+    def test_stray_close_paren_is_syntax_error(self) -> None:
+        # bash: "syntax error near unexpected token `)'"; the ")" is currently
+        # ignored and the command runs.
+        for line in ("echo )", "echo x86*)", ")"):
+            with self.subTest(line=line):
+                statements = self.parser.parse(line)
+                self.assertEqual(len(statements), 1)
+                self.assertIsInstance(statements[0], SyntaxError_)
+                self.assertEqual(statements[0].token, ")")  # type: ignore[union-attr]
+
+    def test_case_pattern_with_leading_paren(self) -> None:
+        # bash allows the optional "(" before a case pattern: "(a) cmd;;".
+        statements = self.parser.parse("case a in (a) echo one;; (b|c) echo two;; esac")
+        self.assertEqual(len(statements), 1)
+        node = statements[0]
+        assert isinstance(node, CaseClause)
+        self.assertEqual([pats for pats, _ in node.items], [["a"], ["b", "c"]])
+
+
+class BashParseAmbiguityTests(unittest.TestCase):
+    """Balanced parentheses must have exactly one parse.
+
+    Earley builds every reading of the input before priorities pick one, so a
+    grammar in which "(" or ")" can be read either as a group delimiter or as
+    a bare token makes the parse cost grow superlinearly with the number of
+    "(...)" / "$(...)" groups on a line (issue #40597)."""
+
+    explicit: Lark
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.explicit = Lark(
+            _GRAMMAR,
+            start="start",
+            parser="earley",
+            lexer="dynamic",
+            ambiguity="explicit",
+        )
+
+    def _assert_unambiguous(self, line: str) -> None:
+        tree = self.explicit.parse(line)
+        ambiguous = sum(1 for t in tree.iter_subtrees() if t.data == "_ambig")
+        self.assertEqual(ambiguous, 0, f"ambiguous parse for {line!r}")
+
+    def test_subshells(self) -> None:
+        self._assert_unambiguous("(echo a) ; (echo b) && (echo c)")
+
+    def test_command_substitutions(self) -> None:
+        self._assert_unambiguous('echo "$(uname -a) $(id)" ; x=$(hostname)')
+
+    def test_function_definition(self) -> None:
+        self._assert_unambiguous("f() { echo hi; }; f")
+
+    def test_comment_and_redirections(self) -> None:
+        self._assert_unambiguous("echo a > f 2>&1 && echo b || echo c & # done\n")
+
+    def test_case_clause(self) -> None:
+        self._assert_unambiguous(
+            "case $x in a) echo 1;; (b|c) echo 2;; esac ; (echo d) ; case y in *) ;; esac"
+        )
+
+    def test_recon_shaped_line(self) -> None:
+        stmt = "echo $(id) ; (ls /proc | head -n 1) ; x=$(cat /etc/hostname)"
+        self._assert_unambiguous(" ; ".join([stmt] * 2))
 
 
 if __name__ == "__main__":

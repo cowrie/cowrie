@@ -52,6 +52,8 @@ or available locally via: info '(coreutils) uniq invocation'
 
 
 class Command_uniq(HoneyPotCommand):
+    consumes_stdin = True
+
     last_line: bytes | None = None
 
     def start(self) -> None:

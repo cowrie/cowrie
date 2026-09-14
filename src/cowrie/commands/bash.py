@@ -21,6 +21,8 @@ commands: dict[str, Callable] = {}
 
 
 class Command_sh(HoneyPotCommand):
+    consumes_stdin = True
+
     def start(self) -> None:
         if self.args and self.args[0].strip() == "-c":
             line = " ".join(self.args[1:])
