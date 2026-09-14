@@ -249,6 +249,18 @@ class BashParseStatementTests(unittest.TestCase):
         self.assertEqual(self._eval(statements[0]), ["echo", "<echo $(echo deep)>"])
         self.assertEqual(self.ctx.substitutions, ["echo $(echo deep)"])
 
+    def test_lone_dollar_in_double_quotes(self) -> None:
+        # bash keeps a "$" that starts no expansion: echo "cost: 5$" prints it.
+        for line, expected in (
+            ('echo "$"', ["echo", "$"]),
+            ('echo "a $ b"', ["echo", "a $ b"]),
+            ('echo "cost: 5$"', ["echo", "cost: 5$"]),
+        ):
+            with self.subTest(line=line):
+                statements = self.parser.parse(line)
+                self.assertIsInstance(statements[0], Command)
+                self.assertEqual(self._eval(statements[0]), expected)
+
     def test_subshell_alone(self) -> None:
         statements = self.parser.parse("(echo one; echo two)")
         self.assertEqual(len(statements), 1)

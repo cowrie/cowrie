@@ -154,7 +154,7 @@ _bq_atom: dollar_var | dollar_brace | BQ_LITERAL
 BQ_LITERAL: /[^`]+/
 
 dq: "\"" _dq_part* "\""
-_dq_part: cmdsub | backtick | dollar_brace | dollar_var | DQ_ESC | DQ_TEXT
+_dq_part: cmdsub | backtick | dollar_brace | dollar_var | DQ_ESC | DQ_TEXT | BARE_DOLLAR
 DQ_TEXT: /[^"$`\\]+/
 DQ_ESC: /\\[\\"$`]/ | /\\/
 
@@ -979,7 +979,7 @@ class BashParser:
         parts: list[str] = []
         for part in dq.children:
             if isinstance(part, Token):
-                if part.type == "DQ_TEXT":
+                if part.type in ("DQ_TEXT", "BARE_DOLLAR"):
                     parts.append(part.value)
                 elif part.type == "DQ_ESC":
                     parts.append(self._unescape_dq(part.value))
