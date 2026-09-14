@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import unittest
+from typing import TYPE_CHECKING
 
 from lark import Lark
 from twisted.internet.defer import Deferred, ensureDeferred, succeed
@@ -25,6 +26,9 @@ from cowrie.shell.bashparse import (
     SyntaxError_,
     WhileClause,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class FakeContext:
@@ -433,6 +437,66 @@ class BashParseCompoundTests(unittest.TestCase):
     def test_unterminated_for_is_error(self) -> None:
         node = self._one("for i in 1 2 3; do echo $i")
         self.assertIsInstance(node, SyntaxError_)
+
+
+class BashParseBashDeviationTests(unittest.TestCase):
+    """Places where the parser disagrees with bash; each test asserts what
+    bash does."""
+
+    def setUp(self) -> None:
+        self.parser = BashParser(FakeContext())
+
+    def _words(self, statements: Iterable[object]) -> list[str]:
+        """Every word and operator the statements would run, in order."""
+        words: list[str] = []
+        for statement in statements:
+            if isinstance(statement, Subshell):
+                words.extend(self._words(statement.statements))
+            elif isinstance(statement, Command):
+                for item in statement.items:
+                    if isinstance(item, str):
+                        words.append(item)
+                    else:
+                        words.extend(str(t) for t in item.scan_values(lambda _: True))
+        return words
+
+    def test_words_after_subshell_are_syntax_error(self) -> None:
+        # bash: "syntax error near unexpected token `echo'"; the words after
+        # the ")" are currently dropped without a word.
+        statements = self.parser.parse("(echo a) echo b")
+        self.assertIsInstance(statements[0], SyntaxError_)
+        self.assertEqual(statements[0].token, "echo")  # type: ignore[union-attr]
+
+    def test_pipe_after_subshell_is_kept(self) -> None:
+        # bash pipes the subshell's output into cat; the "| cat" is currently
+        # dropped without a word.
+        statements = self.parser.parse("(echo a) | cat")
+        self.assertNotIsInstance(statements[0], SyntaxError_)
+        self.assertEqual(self._words(statements)[-2:], ["|", "cat"])
+
+    def test_subshell_in_pipeline(self) -> None:
+        # bash: a subshell may be any element of a pipeline.
+        statements = self.parser.parse("echo a | (cat)")
+        self.assertNotIsInstance(statements[0], SyntaxError_)
+        self.assertEqual(self._words(statements), ["echo", "a", "|", "cat"])
+
+    def test_stray_close_paren_is_syntax_error(self) -> None:
+        # bash: "syntax error near unexpected token `)'"; the ")" is currently
+        # ignored and the command runs.
+        for line in ("echo )", "echo x86*)", ")"):
+            with self.subTest(line=line):
+                statements = self.parser.parse(line)
+                self.assertEqual(len(statements), 1)
+                self.assertIsInstance(statements[0], SyntaxError_)
+                self.assertEqual(statements[0].token, ")")  # type: ignore[union-attr]
+
+    def test_case_pattern_with_leading_paren(self) -> None:
+        # bash allows the optional "(" before a case pattern: "(a) cmd;;".
+        statements = self.parser.parse("case a in (a) echo one;; (b|c) echo two;; esac")
+        self.assertEqual(len(statements), 1)
+        node = statements[0]
+        assert isinstance(node, CaseClause)
+        self.assertEqual([pats for pats, _ in node.items], [["a"], ["b", "c"]])
 
 
 class BashParseAmbiguityTests(unittest.TestCase):
