@@ -51,9 +51,9 @@ class PipeProtocol:
         self.cmd = cmd
         self.cmdargs = cmdargs
         self.input_data: bytes | None = input_data
-        # Working directory and user identity of the shell that built this
-        # pipeline, at the moment it was built: redirection targets resolve
-        # against the cwd, and the files they create are owned by the user.
+        # Working directory and user identity of the shell that started this
+        # command: redirection targets resolve against the cwd, and the files
+        # they create are owned by the user.
         self.cwd = cwd
         self.user = user
         # True when ``input_data`` came from a pipe (an upstream pipeline
@@ -76,7 +76,6 @@ class PipeProtocol:
         self.redirect_real_files: list[tuple[str, str]] = []
         self._setup_redirections()
         self.has_redirection_error = self.redirection_error
-        self.has_redirections = bool(self.redirections)
 
     def _out_of_range_fd(self, op: dict[str, Any]) -> int | None:
         """Return the first file descriptor in ``op`` that exceeds the open-file
