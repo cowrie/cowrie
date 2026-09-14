@@ -103,8 +103,9 @@ start: _WS? _line? _WS?
 _line: _run (_WS? _op _WS? _run)*
 _run: (_content (_WS _content)*)?
 _content: subshell | word | _funcdef | _COMMENT
-// "name()" with no space: the parens are one token rather than an empty subshell
-_funcdef: word FUNC_PARENS
+// "name()" with no space: the parens are one token rather than an empty
+// subshell, and the body may follow without whitespace ("f(){ ...; }").
+_funcdef: word FUNC_PARENS _content?
 FUNC_PARENS: /\([ \t]*\)/
 _op: SEP | PIPE | AMP | IO_REDIR | REDIR | NEWLINE | RPAR | DSEMI
 

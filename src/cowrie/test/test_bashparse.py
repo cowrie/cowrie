@@ -382,7 +382,12 @@ class BashParseCompoundTests(unittest.TestCase):
         self.assertEqual(node.name, "g")
 
     def test_function_paren_spacing_forms(self) -> None:
-        for line in ("f () { echo hi; }", "f( ) { echo hi; }", "f ( ) { echo hi; }"):
+        for line in (
+            "f () { echo hi; }",
+            "f( ) { echo hi; }",
+            "f ( ) { echo hi; }",
+            "f(){ echo hi; }",
+        ):
             with self.subTest(line=line):
                 node = self._one(line)
                 assert isinstance(node, FunctionDef)
@@ -398,6 +403,11 @@ class BashParseCompoundTests(unittest.TestCase):
         statements = self.parser.parse("(echo a) && (echo b) || (echo c)")
         self.assertEqual([type(s) for s in statements], [Subshell] * 3)
         self.assertEqual([s.op for s in statements], [None, "&&", "||"])  # type: ignore[union-attr]
+
+    def test_adjacent_subshells_are_syntax_error(self) -> None:
+        # bash: "syntax error near unexpected token `('"
+        node = self._one("(echo a)(echo b)")
+        self.assertIsInstance(node, SyntaxError_)
 
     def test_empty_subshell_alone_is_syntax_error(self) -> None:
         # bash: "syntax error near unexpected token `)'"
