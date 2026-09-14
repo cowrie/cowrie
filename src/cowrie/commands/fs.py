@@ -323,6 +323,7 @@ class Command_cd(HoneyPotCommand):
     """
     cd command
     """
+    uses_stdin = False
 
     def call(self) -> None:
         if not self.args or self.args[0] == "~":
@@ -667,6 +668,7 @@ class Command_pwd(HoneyPotCommand):
     """
     pwd command
     """
+    uses_stdin = False
 
     def call(self) -> None:
         self.write(self.cwd + "\n")

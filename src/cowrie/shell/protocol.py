@@ -320,6 +320,12 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         # command reads buffered output, so it gets EOF here.
         if self.cmdstack and self.cmdstack[-1] is obj:
             parent = self.cmdstack[-2] if len(self.cmdstack) >= 2 else None
+            # A child shell that inherits its parent's stdin (a pipeline's
+            # first stage, a "(...)" group) is looked through to the shell
+            # that owns the stdin.
+            while parent is not None and getattr(parent, "inherits_stdin", False):
+                index = self.cmdstack.index(parent)
+                parent = self.cmdstack[index - 1] if index > 0 else None
             live_stdin = (
                 not getattr(pp, "stdin_from_pipe", False)
                 and parent is not None

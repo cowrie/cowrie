@@ -309,10 +309,10 @@ class ShellContext(Protocol):
 
 @dataclass
 class Command:
-    """A simple command / pipeline, structure only.
+    """A simple command, structure only.
 
     ``items`` keeps the ordered word trees (still unevaluated) interleaved with
-    the control operator strings (``|``, ``>``, ``2>`` ...). Words are expanded
+    the redirection operator strings (``>``, ``2>`` ...). Words are expanded
     against the live shell by :meth:`BashParser.evaluate` only when the command
     is about to run, so a same-line ``x=hi; echo $x`` sees the assignment.
     ``op`` is the operator that joins this statement to the previous one
@@ -322,6 +322,18 @@ class Command:
 
     items: list[str | Tree] = field(default_factory=list)
     line: str = ""
+    op: str | None = None
+
+
+@dataclass
+class Pipeline:
+    """``cmd | cmd ...``: two or more stages, each any kind of command (a simple
+    command, a ``(...)`` or ``{ ...; }`` group, a loop ...), as in a real
+    shell. ``op`` joins the pipeline to the previous statement; the stages
+    themselves carry no join operator.
+    """
+
+    stages: list[Statement] = field(default_factory=list)
     op: str | None = None
 
 
@@ -421,6 +433,7 @@ class SyntaxError_:
 
 Statement = (
     Command
+    | Pipeline
     | Subshell
     | BraceGroup
     | ForClause
@@ -455,8 +468,9 @@ _RESERVED = frozenset(
     }
 )
 
-# Tokens that end a simple command / pipeline.
+# Tokens that end a statement, and those that end one pipeline stage.
 _STATEMENT_END = frozenset({"SEP", "NEWLINE"})
+_STAGE_END = _STATEMENT_END | {"PIPE"}
 
 _NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
@@ -608,10 +622,39 @@ class BashParser:
         return statements
 
     def _parse_statement(self, line: str, cursor: _Cursor, op: str | None) -> Statement:
+        """One statement: a command, or a pipeline of commands joined by ``|``.
+
+        A newline may follow a ``|`` (bash keeps reading the pipeline on the
+        next line); a ``|`` with no command on either side is a syntax error.
+        """
+        if self._token_type(cursor.peek()) == "PIPE":
+            return SyntaxError_(token="|")
+        stages = [self._parse_command(line, cursor, op)]
+        while self._token_type(cursor.peek()) == "PIPE":
+            if isinstance(stages[-1], SyntaxError_):
+                break
+            cursor.next()  # "|"
+            while self._token_type(cursor.peek()) == "NEWLINE":
+                cursor.next()
+            node = cursor.peek()
+            if node is None:
+                return SyntaxError_(token="")
+            if self._token_type(node) == "PIPE":
+                return SyntaxError_(token="|")
+            stages.append(self._parse_command(line, cursor, None))
+        if len(stages) == 1:
+            return stages[0]
+        if isinstance(stages[-1], SyntaxError_):
+            return stages[-1]
+        first = stages[0]
+        assert not isinstance(first, SyntaxError_)
+        first.op = None  # the join operator belongs to the pipeline
+        return Pipeline(stages=stages, op=op)
+
+    def _parse_command(self, line: str, cursor: _Cursor, op: str | None) -> Statement:
+        """One command: a simple command or a compound command."""
         node = cursor.peek()
 
-        # A subshell at command position runs in sequence; anything piped after
-        # it is dropped (see the pipeline TODO below).
         if isinstance(node, Tree) and node.data == "subshell":
             cursor.next()
             after = cursor.peek()
@@ -621,7 +664,8 @@ class BashParser:
                 if after.data == "subshell":
                     return SyntaxError_(token=self._error_token(line, after))
                 return SyntaxError_(token=self._word_source(line, after))
-            self._skip_to_statement_end(cursor)
+            # A redirection after the group is not emulated: it is dropped.
+            self._skip_to_stage_end(cursor)
             return Subshell(statements=self._subshell_statements(line, node), op=op)
 
         if isinstance(node, Tree) and node.data == "case_clause":
@@ -650,11 +694,11 @@ class BashParser:
         return self._parse_simple(line, cursor, op)
 
     def _parse_simple(self, line: str, cursor: _Cursor, op: str | None) -> Statement:
-        """Gather one simple command / pipeline up to the next statement end."""
+        """Gather one simple command up to the next ``|`` or statement end."""
         units: list[Tree | Token] = []
         while True:
             node = cursor.peek()
-            if node is None or self._token_type(node) in _STATEMENT_END:
+            if node is None or self._token_type(node) in _STAGE_END:
                 break
             # A "(...)" that survived as a unit here is a subshell in the middle
             # of a command -- a bash syntax error reported on the "(" token.
@@ -667,6 +711,13 @@ class BashParser:
             if self._token_type(node) == "FUNC_PARENS":
                 return SyntaxError_(token="(")
             units.append(cursor.next())
+        if (
+            self._token_type(node) == "PIPE"
+            and units
+            and self._token_type(units[-1]) in ("REDIR", "IO_REDIR")
+        ):
+            # A redirection with the "|" where its target should be.
+            return SyntaxError_(token="|")
         return self._make_command(line, units, op)
 
     def _make_command(
@@ -853,11 +904,11 @@ class BashParser:
         while self._is_separator(cursor.peek()):
             cursor.next()
 
-    def _skip_to_statement_end(self, cursor: _Cursor) -> None:
-        """Drop tokens up to (not including) the next statement separator."""
+    def _skip_to_stage_end(self, cursor: _Cursor) -> None:
+        """Drop tokens up to (not including) the next ``|`` or separator."""
         while True:
             node = cursor.peek()
-            if node is None or self._token_type(node) in _STATEMENT_END:
+            if node is None or self._token_type(node) in _STAGE_END:
                 return
             cursor.next()
 

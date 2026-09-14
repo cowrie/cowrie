@@ -51,6 +51,11 @@ class HoneyPotCommand:
     # owes the next pipeline stage the EOF on its stdout when it exits.
     advance_pipe_on_exit: bool = False
 
+    # Whether the command reads its stdin. A pipe feeding a shell goes to the
+    # first command that reads, so a shell builtin that never does (cd,
+    # export, echo ...) leaves the data for the next command, as in bash.
+    uses_stdin: bool = True
+
     def __init__(self, protocol, *args):
         self.protocol = protocol
         self.args = list(args)

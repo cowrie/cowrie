@@ -8,7 +8,6 @@
 from __future__ import annotations
 
 import unittest
-from typing import TYPE_CHECKING
 
 from lark import Lark
 from twisted.internet.defer import Deferred, ensureDeferred, succeed
@@ -22,13 +21,11 @@ from cowrie.shell.bashparse import (
     ForClause,
     FunctionDef,
     IfClause,
+    Pipeline,
     Subshell,
     SyntaxError_,
     WhileClause,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable
 
 
 class FakeContext:
@@ -94,9 +91,12 @@ class BashParseTokenTests(unittest.TestCase):
         # bash does not treat \n specially inside double quotes
         self.assertEqual(self._tokens('echo "\\n"'), ["echo", "\\n"])
 
-    def test_pipe_is_its_own_token(self) -> None:
+    def test_pipe_splits_stages(self) -> None:
+        statement = self.parser.parse("echo a | grep b")[0]
+        assert isinstance(statement, Pipeline)
         self.assertEqual(
-            self._tokens("echo a | grep b"), ["echo", "a", "|", "grep", "b"]
+            [evaluate_now(self.parser, s) for s in statement.stages],  # type: ignore[arg-type]
+            [["echo", "a"], ["grep", "b"]],
         )
 
 
@@ -248,6 +248,49 @@ class BashParseStatementTests(unittest.TestCase):
         statements = self.parser.parse("echo $(echo $(echo deep))")
         self.assertEqual(self._eval(statements[0]), ["echo", "<echo $(echo deep)>"])
         self.assertEqual(self.ctx.substitutions, ["echo $(echo deep)"])
+
+    def test_pipeline_stages(self) -> None:
+        statements = self.parser.parse("echo a | tr a b | cat")
+        self.assertEqual(len(statements), 1)
+        node = statements[0]
+        assert isinstance(node, Pipeline)
+        self.assertEqual([type(s) for s in node.stages], [Command] * 3)
+        self.assertEqual(
+            [self._eval(s) for s in node.stages], [["echo", "a"], ["tr", "a", "b"], ["cat"]]
+        )
+        self.assertEqual([s.op for s in node.stages], [None] * 3)  # type: ignore[union-attr]
+
+    def test_pipeline_join_operator(self) -> None:
+        statements = self.parser.parse("true && echo a | cat")
+        self.assertIsInstance(statements[0], Command)
+        assert isinstance(statements[1], Pipeline)
+        self.assertEqual(statements[1].op, "&&")
+
+    def test_pipeline_newline_after_pipe(self) -> None:
+        # bash keeps reading the pipeline on the next line after a "|".
+        node = self.parser.parse("echo a |\n  cat")[0]
+        assert isinstance(node, Pipeline)
+        self.assertEqual(len(node.stages), 2)
+
+    def test_pipeline_with_group_stages(self) -> None:
+        for line, kinds in (
+            ("(echo a) | cat", [Subshell, Command]),
+            ("echo a | (cat)", [Command, Subshell]),
+            ("{ echo a; } | cat", [BraceGroup, Command]),
+            ("while true; do break; done | cat", [WhileClause, Command]),
+            ("(echo a) | (cat) | cat", [Subshell, Subshell, Command]),
+        ):
+            with self.subTest(line=line):
+                node = self.parser.parse(line)[0]
+                assert isinstance(node, Pipeline)
+                self.assertEqual([type(s) for s in node.stages], kinds)
+
+    def test_pipe_without_stage_is_syntax_error(self) -> None:
+        for line, token in (("| cat", "|"), ("echo a | | cat", "|"), ("echo a |", "")):
+            with self.subTest(line=line):
+                node = self.parser.parse(line)[0]
+                assert isinstance(node, SyntaxError_)
+                self.assertEqual(node.token, token)
 
     def test_lone_dollar_in_double_quotes(self) -> None:
         # bash keeps a "$" that starts no expansion: echo "cost: 5$" prints it.
@@ -512,39 +555,12 @@ class BashParseBashDeviationTests(unittest.TestCase):
     def setUp(self) -> None:
         self.parser = BashParser(FakeContext())
 
-    def _words(self, statements: Iterable[object]) -> list[str]:
-        """Every word and operator the statements would run, in order."""
-        words: list[str] = []
-        for statement in statements:
-            if isinstance(statement, Subshell):
-                words.extend(self._words(statement.statements))
-            elif isinstance(statement, Command):
-                for item in statement.items:
-                    if isinstance(item, str):
-                        words.append(item)
-                    else:
-                        words.extend(str(t) for t in item.scan_values(lambda _: True))
-        return words
-
     def test_words_after_subshell_are_syntax_error(self) -> None:
         # bash: "syntax error near unexpected token `echo'"; the words after
         # the ")" are currently dropped without a word.
         statements = self.parser.parse("(echo a) echo b")
         self.assertIsInstance(statements[0], SyntaxError_)
         self.assertEqual(statements[0].token, "echo")  # type: ignore[union-attr]
-
-    def test_pipe_after_subshell_is_kept(self) -> None:
-        # bash pipes the subshell's output into cat; the "| cat" is currently
-        # dropped without a word.
-        statements = self.parser.parse("(echo a) | cat")
-        self.assertNotIsInstance(statements[0], SyntaxError_)
-        self.assertEqual(self._words(statements)[-2:], ["|", "cat"])
-
-    def test_subshell_in_pipeline(self) -> None:
-        # bash: a subshell may be any element of a pipeline.
-        statements = self.parser.parse("echo a | (cat)")
-        self.assertNotIsInstance(statements[0], SyntaxError_)
-        self.assertEqual(self._words(statements), ["echo", "a", "|", "cat"])
 
     def test_stray_close_paren_is_syntax_error(self) -> None:
         # bash: "syntax error near unexpected token `)'"; the ")" is currently

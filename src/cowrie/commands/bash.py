@@ -135,6 +135,7 @@ commands["sh"] = Command_sh
 
 
 class Command_exit(HoneyPotCommand):
+    uses_stdin = False
     def call(self) -> None:
         # `exit [N]` exits with N, or the last command's status ($?) by default.
         shell = self.protocol.cmdstack[-2]

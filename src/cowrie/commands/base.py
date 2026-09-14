@@ -125,6 +125,7 @@ commands["who"] = Command_who
 
 
 class Command_echo(HoneyPotCommand):
+    uses_stdin = False
     _log = Logger()
 
     def call(self) -> None:
@@ -175,6 +176,7 @@ commands["echo"] = Command_echo
 
 
 class Command_printf(HoneyPotCommand):
+    uses_stdin = False
     _log = Logger()
 
     def call(self) -> None:
@@ -1089,6 +1091,7 @@ commands["chattr"] = Command_chattr
 
 
 class Command_set(HoneyPotCommand):
+    uses_stdin = False
     # Basic functionaltly (show only), need enhancements
     # This will show ALL environ vars, not only the global ones
     # With enhancements it should work like env when -o posix is used
@@ -1105,6 +1108,7 @@ class Command_export(HoneyPotCommand):
     Mark shell variables for export so they appear in the environment of
     child processes. With no operands, list the exported variables.
     """
+    uses_stdin = False
 
     def call(self) -> None:
         args = [a for a in self.args if a != "-p"]
@@ -1128,6 +1132,7 @@ class Command_unset(HoneyPotCommand):
     """
     Remove variables from both the shell and the exported environment.
     """
+    uses_stdin = False
 
     def call(self) -> None:
         for arg in self.args:
@@ -1141,6 +1146,7 @@ commands["unset"] = Command_unset
 
 
 class Command_nop(HoneyPotCommand):
+    uses_stdin = False
     def call(self) -> None:
         pass
 
@@ -1164,6 +1170,7 @@ commands["done"] = Command_nop
 
 class Command_true(HoneyPotCommand):
     """The ``true`` utility: do nothing, successfully (exit 0)."""
+    uses_stdin = False
 
     def start(self) -> None:
         self.exit(0)
@@ -1175,6 +1182,7 @@ commands["/bin/true"] = Command_true
 
 class Command_false(HoneyPotCommand):
     """The ``false`` utility: do nothing, unsuccessfully (exit 1)."""
+    uses_stdin = False
 
     def start(self) -> None:
         self.exit(1)
@@ -1246,6 +1254,7 @@ class Command_test(HoneyPotCommand):
 
     Invoked as ``[`` the final argument must be ``]``.
     """
+    uses_stdin = False
 
     # Set by the ``[`` alias so the closing bracket is required.
     require_bracket: bool = False
