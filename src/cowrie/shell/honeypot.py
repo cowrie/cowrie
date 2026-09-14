@@ -714,47 +714,15 @@ class HoneyPotShell:
             return
 
         # A redirection on a compound command ("(...) > f", "done 2>&1")
-        # applies to the whole group. Evaluate its target words, then run the
+        # applies to the whole group: evaluate its target words, then run the
         # group with the redirection applied to the shell's fds.
         if isinstance(command, REDIRECTABLE) and command.redirections is not None:
             self._run_redirected(command, command.redirections)
             return
 
-        if isinstance(command, Subshell):
-            self._run_subshell(command)
-            return
-
-        if isinstance(command, Pipeline):
-            self._run_pipeline(command)
-            return
-
-        if isinstance(command, BraceGroup):
-            # A { ...; } group runs its statements in the current shell.
-            self.cmdpending[0:0] = command.statements
-            self._advance()
-            return
-
-        if isinstance(command, FunctionDef):
-            # Defining a function records its body and succeeds.
-            self.functions[command.name] = command.body
-            self.last_exit_code = 0
-            self._advance()
-            return
-
-        if isinstance(command, ForClause):
-            self._run_for(command)
-            return
-
-        if isinstance(command, IfClause):
-            self._run_if(command)
-            return
-
-        if isinstance(command, WhileClause):
-            self._run_while(command)
-            return
-
-        if isinstance(command, CaseClause):
-            self._run_case(command)
+        if not isinstance(command, Command):
+            # A compound command (subshell, pipeline, group, loop, ...).
+            self._run_compound(command)
             return
 
         # Expand the statement's words against the *current* environment, just
@@ -767,6 +735,31 @@ class HoneyPotShell:
         d = Deferred.fromCoroutine(self.bashparser.evaluate(command))
         d.addCallback(self._run_expanded)
         d.addErrback(self._statement_failed)
+
+    def _run_compound(self, command: Statement) -> None:
+        """Dispatch a compound command (or a function definition), past the
+        short-circuit and redirection checks in :meth:`runCommand`."""
+        if isinstance(command, Subshell):
+            self._run_subshell(command)
+        elif isinstance(command, Pipeline):
+            self._run_pipeline(command)
+        elif isinstance(command, BraceGroup):
+            # A { ...; } group runs its statements in the current shell.
+            self.cmdpending[0:0] = command.statements
+            self._advance()
+        elif isinstance(command, ForClause):
+            self._run_for(command)
+        elif isinstance(command, IfClause):
+            self._run_if(command)
+        elif isinstance(command, WhileClause):
+            self._run_while(command)
+        elif isinstance(command, CaseClause):
+            self._run_case(command)
+        elif isinstance(command, FunctionDef):
+            # Defining a function records its body and succeeds.
+            self.functions[command.name] = command.body
+            self.last_exit_code = 0
+            self._advance()
 
     def _run_subshell(self, command: Subshell) -> None:
         """Run a "(...)" group in a child shell, so a cd, an assignment or an
@@ -790,44 +783,30 @@ class HoneyPotShell:
         self._advance()
 
     def _run_redirected(self, command: Statement, redirections: Command) -> None:
-        """Evaluate a compound command's trailing redirection target words,
-        then run the group with the redirection applied to its output."""
+        """Run a compound command with a trailing redirection ("(...) > f").
+
+        Its target words are evaluated, then the redirection is applied to the
+        shell's fd table for the group's duration and restored afterwards. A
+        subshell copies the table into its child; an in-place group ({ }, a
+        loop, if, case) reads the swapped table directly and the restore
+        continuation, queued before the body, runs once the body drains.
+        """
+
+        def apply(tokens: list[str]) -> None:
+            _, ops = self.parser.parse_redirections(tokens)
+            fds, error = self._open_redirection_fds(ops)
+            if error:
+                # bash reports the failure (already written) and skips the group.
+                self.last_exit_code = 1
+                self._advance()
+                return
+            saved, self.fds = self.fds, fds
+            self.cmdpending.insert(0, _Continuation(lambda: self._restore_fds(saved)))
+            self._run_compound(command)
+
         d = Deferred.fromCoroutine(self.bashparser.evaluate(redirections))
-        d.addCallback(lambda tokens: self._run_with_fds(command, tokens))
+        d.addCallback(apply)
         d.addErrback(self._statement_failed)
-
-    def _run_with_fds(self, command: Statement, tokens: list[str]) -> None:
-        _, ops = self.parser.parse_redirections(tokens)
-        fds, error = self._open_redirection_fds(ops)
-        if error:
-            # bash reports the failure (already written) and skips the command.
-            self.last_exit_code = 1
-            self._advance()
-            return
-
-        if isinstance(command, Subshell):
-            # A subshell forks, so the redirected table goes to the child.
-            stdin, self.stdin = self.stdin, None
-            self.run_child(
-                command.statements, fds=fds, stdin=stdin, inherits_stdin=True
-            ).addCallback(self._child_finished)
-            return
-
-        # A brace group, loop, if or case runs in this shell, so apply the
-        # table to it for the group's duration and restore it afterwards.
-        saved, self.fds = self.fds, fds
-        self.cmdpending[0:0] = [_Continuation(lambda: self._restore_fds(saved))]
-        if isinstance(command, BraceGroup):
-            self.cmdpending[0:0] = command.statements
-            self._advance()
-        elif isinstance(command, ForClause):
-            self._run_for(command)
-        elif isinstance(command, IfClause):
-            self._run_if(command)
-        elif isinstance(command, WhileClause):
-            self._run_while(command)
-        elif isinstance(command, CaseClause):
-            self._run_case(command)
 
     def _restore_fds(self, saved: dict[int, tuple[str, Any]]) -> None:
         """Restore the shell's fd table after a redirected group finishes."""
