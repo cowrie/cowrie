@@ -25,8 +25,11 @@ There is a single tokeniser for the whole language: the Lark grammar lexes a
 line (or a whole multi-line script) into word trees and control tokens, and the
 recursive descent in :meth:`BashParser._parse_list` recognises reserved words
 only at a command position to build the compound structure, exactly as a real
-shell parses. Newlines separate statements like ``;`` so a script is parsed
-directly rather than line-by-line.
+shell parses. The one clause the grammar recognises itself is ``case``: its
+pattern close is the only ``)`` bash allows without a matching ``(``, and
+keeping every paren paired is what makes a line parse in linear time.
+Newlines separate statements like ``;`` so a script is parsed directly rather
+than line-by-line.
 
 The grammar models the subset of bash that Cowrie emulates: lists separated by
 ``;`` / newline / ``&&`` / ``||``, pipelines, simple redirections, single/double
@@ -74,7 +77,7 @@ if TYPE_CHECKING:
     from collections.abc import Awaitable, Iterator
 
 from lark import Lark, Token, Tree
-from lark.exceptions import LarkError
+from lark.exceptions import LarkError, UnexpectedCharacters
 from twisted.logger import Logger
 
 from cowrie.core.config import CowrieConfig
@@ -99,26 +102,47 @@ _GRAMMAR = r"""
 // stay self-delimiting (echo a|b is three tokens). Requiring the space is also
 // what keeps "$(...)" one command-substitution word instead of letting it be
 // re-read as a bare "$" next to a "(...)" subshell.
-start: _WS? _line? _WS?
-_line: _run (_WS? _op _WS? _run)*
-_run: (_content (_WS _content)*)?
-_content: subshell | word | _funcdef | _COMMENT
+// A line is contents (words, groups, comments) and operators in any order,
+// with whitespace required between two contents and optional around an
+// operator. Two left-recursive sequences -- _after_content and _after_op,
+// named for what they end in -- give every whitespace run exactly one place
+// to attach, so a line has a single parse. (Left recursion: Earley handles
+// it in linear time where a right-recursive list is quadratic.)
+start: _WS? _seq?
+_seq: (_after_content | _after_op) _WS?
+_after_content: _content | _after_content _WS _content | _after_op _WS? _content
+_after_op: _op | _after_content _WS? _op | _after_op _WS? _op
+_content: subshell | word | _funcdef | case_clause | _COMMENT
 // "name()" with no space: the parens are one token rather than an empty
 // subshell, and the body may follow without whitespace ("f(){ ...; }").
 _funcdef: word FUNC_PARENS _content?
 FUNC_PARENS: /\([ \t]*\)/
-_op: SEP | PIPE | AMP | IO_REDIR | REDIR | NEWLINE | RPAR | DSEMI
+_op: SEP | PIPE | AMP | IO_REDIR | REDIR | NEWLINE
 
-// "(" only ever opens a group: a "(...)" is a subshell, and a "(" that never
-// closes is a syntax error. A lone ")" with no matching "(" -- the close of a
-// case pattern like "x86*)" -- is the RPAR token, which the statement parser
-// consumes. Keeping "(" out of _op matters for parse cost: Earley builds every
-// reading of the input, and if "(" could also stand alone every "(...)" and
-// "$(...)" could close at any later ")" on the line (issue #40597).
+// "(" only ever opens a group and ")" only ever closes one: a "(...)" is a
+// subshell, a "(" that never closes is a syntax error, and the one ")" bash
+// allows without a matching "(" -- the close of a case pattern like "x86*)"
+// -- is recognised by the case_clause rule below. Keeping the parens out of
+// _op matters for parse cost: Earley builds every reading of the input, and
+// if either could stand alone, every "(...)" and "$(...)" could close at any
+// later ")" on the line (issue #40597).
 subshell.10: LPAR start RPAR
 
-word: _atom+
+// "case WORD in [(]PAT[|PAT]...) BODY ;; ... esac". The keywords are only
+// keywords here: elsewhere "case", "in" and "esac" lex as ordinary words.
+case_clause: CASE _WS word _WS IN _blank* case_item* ESAC
+case_item: (LPAR _WS?)? case_patterns _WS? RPAR start (DSEMI _blank*)?
+case_patterns: word (_WS? PIPE _WS? word)*
+_blank: _WS | NEWLINE
+CASE: /case(?=[ \t])/
+IN: /in(?=[ \t\r\n])/
+ESAC: /esac(?![^ \t\r\n;&|<>()])/
+
+// A "#" starts a comment only at a word start (see _COMMENT), so a LITERAL
+// never begins with one; inside a word ("a#b", "''#x") it is ordinary text.
+word: _atom (_atom | HASH_LITERAL)*
 _atom: sq | dq | cmdsub | backtick | dollar_brace | dollar_var | ESC | BARE_DOLLAR | LITERAL
+HASH_LITERAL: /#[^ \t\r\n|&;<>()$`'"\\]*/
 
 // An explicit, high-priority "$(" terminal so command substitution wins over a
 // bare "$" followed by a "(...)" subshell.
@@ -171,13 +195,15 @@ RPAR: ")"
 // whitespace (see _WS below).
 NEWLINE: /\r?\n/
 
-BARE_DOLLAR: "$"
-LITERAL: /[^ \t\r\n|&;<>()$`'"\\]+/
+// A "$" that does not start an expansion: never where DOLLAR_NAME,
+// DOLLAR_SPECIAL, "${" or "$(" would match, so a "$x" has one reading.
+BARE_DOLLAR: /\$(?![_a-zA-Z0-9{(?@$#!*])/
+// Not a "#" first (that is a comment), and not digits directly before a
+// redirection operator (that is an IO_REDIR file descriptor, "2>&1").
+LITERAL: /(?!\d+[<>])[^ \t\r\n|&;<>()$`'"\\#][^ \t\r\n|&;<>()$`'"\\]*/
 
-// A "#" starts a comment only at a word boundary (higher priority than the
-// LITERAL that would otherwise begin a word with "#"); a "#" inside a word
-// such as "a#b" stays part of the LITERAL.
-_COMMENT.2: /#[^\r\n]*/
+// A "#" at a word start begins a comment.
+_COMMENT: /#[^\r\n]*/
 
 // Inline whitespace and line continuations only; a bare newline is NEWLINE.
 _WS: /([ \t]|\\\r?\n)+/
@@ -434,7 +460,7 @@ _RESERVED = frozenset(
 
 # Tokens that end a simple command / pipeline (a separator or the close of an
 # enclosing construct).
-_STATEMENT_END = frozenset({"SEP", "NEWLINE", "DSEMI"})
+_STATEMENT_END = frozenset({"SEP", "NEWLINE"})
 
 _NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
@@ -477,6 +503,8 @@ class BashParser:
         try:
             with _parse_alarm(parse_timeout_seconds()):
                 tree = _parser.parse(line)
+        except UnexpectedCharacters as error:
+            return [SyntaxError_(token=self._unexpected_char(line, error))]
         except LarkError:
             return [SyntaxError_(token="")]
         except ParseTimeoutError:
@@ -491,6 +519,17 @@ class BashParser:
             if timed_out or len(line) >= gc_collect_threshold():
                 gc.collect()
         return self._split_statements(line, tree)
+
+    @staticmethod
+    def _unexpected_char(line: str, error: UnexpectedCharacters) -> str:
+        """The token bash names for input the grammar rejects outright: a
+        ")" or ";;" with nothing to close. Anything else gets the generic
+        "unexpected end of file"."""
+        rest = line[error.pos_in_stream :]
+        for token in (";;", ")"):
+            if rest.startswith(token):
+                return token
+        return ""
 
     # -- statement splitting ------------------------------------------------
 
@@ -535,7 +574,7 @@ class BashParser:
         self, line: str, cursor: _Cursor, stop: frozenset[str]
     ) -> list[Statement]:
         """Parse statements separated by ``;`` / newline / ``&&`` / ``||`` until a
-        reserved stop word, a ``)`` / ``;;`` token, or the end of input."""
+        reserved stop word or the end of input."""
         statements: list[Statement] = []
         pending_op: str | None = None
         seen = False
@@ -560,12 +599,6 @@ class BashParser:
                 break
             if self._keyword(node) in stop:
                 break
-            if self._token_type(node) == "DSEMI":
-                break
-            if self._token_type(node) == "RPAR":
-                # A ")" with no open "(" -- bash: syntax error near `)'.
-                statements.append(SyntaxError_(token=")"))
-                return statements
 
             statement = self._parse_statement(
                 line, cursor, pending_op if seen else None
@@ -596,10 +629,12 @@ class BashParser:
                 if after.data == "subshell":
                     return SyntaxError_(token=self._error_token(line, after))
                 return SyntaxError_(token=self._word_source(line, after))
-            if self._token_type(after) == "RPAR":
-                return SyntaxError_(token=")")
             self._skip_to_statement_end(cursor)
             return Subshell(statements=statements, op=op)
+
+        if isinstance(node, Tree) and node.data == "case_clause":
+            cursor.next()
+            return self._case_clause(line, node, op)
 
         keyword = self._keyword(node)
         if keyword == "for":
@@ -609,7 +644,10 @@ class BashParser:
         if keyword in ("while", "until"):
             return self._parse_while(line, cursor, op, until=keyword == "until")
         if keyword == "case":
-            return self._parse_case(line, cursor, op)
+            # The grammar did not recognise a complete case clause here, so
+            # something after "case" is misplaced.
+            cursor.next()
+            return SyntaxError_(token=self._unexpected(line, cursor))
         if keyword == "{":
             return self._parse_brace_group(line, cursor, op)
         if keyword == "function":
@@ -630,8 +668,8 @@ class BashParser:
             # of a command -- a bash syntax error reported on the "(" token.
             if isinstance(node, Tree) and node.data == "subshell":
                 return SyntaxError_(token=self._error_token(line, node))
-            if self._token_type(node) == "RPAR":
-                # A ")" with no open "(" -- bash: syntax error near `)'.
+            # Likewise a case clause, which bash rejects at the pattern's ")".
+            if isinstance(node, Tree) and node.data == "case_clause":
                 return SyntaxError_(token=")")
             units.append(cursor.next())
         return self._make_command(line, units, op)
@@ -733,85 +771,36 @@ class BashParser:
             return error
         return WhileClause(condition=condition, body=body, until=until, op=op)
 
-    def _parse_case(self, line: str, cursor: _Cursor, op: str | None) -> Statement:
-        cursor.next()  # "case"
-        word_trees: list[Tree] = []
-        while True:
-            node = cursor.peek()
-            if node is None or self._keyword(node) == "in" or self._is_separator(node):
-                break
-            if isinstance(node, Tree) and node.data == "word":
-                cursor.next()
-                word_trees.append(node)
-                continue
-            break
-        if self._keyword(cursor.peek()) != "in":
-            return SyntaxError_(token=self._unexpected(line, cursor))
-        cursor.next()  # "in"
-        self._skip_separators(cursor)
-
+    def _case_clause(self, line: str, tree: Tree, op: str | None) -> Statement:
+        """Build a :class:`CaseClause` from the grammar's ``case_clause`` tree."""
+        word: Tree | None = None
         items: list[tuple[list[str], list[Statement]]] = []
-        while True:
-            node = cursor.peek()
-            if node is None or self._keyword(node) == "esac":
-                break
-            patterns, error = self._parse_case_patterns(line, cursor)
-            if error is not None:
-                return error
-            body = self._parse_list(line, cursor, stop=frozenset({"esac"}))
-            if self._token_type(cursor.peek()) == "DSEMI":
-                cursor.next()
-            self._skip_separators(cursor)
-            items.append((patterns, body))
+        for child in tree.children:
+            if not isinstance(child, Tree):
+                continue  # the case / in / esac keywords
+            if child.data == "word":
+                word = child
+            elif child.data == "case_item":
+                items.append(self._case_item(line, child))
+        assert word is not None
+        return CaseClause(word=Command(items=[word], line=line), items=items, op=op)
 
-        error = self._expect(cursor, "esac")
-        if error is not None:
-            return error
-        return CaseClause(
-            word=Command(items=list(word_trees), line=line), items=items, op=op
-        )
-
-    def _parse_case_patterns(
-        self, line: str, cursor: _Cursor
-    ) -> tuple[list[str], Statement | None]:
-        """Read ``pat[|pat]*)`` and return the raw pattern strings."""
+    def _case_item(self, line: str, item: Tree) -> tuple[list[str], list[Statement]]:
+        """The raw pattern strings and parsed body of one ``pat[|pat]*) body ;;``."""
         patterns: list[str] = []
-        node = cursor.peek()
-        if isinstance(node, Tree) and node.data == "subshell":
-            # bash allows an opening "(" before the pattern list, so "(a|b)"
-            # lexes as one group holding the patterns.
-            cursor.next()
-            return self._group_patterns(line, node)
-        while True:
-            node = cursor.peek()
-            if node is None:
-                return patterns, SyntaxError_(token="newline")
-            if self._token_type(node) == "RPAR":
-                cursor.next()
-                return patterns, None
-            if self._token_type(node) == "PIPE":
-                cursor.next()
-                continue
-            if isinstance(node, Tree) and node.data == "word":
-                patterns.append(self._word_source(line, node))
-                cursor.next()
-                continue
-            return patterns, SyntaxError_(token=self._unexpected(line, cursor))
-
-    def _group_patterns(
-        self, line: str, group: Tree
-    ) -> tuple[list[str], Statement | None]:
-        """The pattern strings of a ``(pat|pat)`` case pattern list."""
-        patterns: list[str] = []
-        for child in group.children:
-            if not isinstance(child, Tree) or child.data != "start":
-                continue
-            for node in child.children:
-                if isinstance(node, Tree) and node.data == "word":
-                    patterns.append(self._word_source(line, node))
-                elif self._token_type(node) != "PIPE":
-                    return patterns, SyntaxError_(token=self._error_token(line, group))
-        return patterns, None
+        body: list[Statement] = []
+        for child in item.children:
+            if not isinstance(child, Tree):
+                continue  # "(", ")" and ";;"
+            if child.data == "case_patterns":
+                patterns = [
+                    self._word_source(line, node)
+                    for node in child.children
+                    if isinstance(node, Tree) and node.data == "word"
+                ]
+            elif child.data == "start":
+                body = self._split_statements(line, child)
+        return patterns, body
 
     def _parse_brace_group(
         self, line: str, cursor: _Cursor, op: str | None

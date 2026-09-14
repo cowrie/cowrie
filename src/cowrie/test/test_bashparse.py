@@ -300,6 +300,14 @@ class BashParseStatementTests(unittest.TestCase):
 class BashParseCommentTests(unittest.TestCase):
     """A "#" starts a comment only at a word boundary, like bash."""
 
+    def test_hash_after_quoted_atom_is_literal(self) -> None:
+        # bash: echo ''#x prints "#x": the "#" is not at a word start.
+        ctx = FakeContext()
+        parser = BashParser(ctx)
+        statements = parser.parse("echo ''#x")
+        self.assertIsInstance(statements[0], Command)
+        self.assertEqual(evaluate_now(parser, statements[0]), ["echo", "#x"])  # type: ignore[arg-type]
+
     def setUp(self) -> None:
         self.parser = BashParser(FakeContext())
 
@@ -369,6 +377,46 @@ class BashParseCompoundTests(unittest.TestCase):
         node = self._one("case $x in a) echo 1;; b|c) echo 2;; *) echo 3;; esac")
         assert isinstance(node, CaseClause)
         self.assertEqual([pats for pats, _ in node.items], [["a"], ["b", "c"], ["*"]])
+
+    def test_case_inside_subshell(self) -> None:
+        node = self._one("(case a in a) echo one;; esac)")
+        assert isinstance(node, Subshell)
+        self.assertEqual(len(node.statements), 1)
+        inner = node.statements[0]
+        assert isinstance(inner, CaseClause)
+        self.assertEqual([pats for pats, _ in inner.items], [["a"]])
+
+    def test_case_inside_command_substitution(self) -> None:
+        node = self._one("x=$(case a in a) echo one;; esac)")
+        assert isinstance(node, Command)
+        self._eval(node)
+        self.assertEqual(self.ctx.substitutions, ["case a in a) echo one;; esac"])
+
+    def test_case_multiline(self) -> None:
+        node = self._one("case $x in\n  a)\n    echo 1\n    ;;\n  *) echo 2;;\nesac")
+        assert isinstance(node, CaseClause)
+        self.assertEqual([pats for pats, _ in node.items], [["a"], ["*"]])
+        self.assertEqual(self._eval(node.items[0][1][0]), ["echo", "1"])
+
+    def test_case_body_may_use_esac_as_word(self) -> None:
+        node = self._one("case a in a) echo esac;; esac")
+        assert isinstance(node, CaseClause)
+        self.assertEqual(self._eval(node.items[0][1][0]), ["echo", "esac"])
+
+    def test_case_last_item_without_terminator(self) -> None:
+        node = self._one("case a in a) echo 1; esac")
+        assert isinstance(node, CaseClause)
+        self.assertEqual(self._eval(node.items[0][1][0]), ["echo", "1"])
+
+    def test_case_item_with_empty_body(self) -> None:
+        node = self._one("case a in a) ;; *) echo 2;; esac")
+        assert isinstance(node, CaseClause)
+        self.assertEqual(node.items[0], (["a"], []))
+
+    def test_double_semicolon_outside_case_is_error(self) -> None:
+        # bash: "syntax error near unexpected token `;;'"
+        node = self._one("echo a ;; echo b")
+        self.assertIsInstance(node, SyntaxError_)
 
     def test_brace_group(self) -> None:
         node = self._one("{ echo a; echo b; }")
@@ -532,6 +580,14 @@ class BashParseAmbiguityTests(unittest.TestCase):
 
     def test_function_definition(self) -> None:
         self._assert_unambiguous("f() { echo hi; }; f")
+
+    def test_comment_and_redirections(self) -> None:
+        self._assert_unambiguous("echo a > f 2>&1 && echo b || echo c & # done\n")
+
+    def test_case_clause(self) -> None:
+        self._assert_unambiguous(
+            "case $x in a) echo 1;; (b|c) echo 2;; esac ; (echo d) ; case y in *) ;; esac"
+        )
 
     def test_recon_shaped_line(self) -> None:
         stmt = "echo $(id) ; (ls /proc | head -n 1) ; x=$(cat /etc/hostname)"
