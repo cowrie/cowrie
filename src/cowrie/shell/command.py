@@ -47,10 +47,10 @@ class HoneyPotCommand:
     # it holds even for instances created without __init__ (tests).
     pp: Any = None
 
-    # Whether the command drains its stdin. A pipe feeding a shell is read by
-    # the first command that consumes it and is then empty for the rest, as
-    # in bash; a command that does not read stdin (cd, echo, sleep ...)
-    # leaves the data for the next one.
+    # Whether the command reads its stdin: set True by exactly the commands
+    # that use self.input_data. A pipe feeding a shell is drained by the first
+    # such command and is then empty for the rest, as in bash; a command that
+    # does not read stdin (cd, echo, sleep ...) leaves the data for the next.
     consumes_stdin: bool = False
 
     def __init__(self, protocol, *args):
