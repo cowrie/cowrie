@@ -67,8 +67,7 @@ your own local docker image with::
 The image needs ``src/cowrie/_version.py``, which ``setuptools_scm`` generates from
 the git history and which is not tracked in git. ``make`` writes it before the build.
 A plain ``docker build`` from a fresh clone does not have it, and ``.git`` is excluded
-from the build context, so pass the version in instead (this is what the CI
-workflow does)::
+from the build context, so pass the version in instead::
 
     $ pip install setuptools-scm
     $ docker build -f docker/Dockerfile \
