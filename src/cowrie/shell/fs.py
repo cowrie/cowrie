@@ -548,7 +548,7 @@ class HoneyPotFilesystem:
         parent: str = posixpath.dirname(p)
         directory: Node | None = self.getfile(p, follow_symlinks=False)
         if not directory:
-            raise OSError(errno.EEXIST, os.strerror(errno.EEXIST), p)
+            raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), p)
         if directory[A_TYPE] != T_DIR:
             raise OSError(errno.ENOTDIR, os.strerror(errno.ENOTDIR), p)
         if len(self.get_path(p)) > 0:

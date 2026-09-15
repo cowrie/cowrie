@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import copy
+import errno
 import hashlib
 import os
 import unittest
@@ -128,6 +129,16 @@ class RenameRemoveTests(unittest.TestCase):
     def test_remove_missing_raises(self) -> None:
         with self.assertRaises(OSError):
             self.fs.remove("/tmp/not_here_xyz")
+
+    def test_rmdir_removes_empty_directory(self) -> None:
+        self.fs.link_entry(_dir_entry("rmdir_me", []), "/tmp")
+        self.assertTrue(self.fs.rmdir("/tmp/rmdir_me"))
+        self.assertNotIn("rmdir_me", self.fs.listdir("/tmp"))
+
+    def test_rmdir_missing_raises_enoent(self) -> None:
+        with self.assertRaises(OSError) as cm:
+            self.fs.rmdir("/tmp/not_here_xyz")
+        self.assertEqual(cm.exception.errno, errno.ENOENT)
 
 
 class WalkerTests(unittest.TestCase):
