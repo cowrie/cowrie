@@ -19,12 +19,14 @@ __version__ = "0.3b3"
 import pickle
 from collections import deque
 from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from json.decoder import JSONDecodeError
 from pathlib import Path
 from time import sleep, time
 
 from treq import post
 from twisted.internet import defer, reactor, threads
+from twisted.logger import Logger
 from twisted.web import http
 
 from cowrie.core import output
@@ -323,6 +325,8 @@ class Reporter:
     HTTP client and methods for preparing report paramaters.
     """
 
+    _log = Logger()
+
     def __init__(self, logbook, attempts, dispatch):
         self.logbook = logbook
         self.attempts = attempts
@@ -439,8 +443,13 @@ class Reporter:
         retry_after = yield response.headers.hasHeader("Retry-After")
 
         if retry_after:
-            retry = yield response.headers.getRawHeaders("Retry-After")
-            retry = int(retry.pop())
+            raw = yield response.headers.getRawHeaders("Retry-After")
+            retry = self.parse_retry_after(raw.pop())
+
+            if retry is None:
+                # Nothing usable to back off by, the same position a 429
+                # without the header at all leaves us in.
+                return
 
             if retry > 86340:
                 yield threads.deferToThread(self.sleeper_thread)
@@ -474,6 +483,31 @@ class Reporter:
                 retry_after=retry,
                 wake_at=self.epoch_to_string_utc(self.logbook.sleep_until),
             )
+
+    def parse_retry_after(self, value):
+        """Seconds to wait, from a Retry-After header value.
+
+        RFC 9110 allows either delta-seconds or an HTTP-date. Returns None for
+        a value that is neither, and 0 for a date already in the past.
+        """
+        try:
+            return int(value)
+        except ValueError:
+            pass
+
+        try:
+            when = parsedate_to_datetime(value)
+        except (TypeError, ValueError):
+            self._log.info(
+                "AbuseIPDB plugin could not parse Retry-After header {value!r}",
+                value=value,
+            )
+            return None
+
+        # An HTTP-date without a zone is GMT by the grammar that produced it.
+        if when.tzinfo is None:
+            when = when.replace(tzinfo=timezone.utc)
+        return max(0, int(when.timestamp() - time()))
 
     def sleeper_thread(self):
         # Cheap retry wait hack. Call in thread so as not to block.
