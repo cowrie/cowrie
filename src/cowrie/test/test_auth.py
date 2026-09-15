@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 # ABOUTME: Tests for cowrie/core/auth.py authentication classes.
-# ABOUTME: Covers AuthRandom's returning-attacker fast path.
+# ABOUTME: Covers UserDB rule parsing and AuthRandom's returning-attacker path.
 
 from __future__ import annotations
 
@@ -13,6 +13,33 @@ import unittest
 
 from cowrie.core import auth
 from cowrie.core.config import CowrieConfig
+
+
+class UserDBRuleTests(unittest.TestCase):
+    """UserDB reloads userdb.txt on every login attempt, so one unparseable
+    line breaks authentication for the whole honeypot until it is fixed."""
+
+    def setUp(self) -> None:
+        self.db = auth.UserDB.__new__(auth.UserDB)
+        self.db.userdb = {}
+
+    def test_empty_password_is_a_plain_empty_password(self) -> None:
+        """A userdb.txt line ending in a bare colon ("someuser:x:") parses to
+        an empty password; it must be accepted, not raise IndexError."""
+        self.db.adduser(b"someuser", b"")
+
+        self.assertTrue(self.db.checklogin(b"someuser", b""))
+        self.assertFalse(self.db.checklogin(b"someuser", b"secret"))
+
+    def test_bang_prefix_still_denies(self) -> None:
+        self.db.adduser(b"root", b"!denied")
+
+        self.assertFalse(self.db.checklogin(b"root", b"denied"))
+
+    def test_plain_password_is_accepted(self) -> None:
+        self.db.adduser(b"root", b"secret")
+
+        self.assertTrue(self.db.checklogin(b"root", b"secret"))
 
 
 class AuthRandomReturningLoginTests(unittest.TestCase):
