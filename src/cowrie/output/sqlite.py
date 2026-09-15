@@ -53,7 +53,7 @@ class Output(cowrie.core.output.Output):
         """
         Close connection to db
         """
-        if hasattr(self, "db"):
+        if hasattr(self, "db") and self.db.running:
             self.db.close()
 
     def sqlerror(self, error):
