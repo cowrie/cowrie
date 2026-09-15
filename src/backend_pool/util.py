@@ -19,11 +19,6 @@ from cowrie.core.config import CowrieConfig
 from cowrie.core.resources import read_data_bytes
 
 
-def ping(guest_ip: str) -> int:
-    out = subprocess.run(["ping", "-c 1", guest_ip], capture_output=True)
-    return out.returncode == 0
-
-
 def nmap_port(guest_ip: str, port: int) -> bool:
     out = subprocess.run(
         ["nmap", guest_ip, "-PN", "-p", str(port)],
