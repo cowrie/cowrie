@@ -432,7 +432,7 @@ class HoneyPotFilesystem:
         link.
         """
         try:
-            f: Node | None = self.getfile(path)
+            f: Node | None = self.getfile(path, follow_symlinks=False)
         except Exception:
             return False
         if f is None:

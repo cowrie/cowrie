@@ -197,6 +197,22 @@ class WalkerTests(unittest.TestCase):
     def test_getfile_broken_symlink_returns_none(self) -> None:
         self.assertIsNone(self.fs.getfile("/broken"))
 
+    def test_islink_true_for_symlink_to_file(self) -> None:
+        self.assertTrue(self.fs.islink("/etc/plink"))
+        self.assertTrue(self.fs.isfile("/etc/plink"))
+
+    def test_islink_true_for_symlink_to_directory(self) -> None:
+        self.assertTrue(self.fs.islink("/dirlink"))
+        self.assertTrue(self.fs.isdir("/dirlink"))
+
+    def test_islink_true_for_broken_symlink(self) -> None:
+        self.assertTrue(self.fs.islink("/broken"))
+        self.assertFalse(self.fs.isfile("/broken"))
+
+    def test_islink_false_for_regular_file_and_missing_path(self) -> None:
+        self.assertFalse(self.fs.islink("/etc/passwd"))
+        self.assertFalse(self.fs.islink("/etc/nope"))
+
     def test_getfile_empty_target_symlink_returns_none(self) -> None:
         # Some /proc/<pid>/cwd links ship with an empty target; resolving them
         # must not crash on target[0] (issue: IndexError in getfile).
