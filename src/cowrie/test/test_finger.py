@@ -10,11 +10,15 @@ from __future__ import annotations
 import os
 import tempfile
 import unittest
+from typing import TYPE_CHECKING, Any
 from unittest.mock import patch
 
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
+
+if TYPE_CHECKING:
+    from contextlib import AbstractContextManager
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = tempfile.gettempdir()
@@ -39,7 +43,7 @@ class ShellFingerCommandTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.proto.connectionLost()
 
-    def _passwd(self, contents: bytes):
+    def _passwd(self, contents: bytes) -> AbstractContextManager[Any]:
         return patch.object(self.proto.fs, "file_contents", return_value=contents)
 
     def test_lists_users(self) -> None:
