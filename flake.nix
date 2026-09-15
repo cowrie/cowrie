@@ -33,12 +33,13 @@
 
           cowrie = python.pkgs.buildPythonApplication {
             pname = "cowrie";
-            version = "3.0.5-${self.shortRev or "dirty"}";
+            version = "0-unstable-${builtins.substring 0 8 self.lastModifiedDate}";
             pyproject = true;
             src = self;
 
-            # setuptools-scm needs git metadata the nix source tree lacks.
-            env.SETUPTOOLS_SCM_PRETEND_VERSION = "3.0.5";
+            # setuptools-scm needs git tags the nix source tree lacks, so the
+            # version names the commit rather than claiming a release.
+            env.SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE = "0.0.0+g${self.shortRev or "dirty"}";
 
             build-system = with python.pkgs; [
               setuptools
