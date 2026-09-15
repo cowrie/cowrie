@@ -48,6 +48,7 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
       python3 \
       python3-dev \
       python3-pip \
+      python3-setuptools-scm \
       python3-venv \
       rustc && \
     rm -rf /var/lib/apt/lists/*
@@ -72,8 +73,24 @@ RUN python3 -m venv cowrie-env && \
 
 COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
 
-# RUN . cowrie-env/bin/activate && \
-#     pip install -e ${COWRIE_HOME}/cowrie-git
+# Cowrie refuses to start without src/cowrie/_version.py, which setuptools_scm
+# generates from git history and which is not tracked. The Makefile and the CI
+# workflow write it before building, so it arrives with the COPY above; a plain
+# `docker build` from a fresh clone has neither the file nor, with .git excluded
+# from the context, any history to derive it from. In that case the version
+# comes from this build argument, or is marked unknown so the build still
+# produces a working image.
+ARG SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE
+RUN if [ ! -f cowrie-git/src/cowrie/_version.py ]; then \
+      if [ -z "${SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE}" ]; then \
+        echo "WARNING: no src/cowrie/_version.py in the build context and no" \
+             "SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE build argument;" \
+             "the image will report version 0.0.0+unknown" >&2; \
+        export SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE=0.0.0+unknown; \
+      fi; \
+      python3 -m setuptools_scm --root cowrie-git --config cowrie-git/pyproject.toml \
+        --force-write-version-files; \
+    fi
 
 FROM gcr.io/distroless/python3-debian13:latest AS runtime
 #FROM gcr.io/distroless/python3-debian13:debug AS runtime
