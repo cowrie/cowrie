@@ -89,7 +89,7 @@ dev = [
 "pyupgrade==3.21.2",
 "pyyaml==6.0.3",
 "readthedocs-sphinx-search==0.3.2",
-"ruff==0.16.1",
+"ruff==0.16.7",
 "setuptools==84.0.0",
 "setuptools-scm==10.2.3",
 "sphinx-copybutton==0.5.2",
