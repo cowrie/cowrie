@@ -49,8 +49,6 @@ Written by David MacKenzie and Jim Meyering.
 MODE_REGEX = "^[ugoa]*([-+=]([rwxXst]*|[ugo]))+|[-+=]?[0-7]+$"
 TRY_CHMOD_HELP_MSG = "Try 'chmod --help' for more information.\n"
 
-NO_PERM_BITS_MASK = 0o000
-
 
 class Command_chmod(HoneyPotCommand):
     def call(self) -> None:
