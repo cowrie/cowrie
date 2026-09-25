@@ -95,11 +95,8 @@ class Command_chmod(HoneyPotCommand):
                         f"chmod: cannot access '{file}': No such file or directory\n"
                     )
                 else:
-                    f = self.fs.getfile(path)
-                    file_mode_no_perm = f[fs.A_MODE] & NO_PERM_BITS_MASK
                     try:
-                        # this works for `chmod 0600 ./file`, but not for `chmod u+rwx .,/file`
-                        f[fs.A_MODE] = file_mode_no_perm | int(mode, 8)
+                        self.fs.chmod(path, int(mode, 8))
                     except ValueError:
                         pass
 
