@@ -299,13 +299,14 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
             # Check proxy response code
             try:
                 res_code = int(data.split(b" ")[1], 10)
-            except ValueError:
+            except (IndexError, ValueError):
                 self._log.error("Failed to parse TCP tunnel response code")
                 self._close("Connection refused")
                 return
             if res_code != 200:
                 self._log.error("Unexpected response code: {code}", code=res_code)
                 self._close("Connection refused")
+                return
             # Strip off rest of packet
             eop = data.find(b"\r\n\r\n")
             if eop > -1:
