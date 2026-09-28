@@ -9,7 +9,6 @@ from __future__ import annotations
 import getopt
 import re
 
-from cowrie.shell import fs
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
