@@ -11,7 +11,7 @@ from zope.interface import implementer
 
 from cowrie.shell import avatar as shellavatar
 from cowrie.shell import server as shellserver
-from cowrie.telnet import session
+from cowrie.shell import telnet
 
 
 @implementer(IRealm)
@@ -27,6 +27,6 @@ class HoneyPotRealm:
             return interfaces[0], user, user.logout
         if ITelnetProtocol in interfaces:
             serv = shellserver.CowrieServer(self)
-            user = session.HoneyPotTelnetSession(avatarId, serv)
+            user = telnet.HoneyPotTelnetSession(avatarId, serv)
             return interfaces[0], user, user.logout
         raise NotImplementedError

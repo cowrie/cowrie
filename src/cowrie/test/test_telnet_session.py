@@ -11,7 +11,7 @@ import os
 import unittest
 from unittest.mock import MagicMock
 
-from cowrie.telnet.session import HoneyPotTelnetSession, TelnetSessionProcessProtocol
+from cowrie.shell.telnet import HoneyPotTelnetSession, TelnetSessionProcessProtocol
 from cowrie.test.fake_server import FakeServer
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
