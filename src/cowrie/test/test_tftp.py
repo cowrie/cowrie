@@ -287,9 +287,9 @@ class ShellTftpAsyncTests(unittest.TestCase):
         """A transfer past download_limit_size must abort, end to end."""
         limited_port = self.serve(b"Y" * (TFTP_BLOCK_SIZE * 3))
 
-        orig_limit = Command_tftp.limit_size
-        Command_tftp.limit_size = TFTP_BLOCK_SIZE  # one block
-        self.addCleanup(setattr, Command_tftp, "limit_size", orig_limit)
+        override_config(
+            self, "honeypot", "download_limit_size", str(TFTP_BLOCK_SIZE)
+        )  # one block
 
         cmd = f"tftp -c get /tmp/limited.txt 127.0.0.1:{limited_port}\n"
         self.proto.lineReceived(cmd.encode())
@@ -362,6 +362,7 @@ class TFTPHostnameResolutionTests(unittest.TestCase):
         cmd.host_ip = host_ip
         cmd.port = 69
         cmd.file_to_get = "test.sh"
+        cmd.limit_size = 0
         cmd.artifactFile = Artifact("tftp-download")
         return cmd
 

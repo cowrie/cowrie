@@ -13,8 +13,7 @@ from twisted.internet.defer import CancelledError, inlineCallbacks
 from twisted.internet.protocol import DatagramProtocol
 from twisted.logger import Logger
 
-from cowrie.core.artifact import Artifact
-from cowrie.core.config import CowrieConfig
+from cowrie.core.artifact import Artifact, download_limit_size
 from cowrie.core.download import outbound_rate_limiter
 from cowrie.core.network import (
     DownloadLimitExceeded,
@@ -299,7 +298,7 @@ class Command_tftp(HoneyPotCommand):
     hostname: str | None = None
     host_ip: str
     file_to_get: str
-    limit_size = CowrieConfig.getint("honeypot", "download_limit_size", fallback=0)
+    limit_size: int
     artifactFile: Artifact
     tftp_client: TFTPClient | None = None
     fakeoutfile: str
@@ -307,6 +306,7 @@ class Command_tftp(HoneyPotCommand):
 
     @inlineCallbacks
     def start(self):
+        self.limit_size = download_limit_size()
         parser = CustomParser(self)
         parser.prog = "tftp"
         parser.add_argument("hostname", nargs="?", default=None)

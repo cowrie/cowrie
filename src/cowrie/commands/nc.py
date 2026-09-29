@@ -15,7 +15,7 @@ from twisted.internet.defer import inlineCallbacks
 from twisted.internet.protocol import ClientFactory, Protocol, connectionDone
 from twisted.logger import Logger
 
-from cowrie.core.config import CowrieConfig
+from cowrie.core.artifact import download_limit_size
 from cowrie.core.download import outbound_rate_limiter
 from cowrie.core.network import (
     is_valid_port,
@@ -107,7 +107,7 @@ class Command_nc(HoneyPotCommand):
     _log = Logger()
 
     CONNECT_TIMEOUT: float = 10.0  # seconds
-    limit_size: int = CowrieConfig.getint("honeypot", "download_limit_size", fallback=0)
+    limit_size: int
 
     nc_transport: ITransport | None = None
     received_size: int = 0
@@ -183,6 +183,7 @@ class Command_nc(HoneyPotCommand):
 
     @inlineCallbacks
     def start(self):
+        self.limit_size = download_limit_size()
         try:
             _optlist, args = getopt.getopt(
                 self.args, "46CDdFhklNnrStUuvZzI:i:M:m:O:P:p:q:s:T:V:W:w:X:x:"
