@@ -22,6 +22,7 @@ from twisted.protocols.policies import ProtocolWrapper, TimeoutMixin
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.events import EventLog, transport_events
+from cowrie.telnet.userauth import HoneyPotTelnetAuthProtocol
 
 if TYPE_CHECKING:
     from twisted.python import failure
@@ -117,8 +118,6 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         replaces the authentication protocol (see HoneyPotTelnetAuthProtocol.
         _cbLogin). The CR handling below is scoped to login so the session's
         raw keystroke input is left untouched."""
-        from cowrie.telnet.userauth import HoneyPotTelnetAuthProtocol
-
         return isinstance(self.protocol, HoneyPotTelnetAuthProtocol)
 
     def applicationDataReceived(self, data: bytes) -> None:

@@ -72,7 +72,7 @@ jobs:
 
           # bundled package data is reachable via importlib.resources
           python -c "from cowrie.core.resources import read_data_bytes; assert read_data_bytes('fs.pickle')"
-          python -c "from cowrie.shell.honeyfs import read_honeyfs_bytes; assert b'root:' in read_honeyfs_bytes('etc/passwd')"
+          python -c "from cowrie.core.honeyfs import read_honeyfs_bytes; assert b'root:' in read_honeyfs_bytes('etc/passwd')"
           python -c "from cowrie.core.config import readConfigFile; p = readConfigFile([]); assert 'honeypot' in p.sections()"
 
           # cowrie init materialises a working state directory

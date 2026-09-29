@@ -16,8 +16,9 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+from cowrie.core import honeyfs
 from cowrie.core.config import CowrieConfig
-from cowrie.shell import fs, honeyfs
+from cowrie.shell import fs
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"

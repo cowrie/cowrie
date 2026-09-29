@@ -14,16 +14,6 @@ from twisted.logger import Logger
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
-_log = Logger()
-
-token = CowrieConfig.get("output_csirtg", "token", fallback="a1b2c3d4")
-if token == "a1b2c3d4":
-    _log.info("output_csirtg: token not found in configuration file")
-    sys.exit(1)
-
-os.environ["CSIRTG_TOKEN"] = token
-import csirtgsdk  # noqa: E402
-
 
 class Output(cowrie.core.output.Output):
     """
@@ -38,6 +28,14 @@ class Output(cowrie.core.output.Output):
         Note that csirtsdk is imported here because it reads CSIRTG_TOKEN on import
         Cowrie sets this environment variable.
         """
+        token = CowrieConfig.get("output_csirtg", "token", fallback="a1b2c3d4")
+        if token == "a1b2c3d4":
+            self._log.info("output_csirtg: token not found in configuration file")
+            sys.exit(1)
+        os.environ["CSIRTG_TOKEN"] = token
+        import csirtgsdk
+
+        self.csirtgsdk = csirtgsdk
         self.user = CowrieConfig.get("output_csirtg", "username")
         self.feed = CowrieConfig.get("output_csirtg", "feed")
         self.debug = CowrieConfig.getboolean("output_csirtg", "debug", fallback=False)
@@ -103,7 +101,7 @@ class Output(cowrie.core.output.Output):
                 "output_csirtg: Submitting {indicator!r} to CSIRTG", indicator=i
             )
 
-        ind = csirtgsdk.indicator.Indicator(i).submit()
+        ind = self.csirtgsdk.indicator.Indicator(i).submit()
 
         if self.debug is True:
             self._log.info("output_csirtg: Submitted {result!r} to CSIRTG", result=ind)

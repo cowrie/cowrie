@@ -20,10 +20,10 @@ from typing import TYPE_CHECKING, Any, TypeAlias
 
 from twisted.logger import Logger
 
+from cowrie.core import honeyfs
 from cowrie.core.artifact import temp_download_path
 from cowrie.core.config import CowrieConfig
 from cowrie.core.resources import read_data_bytes
-from cowrie.shell import honeyfs
 
 if TYPE_CHECKING:
     from cowrie.core.events import EventLog
