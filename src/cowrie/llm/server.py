@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING
 
 from twisted.logger import Logger
 
+from cowrie.core.config import CowrieConfig
+
 if TYPE_CHECKING:
     from twisted.cred.portal import IRealm
 
@@ -22,8 +24,6 @@ class CowrieServer:
     _log = Logger()
 
     def __init__(self, realm: IRealm) -> None:
-        from cowrie.core.config import CowrieConfig
-
         self._log.info("Initialized LLM backend server")
         # Get hostname from config or use default
         self.hostname = CowrieConfig.get("honeypot", "hostname", fallback="svr04")
