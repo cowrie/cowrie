@@ -16,7 +16,11 @@ from twisted.logger import Logger
 from twisted.python.compat import iterbytes
 
 from cowrie.core import ttylog
-from cowrie.core.artifact import temp_download_path
+from cowrie.core.artifact import (
+    download_limit_size,
+    download_path,
+    temp_download_path,
+)
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import protocol
 
@@ -34,11 +38,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
     _log = Logger()
 
     ttylogPath: str = CowrieConfig.get("honeypot", "ttylog_path", fallback=".")
-    downloadPath: str = CowrieConfig.get("honeypot", "download_path", fallback=".")
     ttylogEnabled: bool = CowrieConfig.getboolean("honeypot", "ttylog", fallback=False)
-    bytesReceivedLimit: int = CowrieConfig.getint(
-        "honeypot", "download_limit_size", fallback=0
-    )
 
     def __init__(self, protocolFactory=None, *a, **kw):
         self.type: str
@@ -54,6 +54,8 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.transport: Any
         self.startTime: float
         self.stdinlogFile: str
+        self.downloadPath: str = download_path()
+        self.bytesReceivedLimit: int = download_limit_size()
 
         insults.ServerProtocol.__init__(self, protocolFactory, *a, **kw)
 

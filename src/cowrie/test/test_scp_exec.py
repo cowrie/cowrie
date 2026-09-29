@@ -27,11 +27,6 @@ _DOWNLOAD_DIR = tempfile.mkdtemp(prefix="cowrie_scp_exec_")
 # Temp backing files land wherever config points when they are created.
 os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = _DOWNLOAD_DIR
 
-# The class-level download path is read from config at import time, so another
-# test module importing this class first can pin it elsewhere. Force it to this
-# module's scratch directory regardless of import order.
-insults.LoggingServerProtocol.downloadPath = _DOWNLOAD_DIR
-
 
 def run_exec_scp_push(
     framed_stdin: bytes, chunk_size: int = 0, fs_newcount: int | None = None

@@ -18,6 +18,7 @@ from twisted.internet.protocol import connectionDone
 
 from cowrie.insults import insults
 from cowrie.shell import protocol
+from cowrie.test.config_override import override_config
 from cowrie.test.eventcapture import (
     CaptureSink,
     capture_eventlog,
@@ -32,10 +33,11 @@ os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = _DOWNLOAD_DIR
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
-insults.LoggingServerProtocol.downloadPath = _DOWNLOAD_DIR
-
 
 class StdinCaptureEventTests(unittest.TestCase):
+    def setUp(self) -> None:
+        override_config(self, "honeypot", "download_path", _DOWNLOAD_DIR)
+
     def run_exec(self, cmd: bytes, payload: bytes) -> list[dict[str, Any]]:
         sink = CaptureSink()
         avatar = FakeAvatar(FakeServer())
@@ -73,6 +75,9 @@ class StdinCaptureEventTests(unittest.TestCase):
 class TelnetInsultsEventLogTests(unittest.TestCase):
     """The telnet insults wrapper must find the EventLog on the telnet
     transport (session.transport), wiring the real telnet session chain."""
+
+    def setUp(self) -> None:
+        override_config(self, "honeypot", "download_path", _DOWNLOAD_DIR)
 
     def test_telnet_session_chain_binds_eventlog(self) -> None:
         from cowrie.telnet.session import (

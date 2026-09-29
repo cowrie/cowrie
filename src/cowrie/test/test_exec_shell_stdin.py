@@ -15,6 +15,7 @@ from twisted.internet.protocol import connectionDone
 
 from cowrie.insults import insults
 from cowrie.shell import protocol
+from cowrie.test.config_override import override_config
 from cowrie.test.eventcapture import CaptureSink, make_exec_transport
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 
@@ -22,8 +23,6 @@ _DOWNLOAD_DIR = tempfile.mkdtemp(prefix="cowrie_exec_shell_")
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = _DOWNLOAD_DIR
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
-
-insults.LoggingServerProtocol.downloadPath = _DOWNLOAD_DIR
 
 PROMPT = b"root@unitTest:~# "
 
@@ -58,6 +57,9 @@ def start_exec_session(
 
 class ExecShellStdinTests(unittest.TestCase):
     """`ssh host bash` runs a shell fed by channel stdin, as real sshd does."""
+
+    def setUp(self) -> None:
+        override_config(self, "honeypot", "download_path", _DOWNLOAD_DIR)
 
     def drive(
         self, cmd: bytes, term: str | None = None
