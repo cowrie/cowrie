@@ -20,7 +20,7 @@ from twisted.internet import reactor
 from twisted.logger import Logger
 
 from cowrie.core import utils
-from cowrie.shell.command import HoneyPotCommand, process_status
+from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.fs import A_MODE, A_SIZE
 from cowrie.shell.honeypot import LoopSignal
 
@@ -920,7 +920,8 @@ class Command_shutdown(HoneyPotCommand):
             self.exit()
 
     def finish(self) -> None:
-        self.protocol.terminal.transport.processEnded(process_status(0))
+        # The client may have disconnected during the delay.
+        self.protocol.end_process(0)
 
 
 commands["/sbin/shutdown"] = Command_shutdown
@@ -941,7 +942,8 @@ class Command_reboot(HoneyPotCommand):
         reactor.callLater(3, self.finish)
 
     def finish(self) -> None:
-        self.protocol.terminal.transport.processEnded(process_status(0))
+        # The client may have disconnected during the delay.
+        self.protocol.end_process(0)
 
 
 commands["/sbin/reboot"] = Command_reboot

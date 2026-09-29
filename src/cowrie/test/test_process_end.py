@@ -16,6 +16,7 @@ from unittest.mock import patch
 from twisted.internet import task
 from twisted.internet.protocol import connectionDone
 
+from cowrie.commands import base as base_command
 from cowrie.commands import sleep as sleep_command
 from cowrie.insults import insults
 from cowrie.shell import protocol
@@ -148,6 +149,48 @@ class InteractiveProcessEndTests(unittest.TestCase):
         self.proto.connectionLost()
         self.proto.end_process(0)
         self.assertEqual(self.ended, [])
+
+
+class DelayedShutdownTests(unittest.TestCase):
+    """reboot and shutdown end the session after a delay, during which the
+    client may disconnect."""
+
+    LINES = (b"reboot", b"shutdown -h now", b"shutdown -r now")
+
+    def setUp(self) -> None:
+        self.clock = task.Clock()
+        reactor_patch = patch.object(base_command, "reactor", self.clock)
+        reactor_patch.start()
+        self.addCleanup(reactor_patch.stop)
+
+    def run_line(
+        self, line: bytes
+    ) -> tuple[protocol.HoneyPotInteractiveProtocol, list[int]]:
+        proto = protocol.HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        tr = FakeTransport("", "31337")
+        proto.makeConnection(tr)
+        tr.clear()
+        ended: list[int] = []
+        tr.transport.processEnded = lambda reason: ended.append(exit_code(reason))
+        self.addCleanup(proto.connectionLost)
+        proto.lineReceived(line)
+        return proto, ended
+
+    def test_ends_the_session_after_the_delay(self) -> None:
+        for line in self.LINES:
+            with self.subTest(line=line):
+                _proto, ended = self.run_line(line)
+                self.assertEqual(ended, [])
+                self.clock.advance(3)
+                self.assertEqual(ended, [0])
+
+    def test_disconnect_during_the_delay_is_quiet(self) -> None:
+        for line in self.LINES:
+            with self.subTest(line=line):
+                proto, ended = self.run_line(line)
+                proto.connectionLost()
+                self.clock.advance(3)
+                self.assertEqual(ended, [])
 
 
 if __name__ == "__main__":
