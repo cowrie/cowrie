@@ -41,7 +41,6 @@ from cowrie.shell.bashparse import (
     WhileClause,
     max_input_size,
 )
-from cowrie.shell.command import process_status
 from cowrie.shell.parser import CommandParser
 from cowrie.shell.pipe import FD_CAPTURE, FD_TERMINAL, PipeProtocol
 
@@ -396,9 +395,7 @@ class HoneyPotShell:
             # Top-level non-interactive shell (an exec session): end the process
             # with the last command's status so the SSH channel reports a real
             # exit-status to the client.
-            self.protocol.terminal.transport.processEnded(
-                process_status(self.last_exit_code)
-            )
+            self.protocol.end_process(self.last_exit_code)
         elif self.protocol.cmdstack[-1] is self:
             # Nested script / `-c` shell whose queue is drained: unwind it and
             # let the launching command carry on. Done here rather than with an
@@ -1060,11 +1057,7 @@ class HoneyPotShell:
         if self.protocol.cmdstack:
             self.protocol.cmdstack[-1].resume()
         else:
-            # The client may already be disconnected, leaving no transport.
-            try:
-                self.protocol.terminal.transport.processEnded(process_status(code))
-            except AttributeError:
-                pass
+            self.protocol.end_process(code)
 
     def showPrompt(self) -> None:
         if not self.interactive:
@@ -1106,9 +1099,7 @@ class HoneyPotShell:
         exiting with the last command's status ($?) as bash does.
         """
         self._log.info("received eof, logging out")
-        self.protocol.terminal.transport.processEnded(
-            process_status(self.last_exit_code)
-        )
+        self.protocol.end_process(self.last_exit_code)
 
     def handle_CTRL_C(self) -> None:
         self.protocol.lineBuffer = []
