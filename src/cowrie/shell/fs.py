@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Any, TypeAlias
 
 from twisted.logger import Logger
 
-from cowrie.core.artifact import temp_download_path
+from cowrie.core.artifact import download_path, temp_download_path
 from cowrie.core.config import CowrieConfig
 from cowrie.core.resources import read_data_bytes
 from cowrie.shell import honeyfs
@@ -512,7 +512,7 @@ class HoneyPotFilesystem:
         os.close(fd)
         with open(self.tempfiles[fd], "rb") as f:
             shasum: str = hashlib.sha256(f.read()).hexdigest()
-        shasumfile: str = CowrieConfig.get("honeypot", "download_path") + "/" + shasum
+        shasumfile: str = download_path() + "/" + shasum
         if os.path.exists(shasumfile):
             os.remove(self.tempfiles[fd])
         else:
