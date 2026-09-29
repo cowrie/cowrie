@@ -125,7 +125,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.realClientPort = pt.transport.getPeer().port
         self.logintime = time.time()
 
-        timeout = CowrieConfig.getint("honeypot", "interactive_timeout", fallback=180)
+        timeout = CowrieConfig.getint("honeypot", "interactive_timeout", fallback=300)
         self.setTimeout(timeout)
 
         # Source IP of client in user visible reports (can be fake or real)

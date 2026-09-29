@@ -21,6 +21,7 @@ os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
 from cowrie.llm import llm as llm_module
 from cowrie.llm import protocol as llm_protocol
+from cowrie.ssh.transport import HoneyPotSSHTransport
 
 
 def _avatar() -> MagicMock:
@@ -30,6 +31,23 @@ def _avatar() -> MagicMock:
     avatar.server.hostname = "svr04"
     avatar.username = "root"
     return avatar
+
+
+class InteractiveTimeoutTests(unittest.TestCase):
+    def test_default_matches_shell_backend(self) -> None:
+        """With interactive_timeout unset, an idle LLM session lasts as long
+        as an idle shell session."""
+        self.assertFalse(CowrieConfig.has_option("honeypot", "interactive_timeout"))
+        for option in ("internet_facing_ip", "internet_facing_ipv6"):
+            CowrieConfig.set("honeypot", option, "192.0.2.1")
+            self.addCleanup(CowrieConfig.remove_option, "honeypot", option)
+        proto = llm_protocol.HoneyPotBaseProtocol(_avatar())
+        proto.terminal = MagicMock()
+
+        with patch.object(proto, "setTimeout") as set_timeout:
+            proto.connectionMade()
+
+        set_timeout.assert_called_once_with(HoneyPotSSHTransport.interactive_timeout)
 
 
 class ExecCommandDecodeTests(unittest.TestCase):
