@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import posixpath
+import stat
 import zipfile
 
 from twisted.logger import Logger
@@ -30,7 +31,7 @@ class Command_unzip(HoneyPotCommand):
                     self.user["uid"],
                     self.user["gid"],
                     4096,
-                    33188,
+                    stat.S_IFDIR | 0o755,
                 )
 
     def call(self) -> None:
@@ -120,7 +121,7 @@ class Command_unzip(HoneyPotCommand):
                     self.user["uid"],
                     self.user["gid"],
                     4096,
-                    33188,
+                    stat.S_IFDIR | 0o755,
                 )
             elif not f.is_dir():
                 self.mkfullpath(posixpath.dirname(dest))
@@ -129,7 +130,7 @@ class Command_unzip(HoneyPotCommand):
                     self.user["uid"],
                     self.user["gid"],
                     f.file_size,
-                    33188,
+                    stat.S_IFREG | 0o644,
                 )
             else:
                 self._log.info("  skipping: {filename}\n", filename=f.filename)

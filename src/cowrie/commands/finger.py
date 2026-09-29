@@ -23,18 +23,13 @@ class Command_finger(HoneyPotCommand):
         all_users_byte = self.fs.file_contents("/etc/passwd")
         # An attacker can overwrite /etc/passwd with arbitrary bytes.
         all_users = all_users_byte.decode("utf-8", errors="replace")
-        # Convert all new lines to : character
-        all_users = all_users.replace("\n", ":")
-        # Convert into list by splitting string
-        all_users_list = all_users.split(":")
-        # Loop over the data in sets of 7
-        for i in range(0, len(all_users_list), 7):
-            x = i
-            # Ensure any added list contains data and is not a blank space by >
-            if len(all_users_list[x : x + 7]) != 1:
-                # Take the next 7 elements and put them a list, then add to 2d>
-                user_data.append(all_users_list[x : x + 7])
-        # THIS CODE IS FOR DEBUGGING self.write(str(user_data))
+        # A record is one line of seven colon-separated fields. Lines that do
+        # not have all seven are not records: skip them, the way getpwent()
+        # does, so the rest of the file still parses.
+        for line in all_users.splitlines():
+            fields = line.split(":")
+            if len(fields) == 7:
+                user_data.append(fields)
 
         # If finger called without args
         if len(self.args) == 0:

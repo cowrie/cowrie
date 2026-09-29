@@ -47,9 +47,11 @@ class HoneyPotCommand:
     # it holds even for instances created without __init__ (tests).
     pp: Any = None
 
-    # True when this command was still running once start() returned, so it
-    # owes the next pipeline stage the EOF on its stdout when it exits.
-    advance_pipe_on_exit: bool = False
+    # Whether the command reads its stdin: set True by exactly the commands
+    # that use self.input_data. A pipe feeding a shell is drained by the first
+    # such command and is then empty for the rest, as in bash; a command that
+    # does not read stdin (cd, echo, sleep ...) leaves the data for the next.
+    consumes_stdin: bool = False
 
     def __init__(self, protocol, *args):
         self.protocol = protocol
@@ -75,11 +77,10 @@ class HoneyPotCommand:
         self.data: bytes = b""  # output data
         # used to store STDIN data passed via PIPE
         self.input_data: bytes | None = None
-        # This command's own stdio: the fd table, its redirections and the
-        # link to the next pipeline stage, handed over at spawn. Held per
-        # command because a command that finishes late (an async download)
-        # must still write to and clean up the fds it was started with, not
-        # whichever pipeline is running by the time it ends.
+        # This command's own stdio: the fd table and its redirections, handed
+        # over at spawn. Held per command because a command that finishes late
+        # (an async download) must still write to and clean up the fds it was
+        # started with, not whichever command is running by the time it ends.
         pp: Any = getattr(self.protocol, "pp", None)
         self.pp: Any = pp
         self.writefn: Callable[[bytes], None]
@@ -163,20 +164,6 @@ class HoneyPotCommand:
         if len(self.protocol.cmdstack):
             self.protocol.cmdstack.remove(self)
 
-        if (
-            self.advance_pipe_on_exit
-            and self.pp is not None
-            and self.pp.next_command is not None
-        ):
-            # An upstream pipeline stage that outlived its own start() (an
-            # async download, or a command parked on stdin). Its stdout only
-            # closes now, so hand control to the next stage rather than back
-            # to the shell: the stage that ends the pipeline resumes the
-            # shell, and its status is the pipeline's, as in bash.
-            self.advance_pipe_on_exit = False
-            self.pp.outConnectionLost()
-            return
-
         if len(self.protocol.cmdstack):
             # Hand the exit status to the shell that ran us, for $? and the
             # && / || logic in runCommand.
@@ -193,6 +180,16 @@ class HoneyPotCommand:
             except AttributeError:
                 pass
 
+    def exec_command(self, pp: Any, cmdclass: Any, *args: str) -> None:
+        """Replace this command with another, as exec(2) does: leave the
+        cmdstack and start the new command in this one's place, so its exit
+        status goes to the shell that ran this command. The wrappers that
+        dispatch to a real command (busybox, sudo) use this."""
+        self.exited = True
+        if self in self.protocol.cmdstack:
+            self.protocol.cmdstack.remove(self)
+        self.protocol.call_command(pp, cmdclass, *args)
+
     def handle_CTRL_C(self) -> None:
         self._log.info("Received CTRL-C, exiting..")
         self.write("^C\n")
@@ -203,11 +200,12 @@ class HoneyPotCommand:
         # Queue on the innermost shell, the next stdin reader once this
         # command exits: an outer shell only resumes after the shells above
         # it unwind, so a line queued there would wait on the whole stack.
-        # A capture subshell ($(...)) is skipped: its program is fixed source
-        # text, and typed input is stdin data for the next real reader, never
-        # a command to run -- and capture -- inside the substitution.
+        # A transient child shell (a "$(...)" substitution, a "(...)" group or
+        # a pipeline stage -- any shell with a ``done`` Deferred) is skipped:
+        # its program is fixed source text, and typed input is stdin data for
+        # the next real reader, never a command to run inside the child.
         for item in reversed(self.protocol.cmdstack):
-            if hasattr(item, "queue_line") and not getattr(item, "redirect", False):
+            if hasattr(item, "queue_line") and getattr(item, "done", None) is None:
                 item.queue_line(line)
                 return
 

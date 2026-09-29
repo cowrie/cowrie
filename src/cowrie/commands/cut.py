@@ -19,6 +19,8 @@ class Command_cut(HoneyPotCommand):
     cut command
     """
 
+    consumes_stdin = True
+
     def start(self) -> None:
         try:
             optlist, args = getopt.gnu_getopt(
@@ -64,7 +66,13 @@ class Command_cut(HoneyPotCommand):
         self.delimiter = delimiter
         self.field_spec = field_spec
         self.suppress = suppress
-        self.field_indices = self._parse_field_spec(field_spec)
+        try:
+            self.field_indices = self._parse_field_spec(field_spec)
+        except ValueError:
+            self.errorWrite(f"cut: invalid field value '{field_spec}'\n")
+            self.errorWrite("Try 'cut --help' for more information.\n")
+            self.exit()
+            return
 
         if self.input_data:
             self._process(self.input_data)

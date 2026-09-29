@@ -52,9 +52,9 @@ Add the following to your ``etc/cowrie.cfg`` file:
     # Note: This doubles API requests for downloads
     scan_url = true
 
-    # Optional: Collection name for organizing artifacts
-    # If not set, no collection will be created
-    collection = cowrie
+    # Optional: Add uploaded files and submitted URLs to an existing
+    # VirusTotal collection (create it in the VT GUI first, see below).
+    #collection_id = <collection-id-from-vt-gui-url>
 
     # Optional: Custom comment text (default: Cowrie attribution)
     #commenttext = First seen by #Cowrie SSH/telnet Honeypot http://github.com/cowrie/cowrie
@@ -103,15 +103,14 @@ Add a comment to newly uploaded files and submitted URLs. The comment includes:
 * Link to Cowrie GitHub repository
 * ``#Cowrie`` hashtag for easy searching in VirusTotal
 
-collection (optional, default: None)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+collection_id (optional, default: None)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Name of a VirusTotal collection to organize all Cowrie artifacts. When set:
+The ID of an existing VirusTotal collection. When set, uploaded files and
+submitted URLs are added to this collection.
 
-* Collection is automatically created on Cowrie startup (if it doesn't exist)
-* All uploaded files are added to the collection
-* All submitted URLs are added to the collection
-* Provides centralized view of all honeypot findings in VirusTotal
+Create the collection in the VirusTotal GUI, then copy its ID from the
+URL: ``https://www.virustotal.com/gui/collection/<collection-id>``.
 
 **Benefits**:
 
@@ -119,8 +118,6 @@ Name of a VirusTotal collection to organize all Cowrie artifacts. When set:
 * Share collection with other researchers
 * Monitor honeypot activity over time
 * Export IOCs from the collection
-
-If not set or commented out, no collection operations will be performed.
 
 debug (optional, default: False)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -209,10 +206,12 @@ Collections organize related files and URLs in VirusTotal for better tracking an
 Setting Up a Collection
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. Add ``collection = cowrie`` to your configuration
-2. Restart Cowrie
-3. Collection will be automatically created on first startup
-4. All subsequent uploads/submissions will be added to this collection
+1. In the VirusTotal GUI, create a collection (or open an existing one)
+2. Copy its ID from the URL:
+   ``https://www.virustotal.com/gui/collection/<collection-id>``
+3. Set ``collection_id = <collection-id>`` in your configuration
+4. Restart Cowrie — uploaded files and submitted URLs are added to this
+   collection
 
 Accessing Your Collection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -220,8 +219,6 @@ Accessing Your Collection
 View your collection in VirusTotal:
 
 ``https://www.virustotal.com/gui/collection/<collection-id>``
-
-The collection ID is logged when the collection is created.
 
 Collection Features
 ~~~~~~~~~~~~~~~~~~~
@@ -298,14 +295,15 @@ Rate Limit Errors
 * Reduce scan frequency by disabling ``scan_url``
 * Upgrade to paid API tier
 
-Collection Already Exists
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Artifacts Are Not Added To A Collection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: text
+**Cause**: ``collection_id`` is not set, or refers to a collection you do
+not have access to.
 
-    VT: Collection 'cowrie' already exists - will use existing
-
-**Not an error**: This is normal behavior. The plugin will reuse the existing collection.
+**Solution**: Create the collection in the VirusTotal GUI and set
+``collection_id`` to its ID. See ``collection_id`` under Configuration
+Options.
 
 Debug Mode
 ~~~~~~~~~~
@@ -330,7 +328,6 @@ The plugin uses VirusTotal v3 API endpoints:
 * ``GET /api/v3/urls/{url_id}`` - Retrieve URL scan report
 * ``POST /api/v3/urls`` - Submit URL for scanning
 * ``POST /api/v3/urls/{id}/comments`` - Add comment to URL
-* ``POST /api/v3/collections`` - Create collection
 * ``POST /api/v3/collections/{id}/files`` - Add file to collection
 * ``POST /api/v3/collections/{id}/urls`` - Add URL to collection
 

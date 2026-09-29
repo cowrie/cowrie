@@ -21,6 +21,8 @@ class Command_base64(HoneyPotCommand):
     author: Ivan Korolev (@fe7ch)
     """
 
+    consumes_stdin = True
+
     _log = Logger()
 
     mode: str

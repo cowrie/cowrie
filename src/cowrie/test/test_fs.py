@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import copy
+import errno
 import hashlib
 import os
 import unittest
@@ -129,6 +130,16 @@ class RenameRemoveTests(unittest.TestCase):
         with self.assertRaises(OSError):
             self.fs.remove("/tmp/not_here_xyz")
 
+    def test_rmdir_removes_empty_directory(self) -> None:
+        self.fs.link_entry(_dir_entry("rmdir_me", []), "/tmp")
+        self.assertTrue(self.fs.rmdir("/tmp/rmdir_me"))
+        self.assertNotIn("rmdir_me", self.fs.listdir("/tmp"))
+
+    def test_rmdir_missing_raises_enoent(self) -> None:
+        with self.assertRaises(OSError) as cm:
+            self.fs.rmdir("/tmp/not_here_xyz")
+        self.assertEqual(cm.exception.errno, errno.ENOENT)
+
 
 class WalkerTests(unittest.TestCase):
     """getfile() resolves a path to a node; get_path() returns that node's
@@ -185,6 +196,22 @@ class WalkerTests(unittest.TestCase):
 
     def test_getfile_broken_symlink_returns_none(self) -> None:
         self.assertIsNone(self.fs.getfile("/broken"))
+
+    def test_islink_true_for_symlink_to_file(self) -> None:
+        self.assertTrue(self.fs.islink("/etc/plink"))
+        self.assertTrue(self.fs.isfile("/etc/plink"))
+
+    def test_islink_true_for_symlink_to_directory(self) -> None:
+        self.assertTrue(self.fs.islink("/dirlink"))
+        self.assertTrue(self.fs.isdir("/dirlink"))
+
+    def test_islink_true_for_broken_symlink(self) -> None:
+        self.assertTrue(self.fs.islink("/broken"))
+        self.assertFalse(self.fs.isfile("/broken"))
+
+    def test_islink_false_for_regular_file_and_missing_path(self) -> None:
+        self.assertFalse(self.fs.islink("/etc/passwd"))
+        self.assertFalse(self.fs.islink("/etc/nope"))
 
     def test_getfile_empty_target_symlink_returns_none(self) -> None:
         # Some /proc/<pid>/cwd links ship with an empty target; resolving them

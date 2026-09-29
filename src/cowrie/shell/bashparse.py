@@ -25,8 +25,11 @@ There is a single tokeniser for the whole language: the Lark grammar lexes a
 line (or a whole multi-line script) into word trees and control tokens, and the
 recursive descent in :meth:`BashParser._parse_list` recognises reserved words
 only at a command position to build the compound structure, exactly as a real
-shell parses. Newlines separate statements like ``;`` so a script is parsed
-directly rather than line-by-line.
+shell parses. The one clause the grammar recognises itself is ``case``: its
+pattern close is the only ``)`` bash allows without a matching ``(``, and
+keeping every paren paired is what makes a line parse in linear time.
+Newlines separate statements like ``;`` so a script is parsed directly rather
+than line-by-line.
 
 The grammar models the subset of bash that Cowrie emulates: lists separated by
 ``;`` / newline / ``&&`` / ``||``, pipelines, simple redirections, single/double
@@ -62,15 +65,20 @@ could not handle.
 
 from __future__ import annotations
 
+import contextlib
+import gc
 import re
+import signal
+import threading
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
-    from collections.abc import Awaitable
+    from collections.abc import Awaitable, Iterator
 
 from lark import Lark, Token, Tree
-from lark.exceptions import LarkError
+from lark.exceptions import LarkError, UnexpectedCharacters
+from twisted.logger import Logger
 
 from cowrie.core.config import CowrieConfig
 
@@ -79,48 +87,75 @@ from cowrie.core.config import CowrieConfig
 # with no whitespace between them form a single word ("a"$x'b' -> one word).
 #
 # The grammar is a single tokeniser for the whole language: it emits a flat
-# stream of word trees and control tokens (separators, pipes, redirections,
-# parentheses, ";;", newlines). The structure above a simple command --
-# &&/|| lists, pipelines, and the compound commands for/if/while/until/case,
-# brace groups and function definitions -- is recognised by the recursive
-# descent in :meth:`BashParser._parse_list`, which reads reserved words only at
-# a command position, exactly as a real shell does. Keeping one tokeniser means
-# the script-level constructs reuse the same quoting, expansion and redirection
-# lexing as a single interactive line.
+# stream of word trees, "(...)" and case groups, and control tokens
+# (separators, pipes, redirections, newlines). The structure above a simple
+# command -- &&/|| lists, pipelines, and the compound commands
+# for/if/while/until, brace groups and function definitions -- is recognised
+# by the recursive descent in :meth:`BashParser._parse_list`, which reads
+# reserved words only at a command position, exactly as a real shell does.
+# Keeping one tokeniser means the script-level constructs reuse the same
+# quoting, expansion and redirection lexing as a single interactive line.
+#
+# The grammar is unambiguous: every line has exactly one parse. That is what
+# keeps the Earley parse linear in the input size (issue #40597), and
+# test_bashparse asserts it with an explicit-ambiguity parse of sample lines.
 _GRAMMAR = r"""
-// A line is whitespace-separated content (words and subshells) broken up by the
-// control operators. Whitespace is REQUIRED between two content words, so a run
-// of atoms with no spaces is a single word (a"b"$c -> one word) while operators
-// stay self-delimiting (echo a|b is three tokens). Requiring the space is also
-// what keeps "$(...)" one command-substitution word instead of letting it be
-// re-read as a bare "$" next to a "(...)" subshell.
-start: _WS? _line? _WS?
-_line: _run (_WS? _op _WS? _run)*
-_run: (_content (_WS _content)*)?
-_content: subshell | word | _COMMENT
-_op: SEP | PIPE | AMP | IO_REDIR | REDIR | NEWLINE | LPAR | RPAR | DSEMI
+// A line is contents (words, groups, comments) and operators in any order.
+// Whitespace is REQUIRED between two contents, so a run of atoms with no
+// spaces is a single word (a"b"$c -> one word) while operators stay
+// self-delimiting (echo a|b is three tokens); it is optional around an
+// operator. Two left-recursive sequences -- _after_content and _after_op,
+// named for what they end in -- give every whitespace run exactly one place
+// to attach. (Left recursion: Earley handles it in linear time where a
+// right-recursive list is quadratic.)
+start: _WS? _seq?
+_seq: (_after_content | _after_op) _WS?
+_after_content: _content | _after_content _WS _content | _after_op _WS? _content
+_after_op: _op | _after_content _WS? _op | _after_op _WS? _op
+_content: subshell | word | _funcdef | case_clause | _COMMENT
+// A function definition's "()" is one token, so "f()", "f ()" and "f ( )"
+// all read the same way, and the body may follow it directly ("f(){ ...; }").
+_funcdef: word _WS? FUNC_PARENS _content?
+FUNC_PARENS: /\([ \t]*\)/
+_op: SEP | PIPE | AMP | IO_REDIR | REDIR | NEWLINE
 
-// A balanced "(...)" group is preferred over the bare LPAR/RPAR tokens (rule
-// priority), so a command substitution keeps the right extent for "$( (a) )"
-// and a real subshell parses as one unit. A lone ")" with no matching "(" --
-// the close of a case pattern like "x86*)" -- has no subshell parse available
-// and falls back to the RPAR token, which the statement parser consumes.
-subshell.10: LPAR start RPAR
+// "(" only ever opens a group and ")" only ever closes one: a "(...)" is a
+// subshell, a "(" that never closes is a syntax error, and the one ")" bash
+// allows without a matching "(" -- the close of a case pattern like "x86*)"
+// -- is recognised by the case_clause rule below. Keeping the parens out of
+// _op matters for parse cost: Earley builds every reading of the input, and
+// if either could stand alone, every "(...)" and "$(...)" could close at any
+// later ")" on the line (issue #40597). A subshell has at least one command:
+// "( )" is a syntax error in bash, and an empty "()" is FUNC_PARENS.
+subshell: LPAR body RPAR
+body: _WS? _seq
 
-word: _atom+
+// "case WORD in [(]PAT[|PAT]...) BODY ;; ... esac". The keywords are only
+// keywords here: elsewhere "case", "in" and "esac" lex as ordinary words.
+case_clause: CASE _WS word _WS IN _blank* case_item* ESAC
+case_item: (LPAR _WS?)? case_patterns _WS? RPAR start (DSEMI _blank*)?
+case_patterns: word (_WS? PIPE _WS? word)*
+_blank: _WS | NEWLINE
+CASE: /case(?=\s)/
+IN: /in(?=\s)/
+ESAC: /esac(?![^\s;&|<>()])/
+
+// A "#" starts a comment only at a word start (see _COMMENT), so a LITERAL
+// never begins with one; inside a word ("a#b", "''#x") it is ordinary text.
+word: _atom (_atom | HASH_LITERAL)*
 _atom: sq | dq | cmdsub | backtick | dollar_brace | dollar_var | ESC | BARE_DOLLAR | LITERAL
+HASH_LITERAL: /#[^ \t\r\n|&;<>()$`'"\\]*/
 
-// An explicit, high-priority "$(" terminal so command substitution wins over a
-// bare "$" followed by the LPAR token now that "(" is a self-standing operator.
+// An explicit "$(" terminal: BARE_DOLLAR never matches before a "(".
 cmdsub: CMDSUB_OPEN start ")"
-CMDSUB_OPEN.6: "$("
+CMDSUB_OPEN: "$("
 
 backtick: "`" _bq_atom* "`"
 _bq_atom: dollar_var | dollar_brace | BQ_LITERAL
 BQ_LITERAL: /[^`]+/
 
 dq: "\"" _dq_part* "\""
-_dq_part: cmdsub | backtick | dollar_brace | dollar_var | DQ_ESC | DQ_TEXT
+_dq_part: cmdsub | backtick | dollar_brace | dollar_var | DQ_ESC | DQ_TEXT | BARE_DOLLAR
 DQ_TEXT: /[^"$`\\]+/
 DQ_ESC: /\\[\\"$`]/ | /\\/
 
@@ -130,28 +165,25 @@ SQ: /'[^']*'/
 dollar_brace: "${" BRACE_NAME "}"
 BRACE_NAME: /[_a-zA-Z0-9]+/
 
-// Higher priority than the bare BARE_DOLLAR so a "$" that begins a variable
-// reference is lexed as one "$VAR" token even when it directly follows literal
-// text in the same word ("got=$x", "$PATH:/x"), rather than splitting into a
-// bare "$" plus a "VAR" literal.
 dollar_var: DOLLAR_NAME | DOLLAR_SPECIAL
-DOLLAR_NAME.2: /\$[_a-zA-Z0-9]+/
-DOLLAR_SPECIAL.2: /\$[?@$#!*]/
+DOLLAR_NAME: /\$[_a-zA-Z0-9]+/
+DOLLAR_SPECIAL: /\$[?@$#!*]/
 
 ESC: /\\./
 
-// ";;" (case item terminator) must win over a single ";".
-DSEMI.7: ";;"
-// Higher priority than the bare AMP so "&&" and "&>" win maximal munch.
-SEP.2: "&&" | "||" | ";"
-PIPE: "|"
-AMP: "&"
+// A single-character operator never matches where a longer one starts
+// (";;", "&&", "||", "&>"), so each operator has exactly one reading.
+DSEMI: ";;"
+SEP: "&&" | "||" | /;(?!;)/
+PIPE: /\|(?!\|)/
+AMP: /&(?![&>])/
 // A redirection with a file descriptor directly attached to it ("2>", "2>&",
-// "1>>"): one high-priority token so the digit is a file descriptor, not an
-// argument. A digit separated by whitespace ("2 >") stays an ordinary word,
-// which is how bash tells the two apart.
-IO_REDIR.5: /\d+(?:>>|>&|>|<)/
-REDIR.2: />>|>&|&>>|&>|>|</
+// "1>>"): one token, so the digit is a file descriptor, not an argument (a
+// LITERAL never matches digits directly before "<" or ">"). A digit separated
+// by whitespace ("2 >") stays an ordinary word, which is how bash tells the
+// two apart.
+IO_REDIR: /\d+(?:>>|>&|>|<)/
+REDIR: />>|>&|&>>|&>|>(?![>&])|</
 
 LPAR: "("
 RPAR: ")"
@@ -160,13 +192,15 @@ RPAR: ")"
 // whitespace (see _WS below).
 NEWLINE: /\r?\n/
 
-BARE_DOLLAR: "$"
-LITERAL: /[^ \t\r\n|&;<>()$`'"\\]+/
+// A "$" that does not start an expansion: never where DOLLAR_NAME,
+// DOLLAR_SPECIAL, "${" or "$(" would match, so a "$x" has one reading.
+BARE_DOLLAR: /\$(?![_a-zA-Z0-9{(?@$#!*])/
+// Not a "#" first (that is a comment), and not digits directly before a
+// redirection operator (that is an IO_REDIR file descriptor, "2>&1").
+LITERAL: /(?!#|\d+[<>])[^ \t\r\n|&;<>()$`'"\\]+/
 
-// A "#" starts a comment only at a word boundary (higher priority than the
-// LITERAL that would otherwise begin a word with "#"); a "#" inside a word
-// such as "a#b" stays part of the LITERAL.
-_COMMENT.2: /#[^\r\n]*/
+// A "#" at a word start begins a comment.
+_COMMENT: /#[^\r\n]*/
 
 // Inline whitespace and line continuations only; a bare newline is NEWLINE.
 _WS: /([ \t]|\\\r?\n)+/
@@ -190,6 +224,72 @@ def max_input_size() -> int:
     return CowrieConfig.getint("shell", "max_input_size", fallback=16384)
 
 
+def gc_collect_threshold() -> int:
+    """Input length in characters that triggers post-parse garbage collection.
+
+    Lark's Earley parser builds cyclic intermediate structures. CPython's
+    reference counting cannot reclaim those structures promptly, so collect
+    after larger inputs instead of allowing a busy honeypot to accumulate
+    them until a later generation-two collection.
+    """
+    return CowrieConfig.getint("shell", "gc_collect_threshold", fallback=512)
+
+
+class ParseTimeoutError(Exception):
+    """Raised when a shell parse exceeds ``parse_timeout_seconds``."""
+
+
+def parse_timeout_seconds() -> float:
+    """Maximum wall-clock time for one shell parse; zero disables the limit."""
+    return CowrieConfig.getfloat("shell", "parse_timeout_seconds", fallback=10.0)
+
+
+_HAS_PARSE_ALARM = all(
+    hasattr(signal, name)
+    for name in ("SIGALRM", "ITIMER_REAL", "getitimer", "setitimer")
+)
+
+
+def _raise_parse_timeout(signum: int, frame: object) -> None:
+    raise ParseTimeoutError
+
+
+@contextlib.contextmanager
+def _parse_alarm(seconds: float) -> Iterator[None]:
+    """Apply a POSIX wall-clock limit without disturbing an embedding app.
+
+    Signals are process-global and Python only permits changing their handlers
+    in the main thread. Cowrie uses the alarm only when SIGALRM has its default
+    handler and no real-time alarm is already pending; otherwise the caller's
+    signal handling takes precedence and parsing proceeds normally.
+    """
+    if (
+        seconds <= 0
+        or not _HAS_PARSE_ALARM
+        or threading.current_thread() is not threading.main_thread()
+    ):
+        yield
+        return
+
+    if signal.getsignal(signal.SIGALRM) is not signal.SIG_DFL:
+        yield
+        return
+    delay, interval = signal.getitimer(signal.ITIMER_REAL)
+    if delay or interval:
+        yield
+        return
+
+    previous_handler = signal.signal(signal.SIGALRM, _raise_parse_timeout)
+    try:
+        signal.setitimer(signal.ITIMER_REAL, seconds)
+        try:
+            yield
+        finally:
+            signal.setitimer(signal.ITIMER_REAL, 0)
+    finally:
+        signal.signal(signal.SIGALRM, previous_handler)
+
+
 class ShellContext(Protocol):
     """What the evaluator needs from the live shell to evaluate words."""
 
@@ -209,10 +309,10 @@ class ShellContext(Protocol):
 
 @dataclass
 class Command:
-    """A simple command / pipeline, structure only.
+    """A simple command, structure only.
 
     ``items`` keeps the ordered word trees (still unevaluated) interleaved with
-    the control operator strings (``|``, ``>``, ``2>`` ...). Words are expanded
+    the redirection operator strings (``>``, ``2>`` ...). Words are expanded
     against the live shell by :meth:`BashParser.evaluate` only when the command
     is about to run, so a same-line ``x=hi; echo $x`` sees the assignment.
     ``op`` is the operator that joins this statement to the previous one
@@ -222,6 +322,18 @@ class Command:
 
     items: list[str | Tree] = field(default_factory=list)
     line: str = ""
+    op: str | None = None
+
+
+@dataclass
+class Pipeline:
+    """``cmd | cmd ...``: two or more stages, each any kind of command (a simple
+    command, a ``(...)`` or ``{ ...; }`` group, a loop ...), as in a real
+    shell. ``op`` joins the pipeline to the previous statement; the stages
+    themselves carry no join operator.
+    """
+
+    stages: list[Statement] = field(default_factory=list)
     op: str | None = None
 
 
@@ -236,6 +348,7 @@ class Subshell:
 
     statements: list[Statement] = field(default_factory=list)
     op: str | None = None
+    redirections: Command | None = None
 
 
 @dataclass
@@ -244,6 +357,7 @@ class BraceGroup:
 
     statements: list[Statement] = field(default_factory=list)
     op: str | None = None
+    redirections: Command | None = None
 
 
 @dataclass
@@ -258,6 +372,7 @@ class ForClause:
     items: Command | None = None
     body: list[Statement] = field(default_factory=list)
     op: str | None = None
+    redirections: Command | None = None
 
 
 @dataclass
@@ -273,6 +388,7 @@ class IfClause:
     )
     else_body: list[Statement] | None = None
     op: str | None = None
+    redirections: Command | None = None
 
 
 @dataclass
@@ -283,6 +399,7 @@ class WhileClause:
     body: list[Statement] = field(default_factory=list)
     until: bool = False
     op: str | None = None
+    redirections: Command | None = None
 
 
 @dataclass
@@ -296,6 +413,7 @@ class CaseClause:
     word: Command | None = None
     items: list[tuple[list[str], list[Statement]]] = field(default_factory=list)
     op: str | None = None
+    redirections: Command | None = None
 
 
 @dataclass
@@ -321,6 +439,7 @@ class SyntaxError_:
 
 Statement = (
     Command
+    | Pipeline
     | Subshell
     | BraceGroup
     | ForClause
@@ -330,6 +449,10 @@ Statement = (
     | FunctionDef
     | SyntaxError_
 )
+
+# The compound commands a redirection can follow ("(...) > f", "done 2>&1"),
+# carrying it in their ``redirections`` field.
+REDIRECTABLE = (Subshell, BraceGroup, ForClause, IfClause, WhileClause, CaseClause)
 
 # Reserved words recognised only at a command position (the start of a
 # statement). Anywhere else they are ordinary arguments, so ``echo done`` still
@@ -355,9 +478,9 @@ _RESERVED = frozenset(
     }
 )
 
-# Tokens that end a simple command / pipeline (a separator or the close of an
-# enclosing construct).
-_STATEMENT_END = frozenset({"SEP", "NEWLINE", "DSEMI", "RPAR"})
+# Tokens that end a statement, and those that end one pipeline stage.
+_STATEMENT_END = frozenset({"SEP", "NEWLINE"})
+_STAGE_END = _STATEMENT_END | {"PIPE"}
 
 _NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
@@ -382,6 +505,8 @@ class _Cursor:
 class BashParser:
     """Parse a command line into a list of statements for the shell to run."""
 
+    _log = Logger()
+
     def __init__(self, context: ShellContext) -> None:
         self.context = context
 
@@ -394,11 +519,37 @@ class BashParser:
         empty token so the caller can emit the generic message, matching the
         previous "unexpected end of file" fallback.
         """
+        timed_out = False
         try:
-            tree = _parser.parse(line)
+            with _parse_alarm(parse_timeout_seconds()):
+                tree = _parser.parse(line)
+        except UnexpectedCharacters as error:
+            return [SyntaxError_(token=self._unexpected_char(line, error))]
         except LarkError:
             return [SyntaxError_(token="")]
+        except ParseTimeoutError:
+            timed_out = True
+            self._log.warn(
+                "Shell parse exceeded {timeout}s (input: {length} characters)",
+                timeout=parse_timeout_seconds(),
+                length=len(line),
+            )
+            return [SyntaxError_(token="")]
+        finally:
+            if timed_out or len(line) >= gc_collect_threshold():
+                gc.collect()
         return self._split_statements(line, tree)
+
+    @staticmethod
+    def _unexpected_char(line: str, error: UnexpectedCharacters) -> str:
+        """The token bash names for input the grammar rejects outright: a
+        ")" or ";;" with nothing to close. Anything else gets the generic
+        "unexpected end of file"."""
+        rest = line[error.pos_in_stream :]
+        for token in (";;", ")"):
+            if rest.startswith(token):
+                return token
+        return ""
 
     # -- statement splitting ------------------------------------------------
 
@@ -443,7 +594,7 @@ class BashParser:
         self, line: str, cursor: _Cursor, stop: frozenset[str]
     ) -> list[Statement]:
         """Parse statements separated by ``;`` / newline / ``&&`` / ``||`` until a
-        reserved stop word, a ``)`` / ``;;`` token, or the end of input."""
+        reserved stop word or the end of input."""
         statements: list[Statement] = []
         pending_op: str | None = None
         seen = False
@@ -468,8 +619,6 @@ class BashParser:
                 break
             if self._keyword(node) in stop:
                 break
-            if self._token_type(node) in ("DSEMI", "RPAR"):
-                break
 
             statement = self._parse_statement(
                 line, cursor, pending_op if seen else None
@@ -483,14 +632,67 @@ class BashParser:
         return statements
 
     def _parse_statement(self, line: str, cursor: _Cursor, op: str | None) -> Statement:
+        """One statement: a command, or a pipeline of commands joined by ``|``.
+
+        A newline may follow a ``|`` (bash keeps reading the pipeline on the
+        next line); a ``|`` with no command on either side is a syntax error.
+        """
+        if self._token_type(cursor.peek()) == "PIPE":
+            return SyntaxError_(token="|")
+        stages = [self._parse_command(line, cursor, op)]
+        while self._token_type(cursor.peek()) == "PIPE":
+            if isinstance(stages[-1], SyntaxError_):
+                break
+            cursor.next()  # "|"
+            while self._token_type(cursor.peek()) == "NEWLINE":
+                cursor.next()
+            node = cursor.peek()
+            if node is None:
+                return SyntaxError_(token="")
+            if self._token_type(node) == "PIPE":
+                return SyntaxError_(token="|")
+            stages.append(self._parse_command(line, cursor, None))
+        if len(stages) == 1:
+            return stages[0]
+        if isinstance(stages[-1], SyntaxError_):
+            return stages[-1]
+        first = stages[0]
+        assert not isinstance(first, SyntaxError_)
+        first.op = None  # the join operator belongs to the pipeline
+        return Pipeline(stages=stages, op=op)
+
+    def _parse_command(self, line: str, cursor: _Cursor, op: str | None) -> Statement:
+        """One command: a simple command or a compound command, with any
+        redirection that follows a compound (`(...) > f`, `done 2>&1`)
+        attached to it so the runtime can apply it to the whole group."""
+        statement = self._parse_command_head(line, cursor, op)
+        if isinstance(statement, REDIRECTABLE):
+            redirections = self._collect_redirections(line, cursor)
+            if redirections is not None:
+                statement.redirections = redirections
+        return statement
+
+    def _parse_command_head(
+        self, line: str, cursor: _Cursor, op: str | None
+    ) -> Statement:
         node = cursor.peek()
 
-        # A subshell at command position runs in sequence; anything piped after
-        # it is dropped (see the pipeline TODO below).
         if isinstance(node, Tree) and node.data == "subshell":
             cursor.next()
-            self._skip_to_statement_end(cursor)
+            after = cursor.peek()
+            if isinstance(after, Tree):
+                # A word or another group directly after ")" -- bash reports
+                # a syntax error near that token. A redirection ("(a) > f")
+                # is a REDIR/IO_REDIR token, not a Tree, and is collected by
+                # _parse_command instead.
+                if after.data == "subshell":
+                    return SyntaxError_(token=self._error_token(line, after))
+                return SyntaxError_(token=self._word_source(line, after))
             return Subshell(statements=self._subshell_statements(line, node), op=op)
+
+        if isinstance(node, Tree) and node.data == "case_clause":
+            cursor.next()
+            return self._case_clause(line, node, op)
 
         keyword = self._keyword(node)
         if keyword == "for":
@@ -500,7 +702,10 @@ class BashParser:
         if keyword in ("while", "until"):
             return self._parse_while(line, cursor, op, until=keyword == "until")
         if keyword == "case":
-            return self._parse_case(line, cursor, op)
+            # The grammar did not recognise a complete case clause here, so
+            # something after "case" is misplaced.
+            cursor.next()
+            return SyntaxError_(token=self._unexpected(line, cursor))
         if keyword == "{":
             return self._parse_brace_group(line, cursor, op)
         if keyword == "function":
@@ -510,20 +715,48 @@ class BashParser:
 
         return self._parse_simple(line, cursor, op)
 
+    def _collect_redirections(self, line: str, cursor: _Cursor) -> Command | None:
+        """Gather the redirections that follow a compound command as a
+        :class:`Command` of operator strings and target words, or None if
+        there are none. The runtime evaluates and applies them like a simple
+        command's own redirections."""
+        items: list[str | Tree] = []
+        while self._token_type(cursor.peek()) in ("REDIR", "IO_REDIR"):
+            operator = cursor.next()
+            assert isinstance(operator, Token)
+            items.append(str(operator.value))
+            target = cursor.peek()
+            if isinstance(target, Tree) and target.data == "word":
+                items.append(cursor.next())
+        if not items:
+            return None
+        return Command(items=items, line=line)
+
     def _parse_simple(self, line: str, cursor: _Cursor, op: str | None) -> Statement:
-        """Gather one simple command / pipeline up to the next statement end."""
+        """Gather one simple command up to the next ``|`` or statement end."""
         units: list[Tree | Token] = []
         while True:
             node = cursor.peek()
-            if node is None or self._token_type(node) in _STATEMENT_END:
+            if node is None or self._token_type(node) in _STAGE_END:
                 break
             # A "(...)" that survived as a unit here is a subshell in the middle
             # of a command -- a bash syntax error reported on the "(" token.
             if isinstance(node, Tree) and node.data == "subshell":
                 return SyntaxError_(token=self._error_token(line, node))
-            if isinstance(node, Token) and node.type == "LPAR":
-                return SyntaxError_(token=self._error_token_at(line, node))
+            # Likewise a case clause, which bash rejects at the pattern's ")",
+            # and a "()" after an argument ("echo f()"), rejected at the "(".
+            if isinstance(node, Tree) and node.data == "case_clause":
+                return SyntaxError_(token=")")
+            if self._token_type(node) == "FUNC_PARENS":
+                return SyntaxError_(token="(")
             units.append(cursor.next())
+        if (
+            self._token_type(node) == "PIPE"
+            and units
+            and self._token_type(units[-1]) in ("REDIR", "IO_REDIR")
+        ):
+            # A redirection with the "|" where its target should be.
+            return SyntaxError_(token="|")
         return self._make_command(line, units, op)
 
     def _make_command(
@@ -623,64 +856,36 @@ class BashParser:
             return error
         return WhileClause(condition=condition, body=body, until=until, op=op)
 
-    def _parse_case(self, line: str, cursor: _Cursor, op: str | None) -> Statement:
-        cursor.next()  # "case"
-        word_trees: list[Tree] = []
-        while True:
-            node = cursor.peek()
-            if node is None or self._keyword(node) == "in" or self._is_separator(node):
-                break
-            if isinstance(node, Tree) and node.data == "word":
-                cursor.next()
-                word_trees.append(node)
-                continue
-            break
-        if self._keyword(cursor.peek()) != "in":
-            return SyntaxError_(token=self._unexpected(line, cursor))
-        cursor.next()  # "in"
-        self._skip_separators(cursor)
-
+    def _case_clause(self, line: str, tree: Tree, op: str | None) -> Statement:
+        """Build a :class:`CaseClause` from the grammar's ``case_clause`` tree."""
+        word: Tree | None = None
         items: list[tuple[list[str], list[Statement]]] = []
-        while True:
-            node = cursor.peek()
-            if node is None or self._keyword(node) == "esac":
-                break
-            patterns, error = self._parse_case_patterns(line, cursor)
-            if error is not None:
-                return error
-            body = self._parse_list(line, cursor, stop=frozenset({"esac"}))
-            if self._token_type(cursor.peek()) == "DSEMI":
-                cursor.next()
-            self._skip_separators(cursor)
-            items.append((patterns, body))
+        for child in tree.children:
+            if not isinstance(child, Tree):
+                continue  # the case / in / esac keywords
+            if child.data == "word":
+                word = child
+            elif child.data == "case_item":
+                items.append(self._case_item(line, child))
+        assert word is not None
+        return CaseClause(word=Command(items=[word], line=line), items=items, op=op)
 
-        error = self._expect(cursor, "esac")
-        if error is not None:
-            return error
-        return CaseClause(
-            word=Command(items=list(word_trees), line=line), items=items, op=op
-        )
-
-    def _parse_case_patterns(
-        self, line: str, cursor: _Cursor
-    ) -> tuple[list[str], Statement | None]:
-        """Read ``pat[|pat]*)`` and return the raw pattern strings."""
+    def _case_item(self, line: str, item: Tree) -> tuple[list[str], list[Statement]]:
+        """The raw pattern strings and parsed body of one ``pat[|pat]*) body ;;``."""
         patterns: list[str] = []
-        while True:
-            node = cursor.peek()
-            if node is None:
-                return patterns, SyntaxError_(token="newline")
-            if self._token_type(node) == "RPAR":
-                cursor.next()
-                return patterns, None
-            if self._token_type(node) == "PIPE":
-                cursor.next()
-                continue
-            if isinstance(node, Tree) and node.data == "word":
-                patterns.append(self._word_source(line, node))
-                cursor.next()
-                continue
-            return patterns, SyntaxError_(token=self._unexpected(line, cursor))
+        body: list[Statement] = []
+        for child in item.children:
+            if not isinstance(child, Tree):
+                continue  # "(", ")" and ";;"
+            if child.data == "case_patterns":
+                patterns = [
+                    self._word_source(line, node)
+                    for node in child.children
+                    if isinstance(node, Tree) and node.data == "word"
+                ]
+            elif child.data == "start":
+                body = self._split_statements(line, child)
+        return patterns, body
 
     def _parse_brace_group(
         self, line: str, cursor: _Cursor, op: str | None
@@ -693,18 +898,11 @@ class BashParser:
         return BraceGroup(statements=body, op=op)
 
     def _looks_like_funcdef(self, cursor: _Cursor) -> bool:
-        """Detect ``name ()`` at command position (the "()" lexes as LPAR RPAR,
-        or as an empty subshell when separated by a space)."""
+        """Detect ``name ()`` at command position."""
         name = self._word_literal(cursor.peek())
         if name is None or not _NAME_RE.match(name):
             return False
-        after = cursor.peek(1)
-        if isinstance(after, Tree) and after.data == "subshell":
-            return not self._subshell_statements("", after)
-        return (
-            self._token_type(after) == "LPAR"
-            and self._token_type(cursor.peek(2)) == "RPAR"
-        )
+        return self._token_type(cursor.peek(1)) == "FUNC_PARENS"
 
     def _parse_function(self, line: str, cursor: _Cursor, op: str | None) -> Statement:
         name = self._word_literal(cursor.next())
@@ -724,13 +922,8 @@ class BashParser:
         return self._finish_function(line, cursor, name, op)
 
     def _consume_empty_parens(self, cursor: _Cursor) -> None:
-        node = cursor.peek()
-        if isinstance(node, Tree) and node.data == "subshell":
+        if self._token_type(cursor.peek()) == "FUNC_PARENS":
             cursor.next()
-        elif self._token_type(node) == "LPAR":
-            cursor.next()
-            if self._token_type(cursor.peek()) == "RPAR":
-                cursor.next()
 
     def _finish_function(
         self, line: str, cursor: _Cursor, name: str, op: str | None
@@ -748,14 +941,6 @@ class BashParser:
 
     def _skip_separators(self, cursor: _Cursor) -> None:
         while self._is_separator(cursor.peek()):
-            cursor.next()
-
-    def _skip_to_statement_end(self, cursor: _Cursor) -> None:
-        """Drop tokens up to (not including) the next statement separator."""
-        while True:
-            node = cursor.peek()
-            if node is None or self._token_type(node) in _STATEMENT_END:
-                return
             cursor.next()
 
     def _expect(self, cursor: _Cursor, keyword: str) -> Statement | None:
@@ -780,15 +965,6 @@ class BashParser:
             literal = self._word_literal(word)
             return literal if literal is not None else ""
         return line[word.meta.start_pos : word.meta.end_pos]
-
-    def _error_token_at(self, line: str, token: Token) -> str:
-        start = getattr(token, "start_pos", None)
-        if start is None:
-            return "("
-        end = start + 1
-        while end < len(line) and not line[end].isspace() and line[end] != ")":
-            end += 1
-        return line[start:end]
 
     # -- word evaluation ----------------------------------------------------
 
@@ -873,7 +1049,7 @@ class BashParser:
         parts: list[str] = []
         for part in dq.children:
             if isinstance(part, Token):
-                if part.type == "DQ_TEXT":
+                if part.type in ("DQ_TEXT", "BARE_DOLLAR"):
                     parts.append(part.value)
                 elif part.type == "DQ_ESC":
                     parts.append(self._unescape_dq(part.value))
@@ -957,9 +1133,9 @@ class BashParser:
     # -- source slicing for substitution / subshells ------------------------
 
     def _subshell_statements(self, line: str, subshell: Tree) -> list[Statement]:
-        """Parse the inner ``start`` tree of a ``(...)`` group into statements."""
+        """Parse the ``body`` tree of a ``(...)`` group into statements."""
         for child in subshell.children:
-            if isinstance(child, Tree) and child.data == "start":
+            if isinstance(child, Tree) and child.data == "body":
                 return self._split_statements(line, child)
         return []
 

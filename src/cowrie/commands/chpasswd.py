@@ -18,6 +18,8 @@ commands = {}
 
 
 class Command_chpasswd(HoneyPotCommand):
+    consumes_stdin = True
+
     def help(self) -> None:
         output = (
             "Usage: chpasswd [options]",

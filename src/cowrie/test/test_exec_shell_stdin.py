@@ -120,6 +120,23 @@ class ExecShellStdinTests(unittest.TestCase):
         lsp.dataReceived(b"\x04")
         self.assertEqual(ended.get("code"), 0)
 
+    def test_pipeline_first_stage_reads_the_channel(self) -> None:
+        # `ssh host 'cat | cat'`: the first stage runs in a child shell but
+        # reads the live channel, and the data reaches the second stage on EOF.
+        lsp, out, ended = self.drive(b"cat | cat")
+        lsp.dataReceived(b"hello\n")
+        self.assertEqual(ended, {})
+        lsp.eofReceived()
+        self.assertEqual(bytes(out), b"hello\n")
+        self.assertEqual(ended.get("code"), 0)
+
+    def test_subshell_reads_the_channel(self) -> None:
+        lsp, out, ended = self.drive(b"(cat)")
+        lsp.dataReceived(b"hello\n")
+        lsp.eofReceived()
+        self.assertEqual(bytes(out), b"hello\n")
+        self.assertEqual(ended.get("code"), 0)
+
     def test_empty_pipe_into_bash_still_exits(self) -> None:
         # `true | bash`: stdin is the (empty) pipe, not the channel, so the
         # shell sees immediate EOF and the session ends.

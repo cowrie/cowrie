@@ -79,7 +79,7 @@ class Output(cowrie.core.output.Output):
             )
 
     def stop(self):
-        if hasattr(self, "db"):
+        if hasattr(self, "db") and self.db.running:
             self.db.close()
 
     def sqlerror(self, error):

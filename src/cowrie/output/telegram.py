@@ -5,11 +5,23 @@
 
 # Simple Telegram Bot logger
 
+from html import escape
+
 import treq
 from twisted.logger import Logger
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
+
+
+def esc(value: str) -> str:
+    """Escape a value for a Telegram message sent with parse_mode=HTML.
+
+    Telegram's HTML mode wants "<", ">" and "&" escaped in text. Quotes are
+    left alone: nothing here is interpolated into an attribute, and Telegram
+    does not define the numeric entity html.escape would produce for "'".
+    """
+    return escape(str(value), quote=False)
 
 
 class Output(cowrie.core.output.Output):
@@ -40,22 +52,26 @@ class Output(cowrie.core.output.Output):
         # else:
         #     logon_type = ""
 
+        # The message is sent with parse_mode=HTML, so every value put into it
+        # is escaped: the command, credentials and URL are attacker-controlled,
+        # and a literal "<", ">" or "&" would otherwise be read as markup --
+        # breaking the message, or rendering markup the attacker chose.
         # Prepare base message
-        msgtxt = "<strong>[Cowrie " + event["sensor"] + "]</strong>"
-        msgtxt += "\nEvent: " + event["eventid"]
+        msgtxt = "<strong>[Cowrie " + esc(event["sensor"]) + "]</strong>"
+        msgtxt += "\nEvent: " + esc(event["eventid"])
         # msgtxt += "\nLogon type: " + logon_type
-        msgtxt += "\nSource: <code>" + event["src_ip"] + "</code>"
-        msgtxt += "\nSession: <code>" + event["session"] + "</code>"
+        msgtxt += "\nSource: <code>" + esc(event["src_ip"]) + "</code>"
+        msgtxt += "\nSession: <code>" + esc(event["session"]) + "</code>"
 
         if event["eventid"] == "cowrie.login.success":
-            msgtxt += "\nUsername: <code>" + event["username"] + "</code>"
-            msgtxt += "\nPassword: <code>" + event["password"] + "</code>"
+            msgtxt += "\nUsername: <code>" + esc(event["username"]) + "</code>"
+            msgtxt += "\nPassword: <code>" + esc(event["password"]) + "</code>"
             self.send_message(msgtxt)
         elif event["eventid"] in ["cowrie.command.failed", "cowrie.command.input"]:
-            msgtxt += "\nCommand: <pre>" + event["input"] + "</pre>"
+            msgtxt += "\nCommand: <pre>" + esc(event["input"]) + "</pre>"
             self.send_message(msgtxt)
         elif event["eventid"] == "cowrie.session.file_download":
-            msgtxt += "\nUrl: " + event.get("url", "")
+            msgtxt += "\nUrl: " + esc(event.get("url", ""))
             self.send_message(msgtxt)
 
     def send_message(self, message):

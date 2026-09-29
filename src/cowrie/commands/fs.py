@@ -31,8 +31,12 @@ class Command_grep(HoneyPotCommand):
     grep command
     """
 
+    consumes_stdin = True
+
     interactive: bool = False
     matched: bool = False
+    max_count: int | None = None
+    match_count: int = 0
 
     def grep_get_contents(self, filename: str, match: str) -> None:
         try:
@@ -48,8 +52,11 @@ class Command_grep(HoneyPotCommand):
     def grep_application(self, contents: bytes, match: str) -> None:
         matcher = self.compile_match(match)
         for line in contents.split(b"\n"):
+            if self.max_count is not None and self.match_count >= self.max_count:
+                break
             if matcher.search(line):
                 self.matched = True
+                self.match_count += 1
                 self.writeBytes(line + b"\n")
 
     def help(self) -> None:
@@ -73,7 +80,7 @@ class Command_grep(HoneyPotCommand):
         try:
             optlist, args = getopt.getopt(
                 self.args,
-                "abcDEFGHhIiJLlmnOoPqRSsUVvwxZA:B:C:e:f:",
+                "abcDEFGHhIiJLlnOoPqRSsUVvwxZA:B:C:e:f:m:",
                 [
                     "binary-files=",
                     "color=",
@@ -90,9 +97,19 @@ class Command_grep(HoneyPotCommand):
             self.exit()
             return
 
-        for opt, _arg in optlist:
+        for opt, arg in optlist:
             if opt == "-h":
                 self.help()
+            elif opt == "-m":
+                try:
+                    n = int(arg)
+                except ValueError:
+                    n = -1
+                if n < 0:
+                    self.errorWrite("grep: invalid max count\n")
+                    self.exit(2)
+                    return
+                self.max_count = n
 
         if not args:
             # Options only, no pattern (e.g. `grep -h`).
@@ -160,6 +177,8 @@ class Command_tail(HoneyPotCommand):
     """
     tail command
     """
+
+    consumes_stdin = True
 
     n: int = 10
 
@@ -231,6 +250,8 @@ class Command_head(HoneyPotCommand):
     """
     head command
     """
+
+    consumes_stdin = True
 
     linecount: int = 10
     bytecount: int = 0
@@ -473,6 +494,13 @@ class Command_cp(HoneyPotCommand):
             self.errorWrite("Try `cp --help' for more information.\n")
             return
         sources, dest = args[:-1], args[-1]
+        # Quoting reaches the command as an empty argument; there is no such
+        # path, so there is nothing to resolve or index into.
+        if not dest:
+            self.errorWrite(
+                f"cp: cannot create regular file `{dest}': No such file or directory\n"
+            )
+            return
         if len(sources) > 1 and not self.fs.isdir(resolv(dest)):
             self.errorWrite(f"cp: target `{dest}' is not a directory\n")
             return
@@ -545,6 +573,14 @@ class Command_mv(HoneyPotCommand):
             self.errorWrite("Try `mv --help' for more information.\n")
             return
         sources, dest = args[:-1], args[-1]
+        # Quoting reaches the command as an empty argument; there is no such
+        # path, so there is nothing to resolve or index into.
+        if not dest:
+            self.errorWrite(
+                f"mv: cannot move `{sources[0]}' to `{dest}': "
+                "No such file or directory\n"
+            )
+            return
         if len(sources) > 1 and not self.fs.isdir(resolv(dest)):
             self.errorWrite(f"mv: target `{dest}' is not a directory\n")
             return
@@ -639,7 +675,7 @@ class Command_rmdir(HoneyPotCommand):
                         self.errorWrite(
                             f"rmdir: failed to remove '{f}': Not a directory\n"
                         )
-                        return
+                        continue
                     directory.remove(i)
                     break
 
@@ -677,14 +713,14 @@ class Command_touch(HoneyPotCommand):
                 self.errorWrite(
                     f"touch: cannot touch `{pname}`: No such file or directory\n"
                 )
-                return
+                continue
             if self.fs.exists(pname):
                 # FIXME: modify the timestamp here
                 continue
             # can't touch in special directories
             if any([pname.startswith(_p) for _p in fs.SPECIAL_PATHS]):
                 self.errorWrite(f"touch: cannot touch `{pname}`: Permission denied\n")
-                return
+                continue
 
             self.fs.mkfile(pname, self.user["uid"], self.user["gid"], 0, 33188)
 

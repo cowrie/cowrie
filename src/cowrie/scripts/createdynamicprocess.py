@@ -41,7 +41,8 @@ def run():
             obj["USER"] = info["username"]
             obj["PID"] = info["pid"]
             if info["cmdline"]:
-                obj["COMMAND"] = "/".join(info["cmdline"])
+                # ps space-separates argv in its COMMAND column.
+                obj["COMMAND"] = " ".join(info["cmdline"])
             else:
                 obj["COMMAND"] = "[ " + info["name"] + " ]"
             obj["CPU"] = info["cpu_percent"]

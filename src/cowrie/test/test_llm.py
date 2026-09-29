@@ -76,6 +76,38 @@ class SystemContextTests(unittest.TestCase):
 
         self.assertIn("svr04", context)
 
+    def test_indexed_placeholder_in_template(self) -> None:
+        """A stray index after a real placeholder raises IndexError from the
+        format machinery, which _LenientFormat cannot intercept."""
+        proto = self._proto()
+        with patch.object(CowrieConfig, "get", return_value="hi {hostname[10]}"):
+            context = proto._build_system_context()
+
+        self.assertIn("svr04", context)
+
+    def test_dotted_placeholder_in_template(self) -> None:
+        """__missing__ returns a str for the unknown name, and the attribute
+        lookup on it then raises AttributeError."""
+        proto = self._proto()
+        with patch.object(CowrieConfig, "get", return_value="hi {unknown.attr}"):
+            context = proto._build_system_context()
+
+        self.assertIn("svr04", context)
+
+    def test_dotted_known_placeholder_in_template(self) -> None:
+        proto = self._proto()
+        with patch.object(CowrieConfig, "get", return_value="hi {username.title}"):
+            context = proto._build_system_context()
+
+        self.assertIn("svr04", context)
+
+    def test_non_integer_index_in_template(self) -> None:
+        proto = self._proto()
+        with patch.object(CowrieConfig, "get", return_value="hi {hostname[abc]}"):
+            context = proto._build_system_context()
+
+        self.assertIn("svr04", context)
+
     def test_supported_placeholders_still_substituted(self) -> None:
         proto = self._proto()
         with patch.object(

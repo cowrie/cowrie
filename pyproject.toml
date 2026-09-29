@@ -66,35 +66,36 @@ csirtg = ["csirtgsdk==1.1.5"]
 elasticsearch = ["pyes"]
 mysql = ["mysqlclient"]
 mongodb = ["pymongo"]
-pool = ["libvirt-python==12.6.0"]
+pool = ["libvirt-python==12.7.0"]
 rethinkdblog = ["rethinkdb"]
 s3 = ["botocore"]
 slack = ["slackclient"]
 influxdb = ["influxdb"]
 kafka = ["aiokafka"]
 dev = [
-"build==1.5.0",
-"coverage==7.15.2",
+"build==1.6.0",
+"coverage==7.16.1",
 "mypy-extensions==1.1.0; platform_python_implementation=='CPython'",
 "mypy-zope==1.0.16; platform_python_implementation=='CPython'",
-"mypy==2.3.0; platform_python_implementation=='CPython'",
+"mypy==2.3.1; platform_python_implementation=='CPython'",
 "pathspec==1.1.1",
 "pip-audit==2.10.1",
-"pipdeptree==4.2.0",
-"pre-commit==4.6.1",
-"pylint==4.0.7",
-"pyre-check==0.9.25",
-"pyright==1.1.411",
+"pipdeptree==4.2.5",
+"pre-commit==4.6.2",
+"pylint==4.0.8",
+"pyre-check==0.10.0",
+"pyright==1.1.414",
 "pytype==2024.10.11; platform_python_implementation=='CPython'",
 "pyupgrade==3.21.2",
 "pyyaml==6.0.3",
 "readthedocs-sphinx-search==0.3.2",
-"ruff==0.16.1",
-"setuptools==83.0.0",
+"ruff==0.16.7",
+"setuptools==84.0.0",
+"setuptools-scm==10.2.3",
 "sphinx-copybutton==0.5.2",
 "sphinx_rtd_theme==3.1.0",
 "sphinxcontrib-googleanalytics==0.5",
-"tox==4.58.0",
+"tox==4.61.4",
 "types-redis==4.6.0.20241004",
 "yamllint==1.38.0",
 ]

@@ -11,6 +11,7 @@ import os
 import tempfile
 import unittest
 
+from cowrie.shell import fs
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
@@ -85,6 +86,17 @@ class TestTrueFalseTests(unittest.TestCase):
         for op in ("-e", "-f", "-d", "-w", "-r", "-x", "-L", "-s"):
             with self.subTest(op=op):
                 self.assertEqual(self._status(f'[ {op} "" ]'), b"1\n")
+
+    def test_symlink_test_sees_the_link_itself(self) -> None:
+        # -L / -h ask about the entry, not its target, so a link to a file
+        # satisfies both -L and -f.
+        self.proto.fs.link_entry(
+            ["lnk", fs.T_LINK, 0, 0, 0, 0o777, 0, [], "/etc/passwd", None], "/tmp"
+        )
+        self.assertEqual(self._status("[ -L /tmp/lnk ]"), b"0\n")
+        self.assertEqual(self._status("[ -h /tmp/lnk ]"), b"0\n")
+        self.assertEqual(self._status("[ -f /tmp/lnk ]"), b"0\n")
+        self.assertEqual(self._status("[ -L /etc/passwd ]"), b"1\n")
 
     # -- string tests -------------------------------------------------------
 
