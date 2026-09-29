@@ -26,7 +26,6 @@ from cowrie.core.config import CowrieConfig
 # ────────────────────────────────────────────
 #  Metric objects
 # ────────────────────────────────────────────
-HOST_LABEL = CowrieConfig.get("honeypot", "hostname", fallback=socket.gethostname())
 BUCKETS_LEN = (0, 4, 8, 12, 16, 20, 40)
 BUCKETS_DUR = (1, 5, 15, 30, 60, 120, 300, 900, 1800, 3600)
 
@@ -87,6 +86,9 @@ class Output(cowrie.core.output.Output):
     _log = Logger()
 
     def start(self) -> None:
+        self.host_label = CowrieConfig.get(
+            "honeypot", "hostname", fallback=socket.gethostname()
+        )
         port = CowrieConfig.getint("output_prometheus", "port", fallback=9000)
         addr = CowrieConfig.get("output_prometheus", "address", fallback="::")
         self.debug = CowrieConfig.getboolean(
@@ -96,7 +98,7 @@ class Output(cowrie.core.output.Output):
 
         if self.debug:
             self._log.info("[Prometheus] Exporter started on port: {port}", port=port)
-            self._log.info("[Prometheus] Host label: {label}", label=HOST_LABEL)
+            self._log.info("[Prometheus] Host label: {label}", label=self.host_label)
 
         # Helper structures
         self._start_times: dict[str, float] = {}
@@ -153,7 +155,7 @@ class Output(cowrie.core.output.Output):
 
     def _on_session_connect(self, ev: dict) -> None:
         transport = ev.get("protocol", "ssh")
-        sensor = HOST_LABEL
+        sensor = self.host_label
         sid = ev["session"]
         sessions_total.labels(transport, sensor).inc()
         sessions_active.labels(transport, sensor).inc()
@@ -166,7 +168,7 @@ class Output(cowrie.core.output.Output):
     def _on_session_closed(self, ev: dict) -> None:
         sid = ev["session"]
         transport = ev.get("protocol", "ssh")
-        sensor = HOST_LABEL
+        sensor = self.host_label
 
         sessions_active.labels(transport, sensor).dec()
 
@@ -184,13 +186,13 @@ class Output(cowrie.core.output.Output):
 
     def _on_command(self, ev: dict) -> None:
         cmd = ev.get("input", "").strip().split(" ")[0][:30]  # first token
-        commands_total.labels(cmd, HOST_LABEL).inc()
+        commands_total.labels(cmd, self.host_label).inc()
 
     def _on_download(self, ev: dict) -> None:
         proto = ev.get("shasum", "").split(":")[0] or "unknown"
         size = int(ev.get("len", 0))
         dtime = float(ev.get("duration", 0))
-        dl_bytes_total.labels(proto, HOST_LABEL).inc(size)
+        dl_bytes_total.labels(proto, self.host_label).inc(size)
         dl_time_hist.labels(proto).observe(dtime)
 
     def _on_outbound(self, ev: dict) -> None:
