@@ -28,6 +28,7 @@ from typing import TYPE_CHECKING
 
 from cowrie.shell.bashparse import max_input_size
 from cowrie.shell.fs import FileNotFound
+from cowrie.shell.honeypot import HoneyPotShell
 
 if TYPE_CHECKING:
     from cowrie.shell.command import HoneyPotCommand
@@ -94,10 +95,6 @@ def run_script_file(
     is an executable binary. The command's ``exit_code`` is set to the status of
     the last command the script ran.
     """
-    # Imported here to avoid a circular import at module load (honeypot does not
-    # depend on this module, but protocol -> honeypot -> ... -> this would).
-    from cowrie.shell.honeypot import HoneyPotShell
-
     protocol = command.protocol
     depth = getattr(protocol, "_script_depth", 0)
     if depth >= MAX_SCRIPT_DEPTH:

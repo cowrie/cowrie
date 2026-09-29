@@ -21,6 +21,7 @@ import cowrie.commands
 from cowrie.core.config import CowrieConfig
 from cowrie.core.resources import read_data_bytes
 from cowrie.shell import command, honeypot
+from cowrie.shell.script import run_script_file
 
 if TYPE_CHECKING:
     from twisted.python import failure
@@ -159,7 +160,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
     def scriptcmd(self, path: str) -> object:
         """Return a command class that executes a shell script from the virtual filesystem."""
-        from cowrie.shell.script import run_script_file
 
         class Command_scriptcmd(command.HoneyPotCommand):
             def call(self):
