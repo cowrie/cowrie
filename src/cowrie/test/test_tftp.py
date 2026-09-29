@@ -31,6 +31,7 @@ from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
 from cowrie.core.rate_limiter import RateLimiter
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
+from cowrie.test.config_override import override_config
 from cowrie.test.eventcapture import capture_events
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
@@ -348,11 +349,9 @@ class TFTPHostnameResolutionTests(unittest.TestCase):
 
     def setUp(self) -> None:
         self.tmpdir = tempfile.mkdtemp()
-        self._orig_artifact_dir = Artifact.artifactDir
-        Artifact.artifactDir = self.tmpdir
+        override_config(self, "honeypot", "download_path", self.tmpdir)
 
     def tearDown(self) -> None:
-        Artifact.artifactDir = self._orig_artifact_dir
         for name in os.listdir(self.tmpdir):
             os.remove(os.path.join(self.tmpdir, name))
         os.rmdir(self.tmpdir)
@@ -662,16 +661,12 @@ class TFTPDownloadLimitTests(unittest.TestCase):
 
     def setUp(self) -> None:
         self.tmpdir = tempfile.mkdtemp()
-        self._orig_artifact_dir = Artifact.artifactDir
-        Artifact.artifactDir = self.tmpdir
+        override_config(self, "honeypot", "download_path", self.tmpdir)
         self._artifacts: list[Artifact] = []
 
     def tearDown(self) -> None:
-        # Close artifacts while artifactDir still points at the scratch dir,
-        # so close() renames into it rather than the configured download path.
         for artifact in self._artifacts:
             artifact.close()
-        Artifact.artifactDir = self._orig_artifact_dir
         for name in os.listdir(self.tmpdir):
             os.remove(os.path.join(self.tmpdir, name))
         os.rmdir(self.tmpdir)

@@ -12,6 +12,7 @@ import tempfile
 import unittest
 
 from cowrie.core.artifact import Artifact
+from cowrie.test.config_override import override_config
 
 
 class ArtifactDuplicateTests(unittest.TestCase):
@@ -19,14 +20,20 @@ class ArtifactDuplicateTests(unittest.TestCase):
 
     def setUp(self) -> None:
         self.tmpdir = tempfile.mkdtemp()
-        self._orig_artifact_dir = Artifact.artifactDir
-        Artifact.artifactDir = self.tmpdir
+        override_config(self, "honeypot", "download_path", self.tmpdir)
 
     def tearDown(self) -> None:
-        Artifact.artifactDir = self._orig_artifact_dir
         for name in os.listdir(self.tmpdir):
             os.remove(os.path.join(self.tmpdir, name))
         os.rmdir(self.tmpdir)
+
+    def test_saved_in_download_path_configured_at_creation(self) -> None:
+        """The download path is read when the artifact is created, not when
+        the module is imported."""
+        a = Artifact("first")
+        a.write(b"content")
+        a.close()
+        self.assertEqual(os.path.dirname(a.shasumFilename), self.tmpdir)
 
     def test_first_capture_is_not_duplicate(self) -> None:
         a = Artifact("first")
