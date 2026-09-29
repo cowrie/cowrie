@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
-# ABOUTME: tests for cowrie/shell/honeyfs.py — pickle-backed filesystem cache and reads
+# ABOUTME: tests for cowrie/core/honeyfs.py — pickle-backed filesystem cache and reads
 # ABOUTME: covers get_tree deepcopy, read_file extraction, read_honeyfs_bytes cascade
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from cowrie.shell import honeyfs
+from cowrie.core import honeyfs
 
 ENV_CONTENTS = "COWRIE_HONEYPOT_CONTENTS_PATH"
 

@@ -20,7 +20,7 @@ from twisted.python.failure import Failure
 
 from cowrie.core import credentials
 from cowrie.core.config import CowrieConfig
-from cowrie.shell.honeyfs import read_honeyfs_bytes
+from cowrie.core.honeyfs import read_honeyfs_bytes
 
 
 class EventsAttachingPortal:
