@@ -174,41 +174,6 @@ commands["/bin/echo"] = Command_echo
 commands["echo"] = Command_echo
 
 
-class Command_printf(HoneyPotCommand):
-    _log = Logger()
-
-    def call(self) -> None:
-        if not self.args:
-            self.write("printf: usage: printf [-v var] format [arguments]\n")
-        else:
-            if "-v" not in self.args and len(self.args) < 2:
-                # replace r'\\x' with r'\x'
-                s = "".join(self.args[0]).replace("\\\\x", "\\x")
-
-                # replace single character escape \x0 with \x00
-                s = re.sub(r"(?<=\\)x([0-9a-fA-F])(?=\\|\"|\'|\s|$)", r"x0\g<1>", s)
-
-                # strip single and double quotes
-                s = s.strip("\"'")
-
-                # if the string ends with \c escape, strip it
-                if s.endswith("\\c"):
-                    s = s[:-2]
-
-                try:
-                    data: bytes = codecs.escape_decode(s)[0]
-                except ValueError:
-                    self._log.info(
-                        "printf command received Python incorrect hex escape"
-                    )
-                    return
-                self.writeBytes(data)
-
-
-commands["/usr/bin/printf"] = Command_printf
-commands["printf"] = Command_printf
-
-
 class Command_clear(HoneyPotCommand):
     def call(self) -> None:
         self.protocol.terminal.reset()
