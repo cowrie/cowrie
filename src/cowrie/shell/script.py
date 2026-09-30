@@ -108,6 +108,7 @@ def run_script_file(
         contents = command.fs.file_contents(path)
     except (FileNotFound, FileNotFoundError):
         command.errorWrite(not_found_message)
+        command.exit_code = 127
         return
 
     # A file past the input cap is refused like a binary: parsing it would be
@@ -116,6 +117,7 @@ def run_script_file(
     # "scripts" are binaries or web pages fetched from a dead payload URL.
     if len(contents) > max_input_size() or is_executable_binary(contents):
         command.errorWrite(binary_message)
+        command.exit_code = 126
         return
 
     text = contents.decode("utf-8", errors="replace")
