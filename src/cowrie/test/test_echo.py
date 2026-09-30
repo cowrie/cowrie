@@ -278,3 +278,20 @@ class ShellEchoCommandTests(unittest.TestCase):
     def test_syntax_error_goes_to_stderr(self) -> None:
         self.proto.lineReceived(b"bash -c 'echo (' 2>/dev/null; echo rc=$?\n")
         self.assertEqual(self.tr.value(), b"rc=2\n" + PROMPT)
+
+    def test_stray_closing_keywords_are_syntax_errors(self) -> None:
+        for word in (b"fi", b"then", b"done", b"}", b"else", b"do"):
+            with self.subTest(word=word):
+                self.tr.clear()
+                self.proto.lineReceived(word + b"; echo rc=$?\n")
+                self.assertEqual(
+                    self.tr.value(),
+                    b"-bash: syntax error near unexpected token `"
+                    + word
+                    + b"'\n"
+                    + PROMPT,
+                )
+
+    def test_closing_keywords_as_arguments(self) -> None:
+        self.proto.lineReceived(b"echo fi done }; if true; then echo ok; fi\n")
+        self.assertEqual(self.tr.value(), b"fi done }\nok\n" + PROMPT)

@@ -487,6 +487,11 @@ _RESERVED = frozenset(
     }
 )
 
+# Reserved words that only ever close a construct: at the start of a statement
+# that is not the one closing the construct being parsed, each is a syntax
+# error, never a command name.
+_CLOSERS = frozenset({"then", "elif", "else", "fi", "do", "done", "esac", "}"})
+
 # Tokens that end a statement, and those that end one pipeline stage.
 _STATEMENT_END = frozenset({"SEP", "NEWLINE"})
 _STAGE_END = _STATEMENT_END | {"PIPE"}
@@ -609,12 +614,17 @@ class BashParser:
         statements: list[Statement] = []
         pending_op: str | None = None
         seen = False
+        # Index of the first statement on the current input line: bash rejects
+        # a line with a syntax error as a whole, but has run the lines before.
+        line_start = 0
 
         while True:
             # Consume the separators between statements, tracking the operator
             # that will join the next statement to the previous one.
             while self._is_separator(cursor.peek()):
                 separator = cursor.next()
+                if self._token_type(separator) == "NEWLINE":
+                    line_start = len(statements)
                 value = self._separator_op(separator)
                 if value in ("&&", "||"):
                     if not seen:
@@ -628,8 +638,13 @@ class BashParser:
             node = cursor.peek()
             if node is None:
                 break
-            if self._keyword(node) in stop:
+            keyword = self._keyword(node)
+            if keyword in stop:
                 break
+            if keyword in _CLOSERS:
+                del statements[line_start:]
+                statements.append(SyntaxError_(token=keyword))
+                return statements
 
             statement = self._parse_statement(
                 line, cursor, pending_op if seen else None
