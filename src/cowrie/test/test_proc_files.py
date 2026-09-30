@@ -70,7 +70,11 @@ class BootOffsetTests(unittest.TestCase):
         self.assertLessEqual(offset, 90 * 86400)
 
     def test_offset_is_the_same_for_every_session(self) -> None:
-        self.assertEqual(self.proto.boot_time(), self.proto.boot_time())
+        other = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        other.makeConnection(FakeTransport("", "31338"))
+        self.addCleanup(other.connectionLost)
+        other.getProtoTransport().factory.starttime = 1_000_000.0
+        self.assertEqual(other.boot_time(), self.proto.boot_time())
 
 
 if __name__ == "__main__":
