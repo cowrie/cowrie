@@ -89,7 +89,7 @@ class ParseAlarmTests(unittest.TestCase):
             ):
                 with patch("cowrie.shell.bashparse.gc.collect") as collect:
                     self.assertEqual(
-                        self.parser.parse("echo hi"), [SyntaxError_(token="")]
+                        self.parser.parse("echo hi"), [SyntaxError_(token="", lineno=2)]
                     )
         collect.assert_called_once()  # Timed-out input is collected even below 512.
         self.assertEqual(signal.getitimer(signal.ITIMER_REAL), (0.0, 0.0))
@@ -108,7 +108,9 @@ class ParseAlarmTests(unittest.TestCase):
         line = "echo " + " ".join(f"arg{i}" for i in range(1600))
         self.assertLess(len(line), bashparse.max_input_size())
         with patch("cowrie.shell.bashparse.parse_timeout_seconds", return_value=0.05):
-            self.assertEqual(self.parser.parse(line), [SyntaxError_(token="")])
+            self.assertEqual(
+                self.parser.parse(line), [SyntaxError_(token="", lineno=2)]
+            )
         self.assertEqual(signal.getitimer(signal.ITIMER_REAL), (0.0, 0.0))
         self.assertIs(signal.getsignal(signal.SIGALRM), signal.SIG_DFL)
         self.assertNotEqual(
