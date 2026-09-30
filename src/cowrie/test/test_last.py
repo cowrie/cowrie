@@ -40,11 +40,11 @@ class LastTests(unittest.TestCase):
         self.proto.connectionLost()
 
     def test_wtmp_begins_at_boot_not_after_the_login(self) -> None:
-        # A login shortly after midnight, on a machine booted two days before.
+        # A login shortly after midnight; cowrie started two hours before.
         midnight = time.mktime((2026, 9, 5, 0, 0, 0, 0, 0, -1))
         self.proto.logintime = midnight + 13
-        boot = midnight - 2 * 86400 + 4000
-        self.proto.getProtoTransport().factory.starttime = boot
+        self.proto.getProtoTransport().factory.starttime = midnight - 7200
+        boot = self.proto.boot_time()
 
         self.proto.lineReceived(b"last\n")
 

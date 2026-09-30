@@ -197,6 +197,14 @@ timezone = UTC
 #internet_facing_ipv6 = 2001:db8::1
 
 
+# How many seconds before Cowrie started the emulated machine booted. uptime,
+# /proc/uptime and last report the time since that boot, so a restarted
+# honeypot does not claim to have been up for a few seconds.
+#
+# (default: a random value between one and ninety days, chosen at startup)
+#boot_offset = 1209600
+
+
 
 # ============================================================================
 # Authentication Specific Options

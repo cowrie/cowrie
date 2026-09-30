@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import functools
+import random
 import socket
 import time
 from importlib import import_module
@@ -26,6 +28,18 @@ if TYPE_CHECKING:
     from twisted.python import failure
 
     from cowrie.core.events import EventLog
+
+
+@functools.cache
+def boot_offset() -> float:
+    """Seconds between the emulated machine's boot and cowrie's start, from
+    [honeypot] boot_offset. Unset, it is chosen once per process between one
+    and ninety days, so a restarted honeypot does not report seconds of
+    uptime and installs do not share one value."""
+    configured = CowrieConfig.getint("honeypot", "boot_offset", fallback=-1)
+    if configured >= 0:
+        return float(configured)
+    return float(random.randint(86400, 90 * 86400))
 
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
@@ -292,8 +306,9 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                 obj.eofReceived()
 
     def boot_time(self) -> float:
-        """When the emulated machine booted: when the honeypot started."""
-        return float(self.getProtoTransport().factory.starttime)
+        """When the emulated machine booted: boot_offset before cowrie
+        started."""
+        return float(self.getProtoTransport().factory.starttime) - boot_offset()
 
     def uptime(self):
         """
