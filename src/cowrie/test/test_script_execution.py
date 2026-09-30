@@ -102,6 +102,24 @@ class ScriptExecutionTests(unittest.TestCase):
         self.assertIn(b"cannot execute binary file", output)
         self.assertNotIn(b"GARBAGE", output)
 
+    def test_binary_file_exit_status_is_126(self) -> None:
+        """Scripts test `cmd || fallback`; a binary that cannot run must
+        fail with bash's status for ENOEXEC."""
+        self.proto.lineReceived(b'printf "\\x00ELF" > binfile')
+        self.tr.clear()
+        self.proto.lineReceived(b"./binfile; echo rc=$?")
+        self.assertIn(b"rc=126\n", self.tr.value())
+
+    def test_bash_binary_file_exit_status_is_126(self) -> None:
+        self.proto.lineReceived(b'printf "\\x7fELF\\x01\\x00" > /tmp/payload3.x86')
+        self.tr.clear()
+        self.proto.lineReceived(b"bash /tmp/payload3.x86; echo rc=$?")
+        self.assertIn(b"rc=126\n", self.tr.value())
+
+    def test_bash_missing_file_exit_status_is_127(self) -> None:
+        self.proto.lineReceived(b"bash /tmp/nonexistent.sh; echo rc=$?")
+        self.assertIn(b"rc=127\n", self.tr.value())
+
     def test_shebang_line_stripped(self) -> None:
         """Shebang line is not echoed or executed as a command."""
         self.proto.lineReceived(
