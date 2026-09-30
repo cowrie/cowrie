@@ -967,22 +967,22 @@ class HoneyPotShell:
                 message = f"-bash: exec: {cmd}: not found\n".encode()
             else:
                 message = self.command_not_found_message(cmd).encode("utf8")
-            if ops:
-                temp_pp = PipeProtocol(
-                    self.protocol,
-                    None,
-                    [],
-                    None,
-                    dict(self.fds),
-                    ops,
-                    cwd=self.cwd,
-                    user=self.user,
-                )
-                temp_pp.errReceived(message)
-                for real_path, virtual_path in temp_pp.redirect_real_files:
-                    self.protocol.terminal.redirFiles.add((real_path, virtual_path))
-            else:
-                self.protocol.terminal.write(message)
+            # The shell writes the error to its own fd 2, with the command's
+            # redirections applied: `x 2>&1 | cat` and `( x ) 2>/dev/null`
+            # both reroute it.
+            temp_pp = PipeProtocol(
+                self.protocol,
+                None,
+                [],
+                None,
+                dict(self.fds),
+                ops,
+                cwd=self.cwd,
+                user=self.user,
+            )
+            temp_pp.errReceived(message)
+            for real_path, virtual_path in temp_pp.redirect_real_files:
+                self.protocol.terminal.redirFiles.add((real_path, virtual_path))
 
             self.last_exit_code = 127  # command not found
             if exec_replace and not self.interactive:

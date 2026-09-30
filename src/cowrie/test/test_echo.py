@@ -241,3 +241,18 @@ class ShellEchoCommandTests(unittest.TestCase):
     def test_command_substitution_captures_sh_c(self) -> None:
         self.proto.lineReceived(b"x=$(sh -c 'echo hi' 2>&1); echo \"[$x]\"\n")
         self.assertEqual(self.tr.value(), b"[hi]\n" + PROMPT)
+
+    def test_subshell_stderr_duplicated_into_capture(self) -> None:
+        self.proto.lineReceived(b'x=$( (xxxxxx) 2>&1 ); echo "[$x]"\n')
+        self.assertEqual(
+            self.tr.value(), b"[-bash: xxxxxx: command not found]\n" + PROMPT
+        )
+
+    def test_subshell_stderr_duplicated_into_pipe(self) -> None:
+        # len("-bash: ./xxxxxx: No such file or directory\n") == 43
+        self.proto.lineReceived(b"( ./xxxxxx 2>&1 || true ) | wc -c\n")
+        self.assertEqual(self.tr.value(), b"43\n" + PROMPT)
+
+    def test_subshell_stderr_to_devnull_hides_not_found(self) -> None:
+        self.proto.lineReceived(b"( xxxxxx ) 2>/dev/null; echo rc=$?\n")
+        self.assertEqual(self.tr.value(), b"rc=127\n" + PROMPT)
