@@ -425,6 +425,45 @@ def link_blocks(script: list[Command]) -> None:
         _fail("sed: -e expression #1, char 0: unmatched `{'")
 
 
+def split_in_place(args: list[str]) -> tuple[list[str], str | None]:
+    """Take GNU sed's -i[SUFFIX] and --in-place[=SUFFIX] out of ``args``. The
+    suffix is glued to the option, which getopt only supports from Python
+    3.14. Returns the remaining arguments and the backup suffix ("" for
+    none), or None when there is no in-place option."""
+    out: list[str] = []
+    suffix: str | None = None
+    i = 0
+    while i < len(args):
+        arg = args[i]
+        i += 1
+        if arg == "--":
+            out += args[i - 1 :]
+            break
+        if arg == "--in-place" or arg.startswith("--in-place="):
+            suffix = arg.partition("=")[2]
+            continue
+        if not arg.startswith("-") or arg.startswith("--") or arg == "-":
+            out.append(arg)
+            continue
+        # A cluster of short options: -i ends it, taking the rest as suffix;
+        # -e, -f and -l take the rest, or the next argument, as their value.
+        for pos, ch in enumerate(arg[1:], 1):
+            if ch == "i":
+                suffix = arg[pos + 1 :]
+                if pos > 1:
+                    out.append(arg[:pos])
+                break
+            if ch in "efl":
+                out.append(arg)
+                if pos == len(arg) - 1 and i < len(args):
+                    out.append(args[i])
+                    i += 1
+                break
+        else:
+            out.append(arg)
+    return out, suffix
+
+
 class Command_sed(HoneyPotCommand):
     """
     sed command
@@ -434,15 +473,15 @@ class Command_sed(HoneyPotCommand):
 
     def start(self) -> None:
         try:
+            arguments, self.backup_suffix = split_in_place(self.args)
             optlist, args = getopt.gnu_getopt(
-                self.args,
-                "ne:f:i::Ersuz",
+                arguments,
+                "ne:f:Ersuz",
                 [
                     "quiet",
                     "silent",
                     "expression=",
                     "file=",
-                    "in-place=",
                     "regexp-extended",
                     "separate",
                     "posix",
@@ -461,7 +500,7 @@ class Command_sed(HoneyPotCommand):
 
         self.quiet = False
         self.extended = False
-        self.in_place = False
+        self.in_place = self.backup_suffix is not None
         expressions: list[str] = []
         for opt, value in optlist:
             if opt in ("-n", "--quiet", "--silent"):
@@ -482,8 +521,6 @@ class Command_sed(HoneyPotCommand):
                     self.exit_code = 1
                     self.exit()
                     return
-            elif opt in ("-i", "--in-place"):
-                self.in_place = True
             elif opt in ("-E", "-r", "--regexp-extended"):
                 self.extended = True
             elif opt == "--help":
@@ -541,6 +578,8 @@ class Command_sed(HoneyPotCommand):
                 self.exit_code = 2
         if self.in_place:
             for name, data in streams:
+                if self.backup_suffix:
+                    self.write_file(name + self.backup_suffix, data)
                 self.write_file(name, self.run_script(data))
         else:
             self.writeBytes(self.run_script(b"".join(data for _, data in streams)))

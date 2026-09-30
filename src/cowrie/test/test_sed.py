@@ -10,6 +10,7 @@ from __future__ import annotations
 import os
 import unittest
 
+from cowrie.commands.sed import split_in_place
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
@@ -141,6 +142,15 @@ class SedTests(unittest.TestCase):
             self.run_line(b"cat /tmp/sshd_config"), b"PermitRootLogin yes\n"
         )
 
+    def test_in_place_forms(self) -> None:
+        """-i with a backup suffix, clustered with -n, and after the script."""
+        self.run_line(b"printf 'a\\nb\\n' > f; sed -i.bak 's/a/A/' f")
+        self.assertEqual(self.run_line(b"cat f f.bak"), b"A\nb\na\nb\n")
+        self.run_line(b"printf 'a\\nb\\n' > g; sed -ni 's/a/A/p' g")
+        self.assertEqual(self.run_line(b"cat g"), b"A\n")
+        self.run_line(b"printf 'a\\n' > h; sed 's/a/Z/' -i h")
+        self.assertEqual(self.run_line(b"cat h"), b"Z\n")
+
     def test_unknown_command(self) -> None:
         self.assertEqual(
             self.run_line(b"echo x | sed 'k'; echo rc=$?"),
@@ -163,6 +173,25 @@ class SedTests(unittest.TestCase):
         output = self.run_line(b"sed; echo rc=$?")
         self.assertTrue(output.startswith(b"Usage: sed [OPTION]..."), output)
         self.assertTrue(output.endswith(b"rc=1\n"), output)
+
+
+class SplitInPlaceTests(unittest.TestCase):
+    """-i takes an optional suffix glued to it, which getopt cannot parse
+    before Python 3.14."""
+
+    def test_forms(self) -> None:
+        self.assertEqual(split_in_place(["-i", "s/a/b/", "f"]), (["s/a/b/", "f"], ""))
+        self.assertEqual(split_in_place(["-i.bak", "s/a/b/"]), (["s/a/b/"], ".bak"))
+        self.assertEqual(split_in_place(["-ni", "p"]), (["-n", "p"], ""))
+        self.assertEqual(split_in_place(["--in-place=~", "p"]), (["p"], "~"))
+        self.assertEqual(split_in_place(["s/a/b/", "-i", "f"]), (["s/a/b/", "f"], ""))
+
+    def test_option_values_are_not_mistaken_for_i(self) -> None:
+        self.assertEqual(
+            split_in_place(["-e", "-iffy", "f"]), (["-e", "-iffy", "f"], None)
+        )
+        self.assertEqual(split_in_place(["-es/i/j/", "f"]), (["-es/i/j/", "f"], None))
+        self.assertEqual(split_in_place(["--", "-i"]), (["--", "-i"], None))
 
 
 if __name__ == "__main__":
