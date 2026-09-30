@@ -123,7 +123,7 @@ class Command_printf(HoneyPotCommand):
         self.exit_code = self.status
 
     def _error(self, message: str) -> None:
-        self.errorWrite(f"-bash: printf: {message}\n")
+        self.errorWrite(f"{self.shell.error_prefix()}printf: {message}\n")
         self.status = 1
 
     def _format(self, fmt: str, args: list[str], out: bytearray) -> None:

@@ -107,7 +107,7 @@ class ExecInteractiveTests(unittest.TestCase):
 
     def test_exec_not_found_in_nested_shell_is_127(self) -> None:
         out = self.run_line(b'sh -c "exec nosuchcmd"; echo $?')
-        self.assertEqual(out, b"-bash: exec: nosuchcmd: not found\n127\n")
+        self.assertEqual(out, b"sh: line 1: exec: nosuchcmd: not found\n127\n")
         self.assertNotEqual(self.proto.cmdstack, [])
 
     def test_exec_in_substitution_ends_only_capture_shell(self) -> None:

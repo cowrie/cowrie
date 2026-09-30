@@ -47,8 +47,14 @@ class PipeProtocol:
         *,
         cwd: str,
         user: dict[str, Any],
+        error_prefix: str = "-bash: ",
     ) -> None:
         self.cmd = cmd
+        # The name the command was invoked by (argv[0]), when a shell starts it.
+        self.argv0: str | None = None
+        # How the shell that opens the redirections names itself in errors
+        # ("-bash: " at a login prompt, "bash: line 3: " under bash -c).
+        self.error_prefix = error_prefix
         self.cmdargs = cmdargs
         self.input_data: bytes | None = input_data
         # Working directory and user identity of the shell that started this
@@ -116,7 +122,7 @@ class PipeProtocol:
                 # bash reports the offending fd and drops the redirection, but
                 # still runs the command -- its other fds are unaffected.
                 self._write_to_terminal(
-                    f"bash: {bad_fd}: Bad file descriptor\n".encode()
+                    f"{self.error_prefix}{bad_fd}: Bad file descriptor\n".encode()
                 )
                 continue
 
@@ -161,11 +167,13 @@ class PipeProtocol:
             data = self.protocol.fs.file_contents(path)
         except fs.FileNotFound:
             self._emit_redirection_error(
-                f"-bash: {target}: No such file or directory\n"
+                f"{self.error_prefix}{target}: No such file or directory\n"
             )
             return
         except fs.PermissionDenied:
-            self._emit_redirection_error(f"-bash: {target}: Permission denied\n")
+            self._emit_redirection_error(
+                f"{self.error_prefix}{target}: Permission denied\n"
+            )
             return
         else:
             self.input_data = data
@@ -229,11 +237,13 @@ class PipeProtocol:
             )
         except fs.FileNotFound:
             self._emit_redirection_error(
-                f"-bash: {outfile}: No such file or directory\n"
+                f"{self.error_prefix}{outfile}: No such file or directory\n"
             )
             return None
         except fs.PermissionDenied:
-            self._emit_redirection_error(f"-bash: {outfile}: Permission denied\n")
+            self._emit_redirection_error(
+                f"{self.error_prefix}{outfile}: Permission denied\n"
+            )
             return None
 
         with open(safeoutfile, "ab"):

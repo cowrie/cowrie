@@ -156,6 +156,24 @@ class HoneyPotShell:
         launcher_pp = getattr(launcher, "pp", None)
         if launcher_pp is not None and getattr(launcher_pp, "targets", None):
             self.fds = {1: launcher_pp.targets[1], 2: launcher_pp.targets[2]}
+        # How this shell names itself in the errors it reports, as bash does
+        # from $0: "-bash" for the login shell, the name as typed for bash -c
+        # or a script (the launching command sets it). A non-interactive shell
+        # adds the line it is running (current_line, counted from line_base),
+        # and under -c its syntax errors also say "-c". A child shell -- a
+        # subshell, pipeline stage or substitution -- keeps its parent's,
+        # counting from the parent's current line.
+        if isinstance(launcher, HoneyPotShell):
+            self.name: str = launcher.name
+            self.line_numbers: bool = launcher.line_numbers
+            self.syntax_label: str | None = launcher.syntax_label
+            self.line_base: int = launcher.current_line - 1
+        else:
+            self.name = "-bash" if interactive else "bash"
+            self.line_numbers = not interactive
+            self.syntax_label = None if interactive else "-c"
+            self.line_base = 0
+        self.current_line: int = self.line_base + 1
         # Child-shell state (see run_child): a pipeline stage, a "(...)" group
         # or a $(...) substitution runs in its own shell, as a forked child.
         # ``stdin`` is the pipe buffer feeding it, handed to the first command
@@ -192,6 +210,35 @@ class HoneyPotShell:
     def get_variable(self, name: str) -> str | None:
         """Look up a shell variable for the Lark word evaluator."""
         return self.environ.get(name)
+
+    def error_prefix(self) -> str:
+        """The prefix bash puts on an error it reports: its name and, for a
+        non-interactive shell, the line being run."""
+        if self.line_numbers:
+            return f"{self.name}: line {self.current_line}: "
+        return f"{self.name}: "
+
+    def _make_pipe(
+        self,
+        cmdclass: Any,
+        args: list[str],
+        stdin: bytes | None,
+        ops: list[dict[str, Any]] | None,
+    ) -> PipeProtocol:
+        """The stdio wiring for a command this shell starts: its fd table with
+        ``ops`` applied, reporting redirection errors with this shell's
+        prefix."""
+        return PipeProtocol(
+            self.protocol,
+            cmdclass,
+            args,
+            stdin,
+            dict(self.fds),
+            ops,
+            cwd=self.cwd,
+            user=self.user,
+            error_prefix=self.error_prefix(),
+        )
 
     def get_status(self) -> str:
         """Return $? -- the last command's exit status as a string."""
@@ -300,7 +347,7 @@ class HoneyPotShell:
         if self._reject_oversized(line):
             self._advance()
             return
-        self._queue_statements(self.bashparser.parse(line))
+        self._queue_statements(self.bashparser.parse(line), line)
         self._advance()
 
     def queue_line(self, line: str) -> None:
@@ -314,7 +361,7 @@ class HoneyPotShell:
         )
         if self._reject_oversized(line):
             return
-        self._queue_statements(self.bashparser.parse(line))
+        self._queue_statements(self.bashparser.parse(line), line)
 
     def _reject_oversized(self, line: str) -> bool:
         """Refuse a line longer than max_input_size before it reaches the
@@ -326,7 +373,7 @@ class HoneyPotShell:
         self._report_syntax_error(SyntaxError_(token=""))
         return True
 
-    def _queue_statements(self, statements: list[Statement]) -> bool:
+    def _queue_statements(self, statements: list[Statement], source: str = "") -> bool:
         """Append parsed statements to ``cmdpending`` for sequential execution.
 
         A subshell is queued as one unit so its join operator (e.g. the || in
@@ -342,6 +389,9 @@ class HoneyPotShell:
         for statement in statements:
             error = self._find_syntax_error([statement])
             if error is not None:
+                lines = source.split("\n")
+                if not error.source and 0 < error.lineno <= len(lines):
+                    error.source = lines[error.lineno - 1]
                 self.cmdpending.append(error)
                 return False
             self.cmdpending.append(statement)
@@ -366,10 +416,22 @@ class HoneyPotShell:
 
     def _report_syntax_error(self, statement: SyntaxError_) -> None:
         """Write the message bash prints for a syntax error and set $? to 2."""
+        self.current_line = self.line_base + (statement.lineno or 1)
         if statement.token:
-            message = f"-bash: syntax error near unexpected token `{statement.token}'\n"
+            text = f"syntax error near unexpected token `{statement.token}'"
         else:
-            message = "-bash: syntax error: unexpected end of file\n"
+            text = "syntax error: unexpected end of file"
+        if self.line_numbers:
+            # A non-interactive bash also quotes the offending line.
+            label = f"{self.name}: "
+            if self.syntax_label:
+                label += f"{self.syntax_label}: "
+            label += f"line {self.current_line}: "
+            message = f"{label}{text}\n"
+            if statement.token:
+                message += f"{label}`{statement.source}'\n"
+        else:
+            message = f"{self.name}: {text}\n"
         self._write_shell_error(message.encode())
         self.last_exit_code = 2  # bash uses 2 for a syntax error
 
@@ -379,16 +441,7 @@ class HoneyPotShell:
         """Write an error the shell itself reports to its stderr (fd 2), with
         ``ops`` -- the failing command's own redirections -- applied, so
         `x 2>&1 | cat` and `( x ) 2>/dev/null` reroute it."""
-        pp = PipeProtocol(
-            self.protocol,
-            None,
-            [],
-            None,
-            dict(self.fds),
-            ops,
-            cwd=self.cwd,
-            user=self.user,
-        )
+        pp = self._make_pipe(None, [], None, ops)
         pp.errReceived(message)
         for real_path, virtual_path in pp.redirect_real_files:
             self.protocol.terminal.redirFiles.add((real_path, virtual_path))
@@ -756,6 +809,8 @@ class HoneyPotShell:
         # subshell finishes; the statement then runs from the callback. With
         # only synchronous substitutions the Deferred has already fired and
         # the statement runs before this returns.
+        if command.lineno:
+            self.current_line = self.line_base + command.lineno
         self._subst_status = None
         d = Deferred.fromCoroutine(self.bashparser.evaluate(command))
         d.addCallback(self._run_expanded)
@@ -844,16 +899,7 @@ class HoneyPotShell:
         """Apply redirection ops over this shell's fd table, opening any files
         once for the whole group, and register their backing files. Returns the
         new table and whether a redirection failed."""
-        pp = PipeProtocol(
-            self.protocol,
-            None,
-            [],
-            None,
-            dict(self.fds),
-            ops,
-            cwd=self.cwd,
-            user=self.user,
-        )
+        pp = self._make_pipe(None, [], None, ops)
         for real_path, virtual_path in pp.redirect_real_files:
             self.protocol.terminal.redirFiles.add((real_path, virtual_path))
         return {1: pp.targets[1], 2: pp.targets[2]}, pp.has_redirection_error
@@ -956,16 +1002,7 @@ class HoneyPotShell:
                 # creates the backing files via _setup_redirections; register
                 # them so they are hashed/renamed or removed at session close
                 # instead of being orphaned in the download directory.
-                pp = PipeProtocol(
-                    self.protocol,
-                    None,
-                    [],
-                    None,
-                    dict(self.fds),
-                    ops,
-                    cwd=self.cwd,
-                    user=self.user,
-                )
+                pp = self._make_pipe(None, [], None, ops)
                 for real_path, virtual_path in pp.redirect_real_files:
                     self.protocol.terminal.redirFiles.add((real_path, virtual_path))
             self._advance()
@@ -983,7 +1020,7 @@ class HoneyPotShell:
             )
             if exec_seen:
                 # exec reports a failed lookup as its own error.
-                message = f"-bash: exec: {cmd}: not found\n".encode()
+                message = f"{self.error_prefix()}exec: {cmd}: not found\n".encode()
             else:
                 message = self.command_not_found_message(cmd).encode("utf8")
             self._write_shell_error(message, ops)
@@ -1004,17 +1041,10 @@ class HoneyPotShell:
         stdin = self.stdin
         if cmdclass.consumes_stdin:
             self.stdin = None
-        pp = PipeProtocol(
-            self.protocol,
-            cmdclass,
-            args,
-            stdin,
-            dict(self.fds),
-            ops,
-            cwd=self.cwd,
-            user=self.user,
-        )
+        pp = self._make_pipe(cmdclass, args, stdin, ops)
         pp.stdin_from_pipe = stdin is not None
+        # The name the command was invoked by, its argv[0].
+        pp.argv0 = cmd
         if pp.has_redirection_error:
             self._advance()
             return
@@ -1033,10 +1063,10 @@ class HoneyPotShell:
         if cmd[:1] in (".", "/"):
             path = self.protocol.fs.resolve_path(cmd, self.cwd)
             if self.protocol.fs.isdir(path):
-                return f"-bash: {cmd}: Is a directory\n"
+                return f"{self.error_prefix()}{cmd}: Is a directory\n"
             if not self.protocol.fs.exists(path):
-                return f"-bash: {cmd}: No such file or directory\n"
-        return f"-bash: {cmd}: command not found\n"
+                return f"{self.error_prefix()}{cmd}: No such file or directory\n"
+        return f"{self.error_prefix()}{cmd}: command not found\n"
 
     def resume(self) -> None:
         if self._exec_replaced:

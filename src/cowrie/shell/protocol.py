@@ -181,12 +181,14 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                 # Running ./file or /path/file: the kernel rejects a binary with
                 # ENOEXEC ("cannot execute binary file"); a shell script is run
                 # through the parser (the shebang is parsed as a comment).
+                prefix = self.shell.error_prefix()
                 run_script_file(
                     self,
                     path,
-                    not_found_message=f"-bash: {name}: No such file or directory\n",
+                    name=name,
+                    not_found_message=f"{prefix}{name}: No such file or directory\n",
                     binary_message=(
-                        f"-bash: {name}: cannot execute binary file: "
+                        f"{prefix}{name}: cannot execute binary file: "
                         "Exec format error\n"
                     ),
                 )
