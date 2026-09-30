@@ -150,6 +150,12 @@ class HoneyPotShell:
             1: (FD_TERMINAL, None),
             2: (FD_TERMINAL, None),
         }
+        # A shell a command starts (bash -c, a script, su -c) writes where that
+        # command writes, so `$(bash -c ...)` or `sh x.sh > f` captures it.
+        launcher = protocol.cmdstack[-1] if protocol.cmdstack else None
+        launcher_pp = getattr(launcher, "pp", None)
+        if launcher_pp is not None and getattr(launcher_pp, "targets", None):
+            self.fds = {1: launcher_pp.targets[1], 2: launcher_pp.targets[2]}
         # Child-shell state (see run_child): a pipeline stage, a "(...)" group
         # or a $(...) substitution runs in its own shell, as a forked child.
         # ``stdin`` is the pipe buffer feeding it, handed to the first command

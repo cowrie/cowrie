@@ -233,3 +233,11 @@ class ShellEchoCommandTests(unittest.TestCase):
     def test_lone_backslash_in_double_quotes_is_kept(self) -> None:
         self.proto.lineReceived(b'echo "a\\qb"\n')
         self.assertEqual(self.tr.value(), b"a\\qb\n" + PROMPT)
+
+    def test_command_substitution_captures_bash_c(self) -> None:
+        self.proto.lineReceived(b'x=$(bash -c "echo hi"); echo "[$x]"\n')
+        self.assertEqual(self.tr.value(), b"[hi]\n" + PROMPT)
+
+    def test_command_substitution_captures_sh_c(self) -> None:
+        self.proto.lineReceived(b"x=$(sh -c 'echo hi' 2>&1); echo \"[$x]\"\n")
+        self.assertEqual(self.tr.value(), b"[hi]\n" + PROMPT)
