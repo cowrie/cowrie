@@ -38,7 +38,7 @@ class ShellFdRedirectionTests(unittest.TestCase):
         self.tr.clear()
 
     def test_redirect_stderr_to_devnull(self) -> None:
-        self.proto.lineReceived(b"cat /proc/uptime 2>/dev/null")
+        self.proto.lineReceived(b"cat /nonexistent 2>/dev/null")
         self.assertEqual(self.tr.value(), PROMPT)
 
     def test_spaced_fd_is_argument(self) -> None:
