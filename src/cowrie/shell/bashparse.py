@@ -157,7 +157,11 @@ BQ_LITERAL: /[^`]+/
 dq: "\"" _dq_part* "\""
 _dq_part: cmdsub | backtick | dollar_brace | dollar_var | DQ_ESC | DQ_TEXT | BARE_DOLLAR
 DQ_TEXT: /[^"$`\\]+/
-DQ_ESC: /\\[\\"$`]/ | /\\/
+// A lone backslash is literal only where it escapes nothing, so "\\" has
+// exactly one reading: one escaped backslash, never two literal ones. The
+// backslash comes last in each class: Lark reads \\" as an escaped quote and
+// would drop it from the class.
+DQ_ESC: /\\[$`"\\]/ | /\\(?![$`"\\])/
 
 sq: SQ
 SQ: /'[^']*'/
