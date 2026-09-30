@@ -110,6 +110,17 @@ class ScriptExecutionTests(unittest.TestCase):
         self.proto.lineReceived(b"./binfile; echo rc=$?")
         self.assertIn(b"rc=126\n", self.tr.value())
 
+    def test_binary_file_error_names_the_path_as_typed(self) -> None:
+        """bash reports a relative path the way it was typed, not resolved."""
+        self.proto.lineReceived(b'printf "\\x00ELF" > binfile')
+        self.tr.clear()
+        self.proto.lineReceived(b"./binfile")
+        self.assertEqual(
+            self.tr.value(),
+            b"-bash: ./binfile: cannot execute binary file: Exec format error\n"
+            + PROMPT,
+        )
+
     def test_bash_binary_file_exit_status_is_126(self) -> None:
         self.proto.lineReceived(b'printf "\\x7fELF\\x01\\x00" > /tmp/payload3.x86')
         self.tr.clear()

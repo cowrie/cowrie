@@ -157,7 +157,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
         return Command_txtcmd
 
-    def scriptcmd(self, path: str) -> object:
+    def scriptcmd(self, path: str, name: str) -> object:
         """Return a command class that executes a shell script from the virtual filesystem."""
         from cowrie.shell.script import run_script_file
 
@@ -169,9 +169,9 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                 run_script_file(
                     self,
                     path,
-                    not_found_message=f"-bash: {path}: No such file or directory\n",
+                    not_found_message=f"-bash: {name}: No such file or directory\n",
                     binary_message=(
-                        f"-bash: {path}: cannot execute binary file: "
+                        f"-bash: {name}: cannot execute binary file: "
                         "Exec format error\n"
                     ),
                 )
@@ -225,7 +225,9 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             return self.commands[path]
 
         if self.fs.isfile(path):
-            return self.scriptcmd(path)
+            # bash names a command typed with a slash as typed, and one found
+            # through PATH by its full path.
+            return self.scriptcmd(path, cmd if "/" in cmd else path)
 
         self._log.info("Can't find command {cmd}", cmd=cmd)
         return None
