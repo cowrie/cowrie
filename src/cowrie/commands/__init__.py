@@ -43,6 +43,7 @@ command_modules = [
     "nohup",
     "perl",
     "ping",
+    "printf",
     "python",
     "scp",
     "service",
