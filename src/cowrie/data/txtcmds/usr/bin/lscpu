@@ -1,21 +1,43 @@
-Architecture:          x86_64
-CPU op-mode(s):        32-bit, 64-bit
-Byte Order:            Little Endian
-CPU(s):                2
-On-line CPU(s) list:   0-1
-Thread(s) per core:    1
-Core(s) per socket:    2
-Socket(s):             1
-NUMA node(s):          1
-Vendor ID:             GenuineIntel
-CPU family:            6
-Model:                 23
-Stepping:              6
-CPU MHz:               2200.000
-BogoMIPS:              4270.03
-Hypervisor vendor:     KVM
-Virtualization type:   full
-L1d cache:             32K
-L1i cache:             32K
-L2 cache:              6144K
-NUMA node0 CPU(s):     0-1
+Architecture:             x86_64
+  CPU op-mode(s):         32-bit, 64-bit
+  Address sizes:          46 bits physical, 48 bits virtual
+  Byte Order:             Little Endian
+CPU(s):                   2
+  On-line CPU(s) list:    0,1
+Vendor ID:                GenuineIntel
+  Model name:             Intel(R) Xeon(R) CPU E5-2680 v4 @ 2.40GHz
+    CPU family:           6
+    Model:                79
+    Thread(s) per core:   1
+    Core(s) per socket:   2
+    Socket(s):            1
+    Stepping:             1
+    BogoMIPS:             4799.99
+    Flags:                fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq vmx ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch invpcid_single pti tpr_shadow vnmi flexpriority ept vpid fsgsbase bmi1 hle avx2 smep bmi2 erms invpcid rtm rdseed adx smap xsaveopt arat
+Virtualization features:
+  Virtualization:         VT-x
+  Hypervisor vendor:      KVM
+  Virtualization type:    full
+Caches (sum of all):
+  L1d:                    64 KiB (2 instances)
+  L1i:                    64 KiB (2 instances)
+  L2:                     512 KiB (2 instances)
+  L3:                     35 MiB (1 instance)
+NUMA:
+  NUMA node(s):           1
+  NUMA node0 CPU(s):      0,1
+Vulnerabilities:
+  Gather data sampling:   Not affected
+  Itlb multihit:          KVM: Mitigation: VMX disabled
+  L1tf:                   Mitigation; PTE Inversion; VMX conditional cache flushes, SMT vulnerable
+  Mds:                    Mitigation; Clear CPU buffers; SMT Host state unknown
+  Meltdown:               Mitigation; PTI
+  Mmio stale data:        Mitigation; Clear CPU buffers; SMT Host state unknown
+  Reg file data sampling: Not affected
+  Retbleed:               Mitigation; IBRS
+  Spec rstack overflow:   Not affected
+  Spec store bypass:      Mitigation; Speculative Store Bypass disabled via prctl
+  Spectre v1:             Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+  Spectre v2:             Mitigation; IBRS; IBPB conditional; STIBP disabled; RSB filling; PBRSB-eIBRS Not affected; BHI SW loop, KVM SW loop
+  Srbds:                  Not affected
+  Tsx async abort:        Mitigation; Clear CPU buffers; SMT Host state unknown
