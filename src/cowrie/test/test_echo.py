@@ -256,3 +256,21 @@ class ShellEchoCommandTests(unittest.TestCase):
     def test_subshell_stderr_to_devnull_hides_not_found(self) -> None:
         self.proto.lineReceived(b"( xxxxxx ) 2>/dev/null; echo rc=$?\n")
         self.assertEqual(self.tr.value(), b"rc=127\n" + PROMPT)
+
+    def test_three_nested_cases_without_final_dsemi(self) -> None:
+        self.proto.lineReceived(
+            b"case a in N) ;; *) case a in N) ;; *) case a in N) ;; *) "
+            b"echo deep; esac; esac; esac\n"
+        )
+        self.assertEqual(self.tr.value(), b"deep\n" + PROMPT)
+
+    def test_esac_as_an_argument(self) -> None:
+        self.proto.lineReceived(b"echo esac; case a in a) echo esac;; esac\n")
+        self.assertEqual(self.tr.value(), b"esac\nesac\n" + PROMPT)
+
+    def test_esac_in_command_position_is_a_syntax_error(self) -> None:
+        self.proto.lineReceived(b"esac\n")
+        self.assertEqual(
+            self.tr.value(),
+            b"-bash: syntax error near unexpected token `esac'\n" + PROMPT,
+        )

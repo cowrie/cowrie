@@ -110,7 +110,12 @@ _GRAMMAR = r"""
 // right-recursive list is quadratic.)
 start: _WS? _seq?
 _seq: (_after_content | _after_op) _WS?
-_after_content: _content | _after_content _WS _content | _after_op _WS? _content
+_after_content: _content | _after_content _WS _arg | _after_op _WS? _content
+// After another word, "esac" is an ordinary argument ("echo esac"). In command
+// position it only ever closes a case (LITERAL never matches it), so a case
+// body without a final ";;" cannot absorb the next "esac" as a command.
+_arg: _content | esac_arg
+esac_arg: ESAC -> word
 _after_op: _op | _after_content _WS? _op | _after_op _WS? _op
 _content: subshell | word | _funcdef | case_clause | _COMMENT
 // A function definition's "()" is one token, so "f()", "f ()" and "f ( )"
@@ -201,7 +206,7 @@ NEWLINE: /\r?\n/
 BARE_DOLLAR: /\$(?![_a-zA-Z0-9{(?@$#!*])/
 // Not a "#" first (that is a comment), and not digits directly before a
 // redirection operator (that is an IO_REDIR file descriptor, "2>&1").
-LITERAL: /(?!#|\d+[<>])[^ \t\r\n|&;<>()$`'"\\]+/
+LITERAL: /(?!#|\d+[<>]|esac(?=[ \t\r\n|&;<>()]|$))[^ \t\r\n|&;<>()$`'"\\]+/
 
 // A "#" at a word start begins a comment.
 _COMMENT: /#[^\r\n]*/
@@ -547,12 +552,14 @@ class BashParser:
     @staticmethod
     def _unexpected_char(line: str, error: UnexpectedCharacters) -> str:
         """The token bash names for input the grammar rejects outright: a
-        ")" or ";;" with nothing to close. Anything else gets the generic
-        "unexpected end of file"."""
+        ")", ";;" or "esac" with nothing to close. Anything else gets the
+        generic "unexpected end of file"."""
         rest = line[error.pos_in_stream :]
         for token in (";;", ")"):
             if rest.startswith(token):
                 return token
+        if re.match(r"esac(?=[ \t\r\n|&;<>()]|$)", rest):
+            return "esac"
         return ""
 
     # -- statement splitting ------------------------------------------------

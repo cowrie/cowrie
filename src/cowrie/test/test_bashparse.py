@@ -623,6 +623,13 @@ class BashParseAmbiguityTests(unittest.TestCase):
             "case $x in a) echo 1;; (b|c) echo 2;; esac ; (echo d) ; case y in *) ;; esac"
         )
 
+    def test_nested_case_without_final_dsemi(self) -> None:
+        """esac closes a case only in command position, so a body ending
+        without ;; cannot absorb the next esac as a command."""
+        self._assert_unambiguous(
+            "case a in N) ;; *) case a in N) ;; *) echo two; esac; esac"
+        )
+
     def test_recon_shaped_line(self) -> None:
         stmt = "echo $(id) ; (ls /proc | head -n 1) ; x=$(cat /etc/hostname)"
         self._assert_unambiguous(" ; ".join([stmt] * 2))
