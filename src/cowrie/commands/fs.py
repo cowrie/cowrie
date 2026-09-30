@@ -173,72 +173,148 @@ commands["/bin/egrep"] = Command_grep
 commands["/bin/fgrep"] = Command_grep
 
 
-class Command_tail(HoneyPotCommand):
-    """
-    tail command
-    """
+# GNU size suffixes accepted by head and tail counts.
+_COUNT_SUFFIXES = {
+    "": 1,
+    "b": 512,
+    "kB": 1000,
+    "k": 1024,
+    "K": 1024,
+    "KiB": 1024,
+    "MB": 1000**2,
+    "M": 1024**2,
+    "MiB": 1024**2,
+    "GB": 1000**3,
+    "G": 1024**3,
+    "GiB": 1024**3,
+}
+
+
+def _parse_count(text: str) -> tuple[str, int] | None:
+    """Parse a head/tail count: an optional sign ("-" or "+"), digits and a
+    GNU size suffix. Returns (sign, value), or None when it is invalid."""
+    match = re.fullmatch(r"([-+]?)(\d+)([A-Za-z]*)", text)
+    if not match or match.group(3) not in _COUNT_SUFFIXES:
+        return None
+    return match.group(1), int(match.group(2)) * _COUNT_SUFFIXES[match.group(3)]
+
+
+def _split_lines(data: bytes) -> list[bytes]:
+    """Split into lines that keep their newline; a final line without one
+    stays without one."""
+    parts = data.split(b"\n")
+    lines = [part + b"\n" for part in parts[:-1]]
+    if parts[-1]:
+        lines.append(parts[-1])
+    return lines
+
+
+class _HeadTail(HoneyPotCommand):
+    """The shared option handling and file loop of head and tail."""
 
     consumes_stdin = True
+    name: str
 
-    n: int = 10
+    # Count mode ("lines" or "bytes"), its sign as typed and its value.
+    mode: str = "lines"
+    sign: str = ""
+    count: int = 10
 
-    def tail_get_contents(self, filename: str) -> None:
-        try:
-            contents = self.fs.file_contents(filename)
-            self.tail_application(contents)
-        except Exception:
-            self.errorWrite(
-                f"tail: cannot open `{filename}' for reading: No such file or directory\n"
-            )
-
-    def tail_application(self, contents: bytes) -> None:
-        contentsplit = contents.split(b"\n")
-        lines = len(contentsplit)
-        if lines < self.n:
-            self.n = lines - 1
-        i = 0
-        for j in range((lines - self.n - 1), lines):
-            self.writeBytes(contentsplit[j])
-            if i < self.n:
-                self.write("\n")
-            i += 1
+    def select(self, data: bytes) -> bytes:
+        raise NotImplementedError
 
     def start(self) -> None:
-        if not self.args or self.args[0] == ">":
+        args = list(self.args)
+        # The obsolete "-NUM" form (and "+NUM" for tail) as the first argument.
+        if args and re.fullmatch(r"-\d+", args[0]):
+            args[0:1] = ["-n", args[0][1:]]
+        try:
+            optlist, files = getopt.gnu_getopt(
+                args,
+                "c:n:qvfF",
+                ["bytes=", "lines=", "quiet", "silent", "verbose", "follow"],
+            )
+        except getopt.GetoptError as err:
+            self.errorWrite(
+                f"{self.name}: invalid option -- '{err.opt}'\n"
+                f"Try '{self.name} --help' for more information.\n"
+            )
+            self.exit_code = 1
+            self.exit()
             return
-        else:
-            try:
-                optlist, args = getopt.getopt(self.args, "n:")
-            except getopt.GetoptError as err:
-                self.errorWrite(f"tail: invalid option -- '{err.opt}'\n")
-                self.exit()
-                return
 
-            for opt in optlist:
-                if opt[0] == "-n":
-                    if not opt[1].isdigit():
-                        self.errorWrite(f"tail: illegal offset -- {opt[1]}\n")
-                    else:
-                        self.n = int(opt[1])
-        if not self.input_data:
-            files = self.check_arguments("tail", args)
-            for pname in files:
-                self.tail_get_contents(pname)
-        else:
-            self.tail_application(self.input_data)
+        for opt, value in optlist:
+            if opt in ("-n", "--lines", "-c", "--bytes"):
+                mode = "lines" if opt in ("-n", "--lines") else "bytes"
+                parsed = _parse_count(value)
+                if parsed is None:
+                    self.errorWrite(
+                        f"{self.name}: invalid number of {mode}: '{value}'\n"
+                    )
+                    self.exit_code = 1
+                    self.exit()
+                    return
+                self.mode = mode
+                self.sign, self.count = parsed
 
+        if files:
+            for index, name in enumerate(files):
+                if len(files) > 1:
+                    prefix = "\n" if index else ""
+                    self.write(f"{prefix}==> {name} <==\n")
+                self.write_file(name)
+        elif self.input_data is not None:
+            self.writeBytes(self.select(self.input_data))
+        else:
+            # Reading the terminal: wait for its end of input.
+            return
         self.exit()
+
+    def write_file(self, name: str) -> None:
+        path = self.fs.resolve_path(name, self.cwd)
+        if self.fs.isdir(path):
+            self.errorWrite(f"{self.name}: error reading '{name}': Is a directory\n")
+            self.exit_code = 1
+            return
+        try:
+            contents = self.fs.file_contents(path)
+        except fs.FileNotFound:
+            self.errorWrite(
+                f"{self.name}: cannot open '{name}' for reading: "
+                "No such file or directory\n"
+            )
+            self.exit_code = 1
+            return
+        self.writeBytes(self.select(contents))
 
     def lineReceived(self, line: str) -> None:
         self.protocol.events.dispatch(
             "cowrie.command.input",
             "INPUT (%(realm)s): %(input)s",
-            realm="tail",
+            realm=self.name,
             input=line,
         )
 
     def eofReceived(self) -> None:
         self.exit()
+
+
+class Command_tail(_HeadTail):
+    """
+    tail command
+    """
+
+    name = "tail"
+
+    def select(self, data: bytes) -> bytes:
+        if self.mode == "bytes":
+            if self.sign == "+":
+                return data[max(self.count - 1, 0) :]
+            return data[-self.count :] if self.count else b""
+        lines = _split_lines(data)
+        if self.sign == "+":
+            return b"".join(lines[max(self.count - 1, 0) :])
+        return b"".join(lines[-self.count :]) if self.count else b""
 
 
 commands["/bin/tail"] = Command_tail
@@ -246,78 +322,22 @@ commands["/usr/bin/tail"] = Command_tail
 commands["tail"] = Command_tail
 
 
-class Command_head(HoneyPotCommand):
+class Command_head(_HeadTail):
     """
     head command
     """
 
-    consumes_stdin = True
+    name = "head"
 
-    linecount: int = 10
-    bytecount: int = 0
-
-    def head_application(self, contents: bytes) -> None:
-        if self.bytecount:
-            self.writeBytes(contents[: self.bytecount])
-        elif self.linecount:
-            linesplit = contents.split(b"\n")
-            for line in linesplit[: self.linecount]:
-                self.writeBytes(line + b"\n")
-
-    def head_get_file_contents(self, filename: str) -> None:
-        try:
-            contents = self.fs.file_contents(filename)
-            self.head_application(contents)
-        except fs.FileNotFound:
-            self.errorWrite(
-                f"head: cannot open `{filename}' for reading: No such file or directory\n"
-            )
-
-    def start(self) -> None:
-        self.lines: int = 10
-        self.bytecount: int = 0
-        if not self.args or self.args[0] == ">":
-            return
-        else:
-            try:
-                optlist, args = getopt.getopt(self.args, "c:n:")
-            except getopt.GetoptError as err:
-                self.errorWrite(f"head: invalid option -- '{err.opt}'\n")
-                self.exit()
-                return
-
-            for opt in optlist:
-                if opt[0] == "-n":
-                    if not opt[1].isdigit():
-                        self.errorWrite(f"head: invalid number of lines: `{opt[1]}`\n")
-                    else:
-                        self.linecount = int(opt[1])
-                        self.bytecount = 0
-                elif opt[0] == "-c":
-                    if not opt[1].isdigit():
-                        self.errorWrite(f"head: invalid number of bytes: `{opt[1]}`\n")
-                    else:
-                        self.bytecount = int(opt[1])
-                        self.linecount = 0
-
-        if not self.input_data:
-            files = self.check_arguments("head", args)
-            for pname in files:
-                self.head_get_file_contents(pname)
-        else:
-            self.head_application(self.input_data)
-        self.exit()
-
-    def lineReceived(self, line: str) -> None:
-        self.protocol.events.dispatch(
-            "cowrie.command.input",
-            "INPUT (%(realm)s): %(input)s",
-            realm="head",
-            input=line,
-        )
-
-    def eofReceived(self) -> None:
-        self.exit()
+    def select(self, data: bytes) -> bytes:
+        if self.mode == "bytes":
+            if self.sign == "-":
+                return data[: max(len(data) - self.count, 0)]
+            return data[: self.count]
+        lines = _split_lines(data)
+        if self.sign == "-":
+            return b"".join(lines[: max(len(lines) - self.count, 0)])
+        return b"".join(lines[: self.count])
 
 
 commands["/bin/head"] = Command_head
