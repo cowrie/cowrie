@@ -20,7 +20,7 @@ from twisted.protocols.policies import TimeoutMixin
 import cowrie.commands
 from cowrie.core.config import CowrieConfig
 from cowrie.core.resources import read_data_bytes
-from cowrie.shell import command, honeypot
+from cowrie.shell import command, fs, honeypot
 
 if TYPE_CHECKING:
     from twisted.python import failure
@@ -93,6 +93,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.logintime = time.time()
 
         self.events.dispatch("cowrie.session.params", "", arch=self.user.server.arch)
+        self.fs.generated_files["/proc/uptime"] = self.proc_uptime
 
         idle_timeout = CowrieConfig.getint("honeypot", "idle_timeout", fallback=180)
         self.setTimeout(idle_timeout)
@@ -297,6 +298,18 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         pt = self.getProtoTransport()
         r = time.time() - pt.factory.starttime
         return r
+
+    def proc_uptime(self) -> bytes:
+        """/proc/uptime: seconds since boot, and idle seconds summed over the
+        CPUs listed in /proc/cpuinfo, as a lightly loaded machine reports."""
+        uptime = self.uptime()
+        try:
+            cpuinfo = self.fs.file_contents("/proc/cpuinfo")
+        except (fs.FileNotFound, IsADirectoryError):
+            cpuinfo = b""
+        processors = [x for x in cpuinfo.splitlines() if x.startswith(b"processor")]
+        cpus = max(1, len(processors))
+        return f"{uptime:.2f} {uptime * cpus * 0.97:.2f}\n".encode()
 
     def eofReceived(self) -> None:
         """

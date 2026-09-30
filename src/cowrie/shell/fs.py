@@ -26,6 +26,8 @@ from cowrie.core.resources import read_data_bytes
 from cowrie.shell import honeyfs
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from cowrie.core.events import EventLog
 
 (
@@ -141,6 +143,10 @@ class HoneyPotFilesystem:
 
         # Keep count of new files, so we can have an artificial limit
         self.newcount: int = 0
+
+        # Files whose contents are generated when read, like a kernel's /proc
+        # entries: path -> function returning the current contents.
+        self.generated_files: dict[str, Callable[[], bytes]] = {}
 
         # If the operator has set contents_path, walk it and mark
         # A_REALFILE on matching pickle entries so file_contents reads
@@ -315,6 +321,8 @@ class HoneyPotFilesystem:
             raise FileNotFound
         if f[A_TYPE] == T_DIR:
             raise IsADirectoryError
+        if path in self.generated_files:
+            return self.generated_files[path]()
         if f[A_TYPE] == T_FILE and f[A_REALFILE]:
             return Path(f[A_REALFILE]).read_bytes()
         if f[A_TYPE] == T_FILE and isinstance(f[A_CONTENTS], bytes):
