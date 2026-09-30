@@ -220,3 +220,16 @@ class ShellEchoCommandTests(unittest.TestCase):
         output = self.tr.value()
         self.assertNotIn(b"syntax error", output)
         self.assertIn(b"done", output)
+
+    def test_escaped_backslash_in_double_quotes(self) -> None:
+        """Inside double quotes \\\\ is one backslash, as in bash."""
+        self.proto.lineReceived(b'echo "a\\\\b"\n')
+        self.assertEqual(self.tr.value(), b"a\\b\n" + PROMPT)
+
+    def test_escaped_backslash_before_closing_quote(self) -> None:
+        self.proto.lineReceived(b'echo "a\\\\\\\\"\n')
+        self.assertEqual(self.tr.value(), b"a\\\\\n" + PROMPT)
+
+    def test_lone_backslash_in_double_quotes_is_kept(self) -> None:
+        self.proto.lineReceived(b'echo "a\\qb"\n')
+        self.assertEqual(self.tr.value(), b"a\\qb\n" + PROMPT)
