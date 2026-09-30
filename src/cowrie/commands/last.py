@@ -13,6 +13,16 @@ from cowrie.shell.command import HoneyPotCommand
 commands = {}
 
 
+def last_date(stamp: float, *, seconds: bool) -> str:
+    """A date as util-linux last prints it: the day padded with a space, and
+    with seconds and year for the wtmp start."""
+    t = time.localtime(stamp)
+    text = time.strftime("%a %b ", t) + f"{t.tm_mday:2d}" + time.strftime(" %H:%M", t)
+    if seconds:
+        text += time.strftime(":%S %Y", t)
+    return text
+
+
 class Command_last(HoneyPotCommand):
     def call(self) -> None:
         line = list(self.args)
@@ -28,23 +38,14 @@ class Command_last(HoneyPotCommand):
                 self.user["username"],
                 "pts/0",
                 self.protocol.clientIP,
-                time.strftime(
-                    "%a %b %d %H:%M", time.localtime(self.protocol.logintime)
-                ),
+                last_date(self.protocol.logintime, seconds=False),
             )
         )
 
+        # wtmp starts at the emulated boot, the same clock uptime reports.
+        boot = self.protocol.boot_time()
         self.write("\n")
-        self.write(
-            "wtmp begins {}\n".format(
-                time.strftime(
-                    "%a %b %d %H:%M:%S %Y",
-                    time.localtime(
-                        self.protocol.logintime // (3600 * 24) * (3600 * 24) + 63
-                    ),
-                )
-            )
-        )
+        self.write(f"wtmp begins {last_date(boot, seconds=True)}\n")
 
 
 commands["/usr/bin/last"] = Command_last
