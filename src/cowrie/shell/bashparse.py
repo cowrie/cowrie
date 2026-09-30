@@ -326,12 +326,13 @@ class Command:
     is about to run, so a same-line ``x=hi; echo $x`` sees the assignment.
     ``op`` is the operator that joins this statement to the previous one
     (``None`` / ``;`` / ``&&`` / ``||``); ``line`` is the source the word trees
-    point into.
+    point into, and ``lineno`` the 1-based line of that source it starts on.
     """
 
     items: list[str | Tree] = field(default_factory=list)
     line: str = ""
     op: str | None = None
+    lineno: int = 0
 
 
 @dataclass
@@ -444,6 +445,10 @@ class SyntaxError_:
     """
 
     token: str
+    # The 1-based line of the parsed input the error is on, and that line's
+    # text, which a non-interactive bash quotes after the message.
+    lineno: int = 0
+    source: str = ""
 
 
 Statement = (
@@ -538,9 +543,13 @@ class BashParser:
             with _parse_alarm(parse_timeout_seconds()):
                 tree = _parser.parse(line)
         except UnexpectedCharacters as error:
-            return [SyntaxError_(token=self._unexpected_char(line, error))]
+            return [
+                SyntaxError_(
+                    token=self._unexpected_char(line, error), lineno=error.line
+                )
+            ]
         except LarkError:
-            return [SyntaxError_(token="")]
+            return [SyntaxError_(token="", lineno=self._end_line(line))]
         except ParseTimeoutError:
             timed_out = True
             self._log.warn(
@@ -548,11 +557,26 @@ class BashParser:
                 timeout=parse_timeout_seconds(),
                 length=len(line),
             )
-            return [SyntaxError_(token="")]
+            return [SyntaxError_(token="", lineno=self._end_line(line))]
         finally:
             if timed_out or len(line) >= gc_collect_threshold():
                 gc.collect()
         return self._split_statements(line, tree)
+
+    @staticmethod
+    def _end_line(line: str) -> int:
+        """The line bash reports an unexpected end of input on: the one after
+        the last."""
+        return len(line.rstrip("\n").split("\n")) + 1
+
+    @staticmethod
+    def _node_line(node: Tree | Token | None) -> int:
+        """The 1-based source line a grammar node starts on, or 0."""
+        if isinstance(node, Token):
+            return node.line or 0
+        if isinstance(node, Tree) and not node.meta.empty:
+            return node.meta.line
+        return 0
 
     @staticmethod
     def _unexpected_char(line: str, error: UnexpectedCharacters) -> str:
@@ -629,7 +653,9 @@ class BashParser:
                 if value in ("&&", "||"):
                     if not seen:
                         # A leading && / || is a bash syntax error.
-                        statements.append(SyntaxError_(token=value))
+                        statements.append(
+                            SyntaxError_(token=value, lineno=self._node_line(separator))
+                        )
                         return statements
                     pending_op = value
                 elif pending_op not in ("&&", "||"):
@@ -643,7 +669,9 @@ class BashParser:
                 break
             if keyword in _CLOSERS:
                 del statements[line_start:]
-                statements.append(SyntaxError_(token=keyword))
+                statements.append(
+                    SyntaxError_(token=keyword, lineno=self._node_line(node))
+                )
                 return statements
 
             statement = self._parse_statement(
@@ -653,6 +681,10 @@ class BashParser:
             seen = True
             pending_op = None
             if isinstance(statement, SyntaxError_):
+                if not statement.lineno:
+                    statement.lineno = self._node_line(cursor.peek()) or self._end_line(
+                        line
+                    )
                 return statements
 
         return statements
@@ -804,7 +836,7 @@ class BashParser:
         items: list[str | Tree] = [
             unit.value if isinstance(unit, Token) else unit for unit in units
         ]
-        return Command(items=items, line=line, op=op)
+        return Command(items=items, line=line, op=op, lineno=self._node_line(units[0]))
 
     # -- compound commands --------------------------------------------------
 
