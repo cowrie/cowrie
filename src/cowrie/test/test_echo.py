@@ -295,3 +295,12 @@ class ShellEchoCommandTests(unittest.TestCase):
     def test_closing_keywords_as_arguments(self) -> None:
         self.proto.lineReceived(b"echo fi done }; if true; then echo ok; fi\n")
         self.assertEqual(self.tr.value(), b"fi done }\nok\n" + PROMPT)
+
+    def test_syntax_error_rejects_its_line_after_earlier_lines_ran(self) -> None:
+        """bash runs the lines before a syntax error, then reports it and
+        runs nothing after it."""
+        self.proto.lineReceived(b"echo a\nfi; echo b\necho c\n")
+        self.assertEqual(
+            self.tr.value(),
+            b"a\n-bash: syntax error near unexpected token `fi'\n" + PROMPT,
+        )

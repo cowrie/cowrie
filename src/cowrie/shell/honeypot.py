@@ -335,32 +335,34 @@ class HoneyPotShell:
         a ``(...)`` group its own isolated shell, so the inner statements run
         in the parent shell and their ``cd`` / variable effects persist.
 
-        Returns False to stop queueing after a syntax error: commands already
-        queued before the error still run, as in bash.
+        A syntax error is queued in place of the statement holding it and
+        ends the queue: as in bash, earlier lines run, then the error is
+        reported and nothing after it runs. Returns False at a syntax error.
         """
         for statement in statements:
-            if not self._reject_inner_error([statement]):
+            error = self._find_syntax_error([statement])
+            if error is not None:
+                self.cmdpending.append(error)
                 return False
             self.cmdpending.append(statement)
         return True
 
-    def _reject_inner_error(self, statements: list[Statement]) -> bool:
-        """Report a syntax error at the top level or nested anywhere inside a
-        subshell or pipeline, since the whole line is rejected at parse time.
-        Returns False once reported."""
+    def _find_syntax_error(self, statements: list[Statement]) -> SyntaxError_ | None:
+        """The first syntax error at the top level or nested anywhere inside a
+        subshell or pipeline, since bash rejects the whole line holding it."""
         for statement in statements:
             if isinstance(statement, SyntaxError_):
-                self._report_syntax_error(statement)
-                return False
+                return statement
             if isinstance(statement, Subshell):
                 inner = statement.statements
             elif isinstance(statement, Pipeline):
                 inner = statement.stages
             else:
                 continue
-            if not self._reject_inner_error(inner):
-                return False
-        return True
+            error = self._find_syntax_error(inner)
+            if error is not None:
+                return error
+        return None
 
     def _report_syntax_error(self, statement: SyntaxError_) -> None:
         """Write the message bash prints for a syntax error and set $? to 2."""
@@ -724,7 +726,7 @@ class HoneyPotShell:
             command.fn()
             return
 
-        # A syntax error nested in a compound body surfaces here when reached.
+        # A syntax error surfaces here when execution reaches its line.
         if isinstance(command, SyntaxError_):
             self._report_syntax_error(command)
             self._advance()
