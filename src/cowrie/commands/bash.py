@@ -51,6 +51,11 @@ class Command_sh(HoneyPotCommand):
         else:
             self.interactive_shell()
 
+    @property
+    def argv0(self) -> str:
+        """The name this shell was invoked by: bash, sh, /bin/bash ..."""
+        return getattr(self.pp, "argv0", None) or "bash"
+
     def execute_script_file(self, filename: str) -> None:
         # bash refuses to run a binary file and reports it the same way for a
         # missing one; the script contents otherwise go straight to the parser.
@@ -58,9 +63,11 @@ class Command_sh(HoneyPotCommand):
         run_script_file(
             self,
             path,
-            not_found_message=f"bash: {filename}: No such file or directory\n",
+            name=filename,
+            not_found_message=f"{self.argv0}: {filename}: No such file or directory\n",
             binary_message=(
-                f"bash: {filename}: cannot execute binary file: Exec format error\n"
+                f"{self.argv0}: {filename}: cannot execute binary file: "
+                "Exec format error\n"
             ),
         )
 
@@ -68,6 +75,7 @@ class Command_sh(HoneyPotCommand):
         # self.input_data holds commands passed via PIPE
         # create new HoneyPotShell for our a new 'sh' shell
         shell = HoneyPotShell(self.protocol, interactive=False)
+        shell.name = self.argv0
         self.protocol.cmdstack.append(shell)
 
         # call lineReceived method that indicates that we have some commands to parse
@@ -120,6 +128,10 @@ class Command_sh(HoneyPotCommand):
         shell = HoneyPotShell(
             self.protocol, interactive=interactive, reads_stdin=reads_stdin
         )
+        # A shell reading commands from stdin names itself as invoked; it has
+        # no -c string to name in its syntax errors.
+        shell.name = self.argv0
+        shell.syntax_label = None
         # TODO: copy more variables, but only exported variables
         try:
             shell.environ["SHLVL"] = str(int(parentshell.environ["SHLVL"]) + 1)
@@ -146,7 +158,8 @@ class Command_exit(HoneyPotCommand):
                 code = int(self.args[0]) & 0xFF
             except ValueError:
                 self.errorWrite(
-                    f"-bash: exit: {self.args[0]}: numeric argument required\n"
+                    f"{self.shell.error_prefix()}exit: {self.args[0]}: "
+                    "numeric argument required\n"
                 )
                 code = 2
         # The code is the dying shell's final status: whoever launched the

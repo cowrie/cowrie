@@ -362,13 +362,17 @@ class Command_cd(HoneyPotCommand):
         except Exception:
             inode = None
         if pname == "-":
-            self.errorWrite("bash: cd: OLDPWD not set\n")
+            self.errorWrite(f"{self.shell.error_prefix()}cd: OLDPWD not set\n")
             return
         if inode is None or inode is False:
-            self.errorWrite(f"bash: cd: {pname}: No such file or directory\n")
+            self.errorWrite(
+                f"{self.shell.error_prefix()}cd: {pname}: No such file or directory\n"
+            )
             return
         if inode[fs.A_TYPE] != fs.T_DIR:
-            self.errorWrite(f"bash: cd: {pname}: Not a directory\n")
+            self.errorWrite(
+                f"{self.shell.error_prefix()}cd: {pname}: Not a directory\n"
+            )
             return
         # cd is a builtin: it changes the running shell's directory, not this
         # command process's own.

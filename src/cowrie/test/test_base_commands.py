@@ -197,7 +197,7 @@ class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
         self.proto.lineReceived(f"cd {NONEXISTEN_FILE:s}".encode())
         self.assertEqual(
             self.tr.value(),
-            f"bash: cd: {NONEXISTEN_FILE:s}: No such file or directory\n".encode()
+            f"-bash: cd: {NONEXISTEN_FILE:s}: No such file or directory\n".encode()
             + PROMPT,
         )
 

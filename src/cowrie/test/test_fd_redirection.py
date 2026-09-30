@@ -303,7 +303,7 @@ class ShellFdRedirectionTests(unittest.TestCase):
         # command still runs (its stdout is unaffected). Issue #2921.
         self.proto.lineReceived(b"echo test 9999>/dev/null")
         self.assertEqual(
-            self.tr.value(), b"bash: 9999: Bad file descriptor\ntest\n" + PROMPT
+            self.tr.value(), b"-bash: 9999: Bad file descriptor\ntest\n" + PROMPT
         )
 
     def test_in_range_fd_has_no_error(self) -> None:
@@ -318,12 +318,12 @@ class ShellFdRedirectionTests(unittest.TestCase):
         self.tr.clear()
         self.proto.lineReceived(b"echo b 1024>/dev/null")
         self.assertEqual(
-            self.tr.value(), b"bash: 1024: Bad file descriptor\nb\n" + PROMPT
+            self.tr.value(), b"-bash: 1024: Bad file descriptor\nb\n" + PROMPT
         )
 
     def test_dup_from_out_of_range_fd_reports_error(self) -> None:
         # Duplicating from an out-of-range fd reports that fd. Issue #2921.
         self.proto.lineReceived(b"echo hi 2>&9999")
         self.assertEqual(
-            self.tr.value(), b"bash: 9999: Bad file descriptor\nhi\n" + PROMPT
+            self.tr.value(), b"-bash: 9999: Bad file descriptor\nhi\n" + PROMPT
         )
