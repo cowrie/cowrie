@@ -274,3 +274,7 @@ class ShellEchoCommandTests(unittest.TestCase):
             self.tr.value(),
             b"-bash: syntax error near unexpected token `esac'\n" + PROMPT,
         )
+
+    def test_syntax_error_goes_to_stderr(self) -> None:
+        self.proto.lineReceived(b"bash -c 'echo (' 2>/dev/null; echo rc=$?\n")
+        self.assertEqual(self.tr.value(), b"rc=2\n" + PROMPT)

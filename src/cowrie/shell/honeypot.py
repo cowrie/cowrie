@@ -365,14 +365,31 @@ class HoneyPotShell:
     def _report_syntax_error(self, statement: SyntaxError_) -> None:
         """Write the message bash prints for a syntax error and set $? to 2."""
         if statement.token:
-            self.protocol.terminal.write(
-                f"-bash: syntax error near unexpected token `{statement.token}'\n".encode()
-            )
+            message = f"-bash: syntax error near unexpected token `{statement.token}'\n"
         else:
-            self.protocol.terminal.write(
-                b"-bash: syntax error: unexpected end of file\n"
-            )
+            message = "-bash: syntax error: unexpected end of file\n"
+        self._write_shell_error(message.encode())
         self.last_exit_code = 2  # bash uses 2 for a syntax error
+
+    def _write_shell_error(
+        self, message: bytes, ops: list[dict[str, Any]] | None = None
+    ) -> None:
+        """Write an error the shell itself reports to its stderr (fd 2), with
+        ``ops`` -- the failing command's own redirections -- applied, so
+        `x 2>&1 | cat` and `( x ) 2>/dev/null` reroute it."""
+        pp = PipeProtocol(
+            self.protocol,
+            None,
+            [],
+            None,
+            dict(self.fds),
+            ops,
+            cwd=self.cwd,
+            user=self.user,
+        )
+        pp.errReceived(message)
+        for real_path, virtual_path in pp.redirect_real_files:
+            self.protocol.terminal.redirFiles.add((real_path, virtual_path))
 
     def _finish(self) -> None:
         """The command queue is drained: do the shell's idle action.
@@ -967,22 +984,7 @@ class HoneyPotShell:
                 message = f"-bash: exec: {cmd}: not found\n".encode()
             else:
                 message = self.command_not_found_message(cmd).encode("utf8")
-            # The shell writes the error to its own fd 2, with the command's
-            # redirections applied: `x 2>&1 | cat` and `( x ) 2>/dev/null`
-            # both reroute it.
-            temp_pp = PipeProtocol(
-                self.protocol,
-                None,
-                [],
-                None,
-                dict(self.fds),
-                ops,
-                cwd=self.cwd,
-                user=self.user,
-            )
-            temp_pp.errReceived(message)
-            for real_path, virtual_path in temp_pp.redirect_real_files:
-                self.protocol.terminal.redirFiles.add((real_path, virtual_path))
+            self._write_shell_error(message, ops)
 
             self.last_exit_code = 127  # command not found
             if exec_replace and not self.interactive:
