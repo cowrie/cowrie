@@ -291,13 +291,15 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             if not live_stdin:
                 obj.eofReceived()
 
+    def boot_time(self) -> float:
+        """When the emulated machine booted: when the honeypot started."""
+        return float(self.getProtoTransport().factory.starttime)
+
     def uptime(self):
         """
         Uptime
         """
-        pt = self.getProtoTransport()
-        r = time.time() - pt.factory.starttime
-        return r
+        return time.time() - self.boot_time()
 
     def proc_uptime(self) -> bytes:
         """/proc/uptime: seconds since boot, and idle seconds summed over the
