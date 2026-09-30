@@ -46,6 +46,7 @@ command_modules = [
     "printf",
     "python",
     "scp",
+    "sed",
     "service",
     "sleep",
     "ssh",
