@@ -54,6 +54,7 @@ command_modules = [
     "tar",
     "tee",
     "tftp",
+    "tr",
     "ulimit",
     "uname",
     "uniq",
