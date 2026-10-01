@@ -31,9 +31,14 @@ class Output(cowrie.core.output.Output):
 
     _log = Logger()
 
+    # Topic (message_thread_id) to post into, for groups with Topics enabled.
+    # Empty means no topic: messages go to the chat itself.
+    thread_id: str = ""
+
     def start(self):
         self.bot_token = CowrieConfig.get("output_telegram", "bot_token")
         self.chat_id = CowrieConfig.get("output_telegram", "chat_id")
+        self.thread_id = CowrieConfig.get("output_telegram", "thread_id", fallback="")
 
     def stop(self):
         pass
@@ -76,16 +81,19 @@ class Output(cowrie.core.output.Output):
 
     def send_message(self, message):
         self._log.info("Telegram plugin will try to call TelegramBot")
+        params = [
+            ("chat_id", str(self.chat_id)),
+            ("parse_mode", "HTML"),
+            ("text", message),
+        ]
+        if self.thread_id:
+            params.append(("message_thread_id", self.thread_id))
         # treq.get returns a Deferred; a network failure surfaces there, not as
         # a synchronous exception, so it needs an errback rather than a
         # try/except to avoid an unhandled Deferred error.
         d = treq.get(
             "https://api.telegram.org/bot" + self.bot_token + "/sendMessage",
-            params=[
-                ("chat_id", str(self.chat_id)),
-                ("parse_mode", "HTML"),
-                ("text", message),
-            ],
+            params=params,
             allow_redirects=False,
         )
         d.addErrback(self._request_failed)
