@@ -144,7 +144,13 @@ def recurse(localroot, root, tree, maxdepth=100):
                 continue
             else:
                 entry[A_TYPE] = T_LINK
-                entry[A_TARGET] = realpath[len(localroot) :]
+                # Record the target as readlink(2) reports it, so `ls -l`
+                # shows what the template host showed and relative targets
+                # keep resolving against the link's own directory. Storing
+                # realpath() instead flattened symlink chains and, when
+                # localroot was "/", ate the leading slash of absolute
+                # targets.
+                entry[A_TARGET] = os.readlink(path)
         elif S_ISDIR(s[ST_MODE]):
             entry[A_TYPE] = T_DIR
             if (PROC or not localpath.startswith("/proc/")) and maxdepth > 0:
