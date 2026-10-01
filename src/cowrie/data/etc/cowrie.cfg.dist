@@ -1278,12 +1278,15 @@ debug = false
 # Send message using Telegram bot
 # 1. Create a bot following https://core.telegram.org/bots#6-botfather to get token.
 # 2. Send message to your bot, then use https://api.telegram.org/bot{bot_token}/getUpdates to find chat_id.
+# 3. Optional: to post into a topic of a group with Topics enabled, set thread_id to the topic id, the last number in the topic link (https://t.me/c/<chat>/<topic>).
+# The chat_id of such a group starts with -100. Leave thread_id unset to post in the chat itself.
 # N.b. bot will only send messages on cowrie.login.success, cowrie.command.input/.failed, and
 # cowrie.session.file_download, to prevent spam. 
 [output_telegram]
 enabled = false
 bot_token = 123456789:AbCDEfGhiJkLmnOpQRstUVWxYZ
 chat_id = 987654321
+#thread_id = 42
 
 # Reports login attempts to AbuseIPDB. A short guide is in the original
 # pull request on GitHub: https://github.com/cowrie/cowrie/pull/1346
