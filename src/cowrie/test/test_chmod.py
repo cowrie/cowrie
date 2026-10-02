@@ -217,6 +217,23 @@ class ShellChmodModeTests(unittest.TestCase):
         self.assertEqual(stat.S_IMODE(self.mode_of("/tmp/modes/d")), 0o750)
         self.assertTrue(stat.S_ISDIR(self.mode_of("/tmp/modes/d")))
 
+    def test_star_changes_every_visible_entry(self) -> None:
+        self.run_line(b"mkdir /tmp/modes/star")
+        self.run_line(b"cd /tmp/modes/star")
+        try:
+            for name in ("a", "b", ".hidden"):
+                self.run_line(f"echo hi > {name}".encode())
+                self.proto.fs.chmod(f"/tmp/modes/star/{name}", 0o644)
+            self.tr.clear()
+            self.proto.lineReceived(b"chmod 700 *")
+            self.assertEqual(self.tr.value(), b"root@unitTest:/tmp/modes/star# ")
+            for name, perm in (("a", 0o700), ("b", 0o700), (".hidden", 0o644)):
+                self.assertEqual(
+                    stat.S_IMODE(self.mode_of(f"/tmp/modes/star/{name}")), perm
+                )
+        finally:
+            self.run_line(b"cd /tmp/modes")
+
     def test_mode_out_of_range_is_invalid(self) -> None:
         self.make_file("f", 0o644)
         self.assertEqual(

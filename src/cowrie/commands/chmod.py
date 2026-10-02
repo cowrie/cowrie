@@ -158,12 +158,19 @@ class Command_chmod(HoneyPotCommand):
         # go through the list of files and check whether they exist
         for file in files:
             if file == "*":
+                # the shell leaves globbing to commands; * names the visible entries
+                names = [
+                    entry[fs.A_NAME]
+                    for entry in self.fs.get_path(self.cwd)
+                    if not entry[fs.A_NAME].startswith(".")
+                ]
                 # if the current directory is empty, return 'No such file or directory'
-                files = self.fs.get_path(self.cwd)[:]
-                if not files:
+                if not names:
                     self.errorWrite(
                         "chmod: cannot access '*': No such file or directory\n"
                     )
+                for name in names:
+                    self.change_mode(name, mode)
             else:
                 path = self.fs.resolve_path(file, self.cwd)
                 if not self.fs.exists(path):
