@@ -3,23 +3,28 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 
-#  cowrie.client.fingerprint
-#  cowrie.client.size
-#  cowrie.client.var
-#  cowrie.client.version
-#  cowrie.command.failed
-#  cowrie.command.success
-#  cowrie.direct-tcpip.data
-#  cowrie.direct-tcpip.request
-#  cowrie.log.closed
-#  cowrie.login.failed
-#  cowrie.login.success
-#  cowrie.session.closed
-#  cowrie.session.connect
-#  cowrie.session.file_download
-#  cowrie.session.file_upload
+# ABOUTME: Formats Cowrie events as CEF (Common Event Format) strings for
+# ABOUTME: the localsyslog and textlog output plugins.
+# The event ids and their attributes are documented in docs/OUTPUT.rst.
 
 from __future__ import annotations
+
+
+def escapeCefValue(value: str) -> str:
+    """
+    Escape a CEF extension value.
+
+    Pairs in the extension are delimited by a space and a key is separated
+    from its value by "=", so a literal "=" in a value would read as the start
+    of the next pair. CEF escapes it as "\\=", the backslash itself as "\\\\",
+    and a newline as "\\n" / "\\r" so one event stays on one line.
+    """
+    return (
+        value.replace("\\", "\\\\")
+        .replace("=", "\\=")
+        .replace("\r", "\\r")
+        .replace("\n", "\\n")
+    )
 
 
 def formatCef(logentry: dict[str, str]) -> str:
@@ -56,16 +61,17 @@ def formatCef(logentry: dict[str, str]) -> str:
         case "cowrie.login.failed":
             cefExtensions["duser"] = logentry["username"]
             cefExtensions["outcome"] = "failed"
-        case "cowrie.file.file_download" | "cowrie.file.file_upload":
-            cefExtensions["filehash"] = logentry["filehash"]
-            cefExtensions["filePath"] = logentry["filename"]
-            cefExtensions["fsize"] = logentry["size"]
+        case "cowrie.session.file_download" | "cowrie.session.file_upload":
+            cefExtensions["filehash"] = logentry["shasum"]
+            cefExtensions["filePath"] = logentry["outfile"]
+        case _:
+            pass
 
     # 'out' 'outcome'  request, rt
 
     cefList = []
     for key in cefExtensions:
-        value = str(cefExtensions[key])
+        value = escapeCefValue(str(cefExtensions[key]))
         cefList.append(f"{key}={value}")
 
     cefExtension = " ".join(cefList)

@@ -56,7 +56,7 @@ class CheckInitializedTests(unittest.TestCase):
             cowrie_script.check_initialized()
 
         self.assertEqual(ctx.exception.code, 1)
-        self.assertIn("not initialised", stderr.getvalue())
+        self.assertIn("not initialized", stderr.getvalue())
 
 
 class CowrieInitTests(unittest.TestCase):

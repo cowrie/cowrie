@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import getopt
-import os.path
+import posixpath
 import stat
 import time
 
@@ -35,7 +35,7 @@ class Command_ls(HoneyPotCommand):
             return group
 
     def call(self) -> None:
-        path = self.protocol.cwd
+        path = self.cwd
         paths = []
         self.showHidden = False
         self.showDirectories = False
@@ -65,7 +65,7 @@ class Command_ls(HoneyPotCommand):
                 self.showDirectories = True
 
         for arg in args:
-            paths.append(self.protocol.fs.resolve_path(arg, self.protocol.cwd))
+            paths.append(self.protocol.fs.resolve_path(arg, self.cwd))
 
         if not paths:
             func(path)
@@ -81,7 +81,7 @@ class Command_ls(HoneyPotCommand):
                     dot = self.protocol.fs.getfile(path)[:]
                     dot[fs.A_NAME] = "."
                     files.append(dot)
-                    dotdot = self.protocol.fs.getfile(os.path.split(path)[0])[:]
+                    dotdot = self.protocol.fs.getfile(posixpath.split(path)[0])[:]
                     if not dotdot:
                         dotdot = self.protocol.fs.getfile(path)[:]
                     dotdot[fs.A_NAME] = ".."

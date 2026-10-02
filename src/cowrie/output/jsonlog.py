@@ -36,7 +36,7 @@ class Output(cowrie.core.output.Output):
                 base, dirs, defaultMode=0o664
             )
         elif logtype == "plain":
-            self.outfile = open(Path(dirs, base), "w", encoding="utf-8")
+            self.outfile = open(Path(dirs, base), "a", encoding="utf-8")
         else:
             raise ValueError
 

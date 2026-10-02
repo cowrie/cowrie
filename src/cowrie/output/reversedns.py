@@ -6,7 +6,8 @@
 from __future__ import annotations
 
 import ipaddress
-from functools import lru_cache
+from collections import OrderedDict
+from typing import Any
 
 from twisted.internet import defer
 from twisted.logger import Logger
@@ -30,6 +31,8 @@ class Output(cowrie.core.output.Output):
         Start Output Plugin
         """
         self.timeout = [CowrieConfig.getint("output_reversedns", "timeout", fallback=3)]
+        self.cache_size: int = 1000
+        self._cache: OrderedDict[str, Any] = OrderedDict()
 
     def stop(self):
         """
@@ -107,10 +110,12 @@ class Output(cowrie.core.output.Output):
                 d.addCallback(processForward)
                 d.addErrback(cbError)
 
-    @lru_cache(maxsize=1000)
     def reversedns(self, addr):
         """
-        Perform a reverse DNS lookup on an IP
+        Perform a reverse DNS lookup on an IP, serving repeat lookups
+        from a bounded cache of resolved results. A Deferred is single
+        use, so the cache holds DNS answers (None for NXDOMAIN), never
+        the Deferred itself.
 
         Arguments:
             addr -- IPv4 Address
@@ -119,5 +124,31 @@ class Output(cowrie.core.output.Output):
             ptr = ipaddress.ip_address(addr).reverse_pointer
         except ValueError:
             return None
+        if addr in self._cache:
+            self._cache.move_to_end(addr)
+            return defer.succeed(self._cache[addr])
         d = client.lookupPointer(ptr, timeout=self.timeout)
+        d.addCallbacks(
+            self._cacheResult,
+            self._cacheFailure,
+            callbackArgs=(addr,),
+            errbackArgs=(addr,),
+        )
         return d
+
+    def _cacheResult(self, result, addr):
+        self._cacheStore(addr, result)
+        return result
+
+    def _cacheFailure(self, failure, addr):
+        # NXDOMAIN is a definitive answer worth caching; timeouts and
+        # SERVFAIL are transient, so the next connect retries the lookup.
+        if failure.check(error.DNSNameError):
+            self._cacheStore(addr, None)
+        return failure
+
+    def _cacheStore(self, addr, result):
+        self._cache[addr] = result
+        self._cache.move_to_end(addr)
+        while len(self._cache) > self.cache_size:
+            self._cache.popitem(last=False)

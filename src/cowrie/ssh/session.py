@@ -34,15 +34,19 @@ class HoneyPotSSHSession(session.SSHSession):
             self._log.info("Extra data in request_env: {rest!r}", rest=rest)
             return 1
 
+        # Name and value are attacker input from the env request and need
+        # not be valid UTF-8.
+        name_str = name.decode("utf-8", errors="replace")
+        value_str = value.decode("utf-8", errors="replace")
         self.conn.transport.events.dispatch(
             "cowrie.client.var",
             "request_env: %(name)s=%(value)s",
-            name=name.decode("utf-8"),
-            value=value.decode("utf-8"),
+            name=name_str,
+            value=value_str,
         )
         # FIXME: This only works for shell, not for exec command
         if self.session:
-            self.session.environ[name.decode("utf-8")] = value.decode("utf-8")
+            self.session.environ[name_str] = value_str
         return 0
 
     def request_agent(self, data: bytes) -> int:

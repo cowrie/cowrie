@@ -202,11 +202,13 @@ def run():
         printhelp()
         return
 
+    global PROC, VERBOSE
+
     for o, a in optlist:
         if o == "-v":
-            pass
+            VERBOSE = True
         elif o == "-p":
-            pass
+            PROC = True
         elif o == "-l":
             localroot = a
         elif o == "-d":
@@ -238,7 +240,8 @@ def run():
     recurse(localroot, "/", tree[A_CONTENTS], maxdepth)
 
     if output:
-        pickle.dump(tree, open(output, "wb"))
+        with open(output, "wb") as f:
+            pickle.dump(tree, f)
     else:
         print(pickle.dumps(tree))
 

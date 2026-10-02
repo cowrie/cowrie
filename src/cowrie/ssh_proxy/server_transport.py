@@ -10,7 +10,6 @@ import struct
 import time
 import uuid
 import zlib
-from hashlib import md5
 
 from twisted.conch.ssh import transport
 from twisted.conch.ssh.common import getNS
@@ -22,7 +21,7 @@ from twisted.python import failure, randbytes
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.events import EventLog, transport_events
-from cowrie.core.utils import escape_nonprintable
+from cowrie.core.utils import escape_nonprintable, hassh_client
 from cowrie.ssh_proxy import client_transport
 from cowrie.ssh_proxy.protocols import ssh
 
@@ -186,8 +185,14 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         )
 
     def connect_to_backend(self, ip, port):
+        # The pool hands the address back as the bytes it read off the wire; a
+        # directly configured backend is already a str. Normalise it here so
+        # the failure log below reports an address rather than a bytes repr.
+        if isinstance(ip, bytes):
+            ip = ip.decode("utf-8", errors="replace")
+
         # remember target so we can log consistently on success/failure
-        self.backend_ip = ip
+        self.backend_ip = ip.decode() if isinstance(ip, bytes) else ip
         self.backend_port = port
 
         # connection to the backend starts here
@@ -235,7 +240,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
                     "Remote SSH version: %(version)s",
                     version=escape_nonprintable(self.otherVersionString),
                 )
-            m = re.match(rb"SSH-(\d+.\d+)-(.*)", self.otherVersionString)
+            m = re.match(rb"SSH-(\d+\.\d+)-(.*)", self.otherVersionString)
             if m is None:
                 self._log.info(
                     "Bad protocol version identification: {version!r}",
@@ -282,12 +287,14 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         Override because OpenSSH pads with 0 on KEXINIT
         """
+        if self.transport is None:
+            return
         if self._keyExchangeState != self._KEY_EXCHANGE_NONE:
             if not self._allowedKeyExchangeMessageType(messageType):
                 self._blockedByKeyExchange.append((messageType, payload))
                 return
 
-        payload = chr(messageType).encode() + payload
+        payload = bytes((messageType,)) + payload
         if self.outgoingCompression:
             payload = self.outgoingCompression.compress(
                 payload
@@ -317,14 +324,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             s.split(b",") for s in strings
         )
 
-        # hassh SSH client fingerprint
-        # https://github.com/salesforce/hassh
-        ckexAlgs = ",".join([alg.decode("utf-8") for alg in kexAlgs])
-        cencCS = ",".join([alg.decode("utf-8") for alg in encCS])
-        cmacCS = ",".join([alg.decode("utf-8") for alg in macCS])
-        ccompCS = ",".join([alg.decode("utf-8") for alg in compCS])
-        hasshAlgorithms = f"{ckexAlgs};{cencCS};{cmacCS};{ccompCS}"
-        hassh = md5(hasshAlgorithms.encode("utf-8")).hexdigest()
+        hasshAlgorithms, hassh = hassh_client(kexAlgs, encCS, macCS, compCS)
 
         if self.events:
             self.events.dispatch(
@@ -429,7 +429,8 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             # With python >= 3 we can use super?
             transport.SSHServerTransport.sendDisconnect(self, reason, desc)
         else:
-            self.transport.write(b"Packet corrupt\n")
+            # this message is used to detect Cowrie behaviour
+            # self.transport.write(b"Packet corrupt\n")
             self._log.info(
                 "Disconnecting with error, code {code}\nreason: {desc}",
                 code=reason,
@@ -468,6 +469,13 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.delayedPackets.append([messageNum, payload])
         else:
             if len(self.delayedPackets) > 0:
+                # Flush the queued packets in order, then this one; leaving them
+                # queued would strand a frontend request (e.g. the channel open
+                # that follows login) and hang the session. Mirrors the backend
+                # side in BackendSSHTransport.packet_buffer.
                 self.delayedPackets.append([messageNum, payload])
+                for packet in self.delayedPackets:
+                    self.sshParse.parse_num_packet("[SERVER]", packet[0], packet[1])
+                self.delayedPackets = []
             else:
                 self.sshParse.parse_num_packet("[SERVER]", messageNum, payload)

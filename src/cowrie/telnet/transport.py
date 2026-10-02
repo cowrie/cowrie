@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 from twisted.conch.telnet import AlreadyNegotiating, TelnetTransport
 from twisted.internet.protocol import connectionDone
 from twisted.logger import Logger
-from twisted.protocols.policies import TimeoutMixin
+from twisted.protocols.policies import ProtocolWrapper, TimeoutMixin
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.events import EventLog, transport_events
@@ -52,9 +52,14 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
 
     _log = Logger()
 
-    # The session's event emitter, bound in connectionMade when the running
-    # application provides a dispatcher.
+    # The session's event emitter, bound in connectionMade (or, under the
+    # PROXY protocol, on the first dataReceived) when the running application
+    # provides a dispatcher.
     events: EventLog | None = None
+    # Set when running behind a PROXY-protocol proxy: cowrie.session.connect is
+    # held back until the PROXY header has been parsed and getPeer() reflects
+    # the real client.
+    _emit_connect_pending: bool = False
 
     # Set while the connection is being torn down. Telnet.connectionLost()
     # iterates self.options and errbacks pending negotiations; our retry
@@ -72,14 +77,29 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
             CowrieConfig.getint("honeypot", "authentication_timeout", fallback=120)
         )
 
+        if isinstance(self.transport, ProtocolWrapper):
+            # A protocol wrapper in front of us (the haproxy: endpoint's PROXY
+            # parser) only resolves the real client address once it has read
+            # the header, which happens on the first dataReceived(). Defer
+            # cowrie.session.connect until then so it carries the real IP
+            # rather than the proxy's.
+            self._emit_connect_pending = True
+        else:
+            self._emit_connect()
+
+        TelnetTransport.connectionMade(self)
+
+    def _emit_connect(self) -> None:
+        """
+        Bind the session event log and announce cowrie.session.connect using
+        the current (possibly PROXY-resolved) peer address.
+        """
         self.events = transport_events(
             self.factory,
             self.transport,
             session=self.transportId,
             protocol="telnet",
         )
-
-        TelnetTransport.connectionMade(self)
 
     def write(self, data):
         """
@@ -91,6 +111,30 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         http://stackoverflow.com/questions/35087250/twisted-telnet-server-how-to-avoid-nested-crlf
         """
         self.transport.write(data.replace(b"\r\n", b"\n"))
+
+    def _in_login_phase(self) -> bool:
+        """True until the login succeeds and the interactive session protocol
+        replaces the authentication protocol (see HoneyPotTelnetAuthProtocol.
+        _cbLogin). The CR handling below is scoped to login so the session's
+        raw keystroke input is left untouched."""
+        from cowrie.telnet.userauth import HoneyPotTelnetAuthProtocol
+
+        return isinstance(self.protocol, HoneyPotTelnetAuthProtocol)
+
+    def applicationDataReceived(self, data: bytes) -> None:
+        """
+        Deliver line-based login input the way a real telnetd does.
+
+        The login is read by a LineReceiver that only breaks on LF. Twisted's
+        NVT layer turns CR LF into LF but leaves any other carriage return as a
+        literal CR (CR NUL, or CR before the next line), so a client that ends
+        a line with a bare CR -- PuTTY with "Return sends ^M" -- would never
+        deliver the LF the login waits for (issue #1461). During login, treat a
+        CR as the line terminator too.
+        """
+        if self._in_login_phase():
+            data = data.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+        TelnetTransport.applicationDataReceived(self, data)
 
     def dataReceived(self, data: bytes) -> None:
         """
@@ -104,9 +148,17 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         Telnet.dataReceived() also re-enters the application stack
         (applicationDataReceived -> protocol.dataReceived, negotiate,
         commandReceived), so a ValueError raised by downstream honeypot code is
-        caught here too. Log the full traceback as well so a genuine bug is not
-        silently reduced to a one-line protocol error.
+        caught here too. That is a genuine bug, so log the full traceback for
+        it -- but not for the parser's own protocol error, which is expected
+        garbage traffic (see below).
         """
+        if self._emit_connect_pending:
+            # First bytes have arrived, which under the PROXY protocol means
+            # the header has been parsed and getPeer() now reflects the real
+            # client. Announce the connection before processing the data.
+            self._emit_connect_pending = False
+            self._emit_connect()
+
         try:
             TelnetTransport.dataReceived(self, data)
         except ValueError as e:
@@ -116,9 +168,31 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
                     "Telnet protocol error %(error)s; dropping connection",
                     error=str(e),
                 )
-            self._log.failure("Telnet protocol error; dropping connection")
+            # Twisted's parser raises ValueError("Stumped", byte) for a byte
+            # that is not a valid command after IAC: a non-telnet or malformed
+            # client (scanners, binary garbage) probing the port. That is
+            # expected honeypot traffic, already recorded by the event above,
+            # so drop it without a traceback. Any other ValueError comes from
+            # re-entrant honeypot code and is a real bug worth the traceback.
+            stumped = bool(e.args) and e.args[0] == "Stumped"
+            if not stumped:
+                self._log.failure("Telnet protocol error; dropping connection")
+            elif not self.events:
+                self._log.info(
+                    "Telnet protocol error {error}; dropping connection",
+                    error=str(e),
+                )
             if self.transport:
                 self.transport.loseConnection()
+            return
+
+        # A line ending in a bare CR leaves Twisted parked in the "newline"
+        # state with the CR pending, so no terminator reaches the login reader
+        # until the next byte arrives. Flush it now as a newline so the prompt
+        # advances immediately, as a real telnetd does (issue #1461).
+        if self.state == "newline" and self._in_login_phase():
+            self.state = "data"
+            self.applicationDataReceived(b"\n")
 
     def timeoutConnection(self) -> None:
         """
@@ -136,6 +210,13 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         self._closing = True
         self.setTimeout(None)
         TelnetTransport.connectionLost(self, reason)
+        if self._emit_connect_pending:
+            # A proxied connection whose PROXY header carried no trailing data
+            # never reached dataReceived(), so the deferred announce never
+            # fired. getPeer() is resolved by now; announce it before closing
+            # so the connection is still logged (as a direct one would be).
+            self._emit_connect_pending = False
+            self._emit_connect()
         duration_ms = round((time.time() - self.startTime) * 1000)
         if self.events is not None:
             self.events.session_closed(duration_ms)
@@ -191,7 +272,7 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
     def _get_option_name(self, option: bytes) -> str:
         """Get human-readable name for a telnet option byte."""
         if option:
-            option_byte = option[0] if isinstance(option, bytes) else option
+            option_byte = option[0]
             return TELNET_OPTIONS.get(option_byte, f"UNKNOWN-{option_byte}")
         return "UNKNOWN"
 
@@ -204,7 +285,10 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         each one floods the log, so identical repeats within a connection are
         suppressed after the first.
         """
-        option_byte = option[0] if option else 0
+        # -1 is a sentinel distinct from every real option byte: 0 is the
+        # real BINARY option, so using it for an empty option made the two
+        # collide in the log line and in the dedup key below.
+        option_byte = option[0] if option else -1
         key = (command, option_byte)
         if key in self._logged_options:
             return

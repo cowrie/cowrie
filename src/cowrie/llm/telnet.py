@@ -33,7 +33,9 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
     def __init__(self, username, server):
         self.transportId = None
         self.windowSize = [40, 80]
-        self.username = username.decode()
+        # The username is raw attacker input from the login prompt and need
+        # not be valid UTF-8.
+        self.username = username.decode("utf-8", errors="replace")
         self.server = server
 
         self.environ = {

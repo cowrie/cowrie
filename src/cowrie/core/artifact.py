@@ -27,12 +27,23 @@ from __future__ import annotations
 import hashlib
 import os
 import tempfile
+import uuid
 from typing import TYPE_CHECKING, Any
 
 from cowrie.core.config import CowrieConfig
 
 if TYPE_CHECKING:
     from types import TracebackType
+
+
+def temp_download_path(prefix: str) -> str:
+    """A unique download-dir path for a temp file that is renamed to its
+    sha256 or serves as honeyfs realfile backing once written. The name
+    carries no session or attacker-controlled text, only the prefix."""
+    return os.path.join(
+        CowrieConfig.get("honeypot", "download_path", fallback="."),
+        f"{prefix}_{uuid.uuid4().hex}",
+    )
 
 
 class Artifact:

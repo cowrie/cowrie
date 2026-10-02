@@ -56,7 +56,7 @@ from cowrie.ssh_proxy.protocols import base_protocol
 class SFTP(base_protocol.BaseProtocol):
     _log = Logger()
     prevID: int = 0
-    ID: int = 0
+    packetID: int = 0
     handle: bytes = b""
     path: bytes = b""
     command: bytes = b""
@@ -87,29 +87,24 @@ class SFTP(base_protocol.BaseProtocol):
         else:
             raise ValueError
 
-        if self.parentPacket.packetSize == 0:
-            self.parentPacket.packetSize = int(data[:4].hex(), 16) - len(data[4:])
-            data = data[4:]
-            self.parentPacket.data = data
-            data = b""
+        # An SFTP message is a 4-byte big-endian length followed by that many
+        # bytes. The channel splits and joins messages wherever it likes, so
+        # accumulate until a whole one is present and then take every whole
+        # message the buffer holds. Anything left over stays for the next call
+        # rather than being read as though it belonged to this message.
+        packet = self.parentPacket
+        packet.buffer += data
 
-        else:
-            if len(data) > self.parentPacket.packetSize:
-                self.parentPacket.data = (
-                    self.parentPacket.data + data[: self.parentPacket.packetSize]
-                )
-                data = data[self.parentPacket.packetSize :]
-                self.parentPacket.packetSize = 0
-            else:
-                self.parentPacket.packetSize -= len(data)
-                self.parentPacket.data = self.parentPacket.data + data
-                data = b""
+        while len(packet.buffer) >= 4:
+            length = int.from_bytes(packet.buffer[:4], byteorder="big")
+            if len(packet.buffer) - 4 < length:
+                # The body has not all arrived yet.
+                return
 
-        if self.parentPacket.packetSize == 0:
+            packet.data = packet.buffer[4 : 4 + length]
+            packet.packetSize = length
+            packet.buffer = packet.buffer[4 + length :]
             self.handle_packet(parent)
-
-        if len(data) != 0:
-            self.parse_packet(parent, data)
 
     def handle_packet(self, parent: str) -> None:
         self.packetSize: int = self.parentPacket.packetSize
@@ -118,8 +113,8 @@ class SFTP(base_protocol.BaseProtocol):
 
         sftp_num: int = self.extract_int(1)
 
-        self.prevID: int = self.ID
-        self.ID: int = self.extract_int(4)
+        self.prevID = self.packetID
+        self.packetID = self.extract_int(4)
 
         self.path: bytes = b""
 
@@ -170,7 +165,7 @@ class SFTP(base_protocol.BaseProtocol):
                 self.theFile = self.theFile[: self.offset] + self.extract_data()
 
         elif sftp_num == filetransfer.FXP_HANDLE:
-            if self.ID == self.prevID:
+            if self.packetID == self.prevID:
                 self.handle = self.extract_string()
 
         elif sftp_num == filetransfer.FXP_READDIR:
@@ -227,7 +222,9 @@ class SFTP(base_protocol.BaseProtocol):
                     # TODO: should use artifact functions
                     shasum = hashlib.sha256(self.theFile).hexdigest()
                     outfile = os.path.join(self.downloadPath, shasum)
-                    fname = self.command.decode().split(" ")[-1]
+                    # The command line is client bytes and need not be valid
+                    # UTF-8.
+                    fname = self.command.decode(errors="replace").split(" ")[-1]
                     duplicate = os.path.exists(outfile)
 
                     if not duplicate:
@@ -271,7 +268,7 @@ class SFTP(base_protocol.BaseProtocol):
             self.command = b"rmdir " + self.extract_string()
 
         elif sftp_num == filetransfer.FXP_STATUS:
-            if self.ID == self.prevID:
+            if self.packetID == self.prevID:
                 code = self.extract_int(4)
                 if code in [0, 1]:
                     if b"get" not in self.command and b"put" not in self.command:

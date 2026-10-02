@@ -36,8 +36,14 @@ class UtilsTestCase(unittest.TestCase):
         hour = durationHuman(3600)
         self.assertEqual(hour, "01:00:00")
 
-        something = durationHuman(364020)
-        self.assertEqual(something, "4.0 days 05:07:00")
+        days = durationHuman(364020)
+        self.assertEqual(days, "4 days 05:07:00")
+
+        one_day = durationHuman(86400)
+        self.assertEqual(one_day, "1 day 00:00")
+
+        years = durationHuman(2 * 365 * 86400)
+        self.assertEqual(years, "1 year ")
 
     def test_get_endpoints_from_section(self) -> None:
         cfg = get_config("[ssh]\nlisten_addr = 1.1.1.1\n")
@@ -103,12 +109,6 @@ class UtilsTestCase(unittest.TestCase):
         self.assertEqual(escape_nonprintable(b""), "")
 
     def test_create_endpoint_services(self) -> None:
-        parent = MultiService()
-        create_endpoint_services(
-            reactor, parent, ["tcp:23:interface=1.1.1.1"], protocol.Factory()
-        )
-        self.assertEqual(len(parent.services), 1)
-
         parent = MultiService()
         create_endpoint_services(
             reactor, parent, ["tcp:23:interface=1.1.1.1"], protocol.Factory()

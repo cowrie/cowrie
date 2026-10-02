@@ -9,19 +9,24 @@ from __future__ import annotations
 import copy
 import enum
 import fnmatch
-import os
+import posixpath
+import re
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from twisted.python.failure import Failure
+
+from twisted.internet.defer import Deferred, succeed
 from twisted.logger import Logger
 from twisted.python.compat import iterbytes
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
 from cowrie.shell.bashparse import (
+    REDIRECTABLE,
     BashParser,
     BraceGroup,
     CaseClause,
@@ -29,14 +34,16 @@ from cowrie.shell.bashparse import (
     ForClause,
     FunctionDef,
     IfClause,
+    Pipeline,
     Statement,
     Subshell,
     SyntaxError_,
     WhileClause,
+    max_input_size,
 )
 from cowrie.shell.command import process_status
 from cowrie.shell.parser import CommandParser
-from cowrie.shell.pipe import PipeProtocol
+from cowrie.shell.pipe import FD_CAPTURE, FD_TERMINAL, PipeProtocol
 
 # Honeypot safety caps. A loop in an uploaded script must never hang or exhaust
 # the process: bound the number of iterations a single loop runs. Real malware
@@ -44,6 +51,10 @@ from cowrie.shell.pipe import PipeProtocol
 # ceilings are far above that yet keep a `while true` from running forever.
 MAX_WHILE_ITERATIONS = 1000
 MAX_FOR_ITEMS = 10000
+
+# A word is a variable assignment only when a valid shell identifier precedes
+# the =; bash treats words like "=", "=foo" or "1x=5" as command names.
+ASSIGNMENT_WORD = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=")
 
 
 class LoopSignal(enum.Enum):
@@ -79,39 +90,109 @@ class HoneyPotShell:
         self,
         protocol: Any,
         interactive: bool = True,
-        redirect: bool = False,
-        effective_user: dict[str, Any] | None = None,
+        reads_stdin: bool = False,
     ) -> None:
         self.protocol = protocol
         self.interactive: bool = interactive
-        self.redirect: bool = redirect  # to support output redirection
-        self.effective_user = effective_user  # For su: {uid, gid, username, home}
+        # The shell's commands arrive over a live stdin (an SSH exec channel
+        # running `bash`): a drained queue means idle, not done, until EOF.
+        self.reads_stdin: bool = reads_stdin
         # Parsed-but-not-yet-evaluated statements; each is expanded against the
         # live environment only when it is about to run (see runCommand). A
         # subshell stays a single unit here so its &&/|| gate covers the whole
         # group; runCommand splices its statements in only when it runs.
         self.cmdpending: list[Statement | _Continuation] = []
         # A nested shell (e.g. a command substitution) inherits the live
-        # environment of whichever shell is currently running; the very first
-        # shell of a session falls back to the login environment, all of which
-        # is exported.
+        # environment, working directory and user identity of whichever shell
+        # or command is currently running, as a forked shell process inherits
+        # its parent's; the very first shell of a session falls back to the
+        # login environment (all of which is exported), the login user, and
+        # that user's home. cwd and user are this shell's own from here on: a
+        # cd or su inside a substitution or nested script shell never changes
+        # the parent's.
         if protocol.cmdstack:
             parent = protocol.cmdstack[-1]
             self.environ: dict[str, str] = copy.copy(parent.environ)
             self.exported: set[str] = copy.copy(parent.exported)
+            self.cwd: str = parent.cwd
+            self.user: dict[str, Any] = dict(parent.user)
+            # Shell functions are inherited like the environment; a launching
+            # command (bash -c, su -c) has none to pass on.
+            self.functions: dict[str, list[Statement]] = dict(
+                getattr(parent, "functions", {})
+            )
         else:
             self.environ = copy.copy(protocol.environ)
             self.exported = set(protocol.environ.keys())
+            self.functions = {}
+            self.user = {
+                "uid": protocol.user.uid,
+                "gid": protocol.user.gid,
+                "username": protocol.user.username,
+                "home": protocol.user.avatar.home,
+            }
+            if protocol.fs.exists(protocol.user.avatar.home):
+                self.cwd = protocol.user.avatar.home
+            else:
+                self.cwd = "/"
         if hasattr(protocol.user, "windowSize"):
             self.environ["COLUMNS"] = str(protocol.user.windowSize[1])
             self.environ["LINES"] = str(protocol.user.windowSize[0])
         self.parser = CommandParser()
         self.bashparser = BashParser(self)
+        # The shell's fd table for the commands it runs (stdout=1, stderr=2),
+        # inherited by each command as a forked process inherits its parent's
+        # open files. A command applies its own redirections on top, and a
+        # redirection on a compound command (`{ ...; } > f`) swaps the shell's
+        # own entry for the group's duration. A top-level shell writes to the
+        # terminal; a capture child (see run_child) points fd 1 at a sink.
+        self.fds: dict[int, tuple[str, Any]] = {
+            1: (FD_TERMINAL, None),
+            2: (FD_TERMINAL, None),
+        }
+        # A shell a command starts (bash -c, a script, su -c) writes where that
+        # command writes, so `$(bash -c ...)` or `sh x.sh > f` captures it.
+        launcher = protocol.cmdstack[-1] if protocol.cmdstack else None
+        launcher_pp = getattr(launcher, "pp", None)
+        if launcher_pp is not None and getattr(launcher_pp, "targets", None):
+            self.fds = {1: launcher_pp.targets[1], 2: launcher_pp.targets[2]}
+        # How this shell names itself in the errors it reports, as bash does
+        # from $0: "-bash" for the login shell, the name as typed for bash -c
+        # or a script (the launching command sets it). A non-interactive shell
+        # adds the line it is running (current_line, counted from line_base),
+        # and under -c its syntax errors also say "-c". A child shell -- a
+        # subshell, pipeline stage or substitution -- keeps its parent's,
+        # counting from the parent's current line.
+        if isinstance(launcher, HoneyPotShell):
+            self.name: str = launcher.name
+            self.line_numbers: bool = launcher.line_numbers
+            self.syntax_label: str | None = launcher.syntax_label
+            self.line_base: int = launcher.current_line - 1
+        else:
+            self.name = "-bash" if interactive else "bash"
+            self.line_numbers = not interactive
+            self.syntax_label = None if interactive else "-c"
+            self.line_base = 0
+        self.current_line: int = self.line_base + 1
+        # Child-shell state (see run_child): a pipeline stage, a "(...)" group
+        # or a $(...) substitution runs in its own shell, as a forked child.
+        # ``stdin`` is the pipe buffer feeding it, handed to the first command
+        # that reads; with none, an ``inherits_stdin`` child reads whatever its
+        # parent reads. ``_capture`` is the bytearray fd 1 points at when the
+        # child captures its stdout. ``done`` fires with the finished child
+        # when it leaves the cmdstack -- its queue drained, or an inner `exit`
+        # or `exec` ended it: the parent's read on the pipe seeing EOF.
+        self.stdin: bytes | None = None
+        self.inherits_stdin: bool = False
+        self._capture: bytearray | None = None
+        self.done: Deferred[HoneyPotShell] | None = None
+        # Final status of the most recent command substitution expanded for
+        # the current statement: bash makes it the statement's own status
+        # when the statement is only assignments.
+        self._subst_status: int | None = None
         # Exit status of the most recent command in this shell, for $? and the
         # && / || short-circuit logic.
         self.last_exit_code: int = 0
-        # Shell functions defined in this shell, name -> body statements.
-        self.functions: dict[str, list[Statement]] = {}
         # Flow-control state: how many loops are currently running (so break /
         # continue only act inside a loop) and a pending loop signal consumed by
         # the innermost loop continuation.
@@ -120,6 +201,9 @@ class HoneyPotShell:
         # Trampoline state for _advance (see its docstring).
         self._advancing: bool = False
         self._advance_pending: bool = False
+        # True once `exec` has replaced this shell with the command now
+        # running: when that command finishes, the shell is gone (see resume).
+        self._exec_replaced: bool = False
 
     # -- bashparse.ShellContext interface -----------------------------------
 
@@ -127,58 +211,143 @@ class HoneyPotShell:
         """Look up a shell variable for the Lark word evaluator."""
         return self.environ.get(name)
 
+    def error_prefix(self) -> str:
+        """The prefix bash puts on an error it reports: its name and, for a
+        non-interactive shell, the line being run."""
+        if self.line_numbers:
+            return f"{self.name}: line {self.current_line}: "
+        return f"{self.name}: "
+
+    def _make_pipe(
+        self,
+        cmdclass: Any,
+        args: list[str],
+        stdin: bytes | None,
+        ops: list[dict[str, Any]] | None,
+    ) -> PipeProtocol:
+        """The stdio wiring for a command this shell starts: its fd table with
+        ``ops`` applied, reporting redirection errors with this shell's
+        prefix."""
+        return PipeProtocol(
+            self.protocol,
+            cmdclass,
+            args,
+            stdin,
+            dict(self.fds),
+            ops,
+            cwd=self.cwd,
+            user=self.user,
+            error_prefix=self.error_prefix(),
+        )
+
     def get_status(self) -> str:
         """Return $? -- the last command's exit status as a string."""
         return str(self.last_exit_code)
 
-    def command_substitution(self, source: str) -> str:
-        """Run ``source`` as a command substitution and return its captured
-        stdout with trailing newlines stripped.
+    @property
+    def captured(self) -> bytes:
+        """The stdout captured by this child, when fd 1 points at a sink."""
+        return bytes(self._capture) if self._capture is not None else b""
 
-        The inner source runs in a single capture subshell with the same
-        sequencing as a top-level line: a same-line assignment is visible to
-        later statements, ``$?`` carries across them, and ``&&`` / ``||``
-        short-circuit. A nested ``(...)`` group recurses. Output is captured
-        instead of reaching the terminal.
+    def command_substitution(self, source: str) -> Deferred[str]:
+        """Run ``source`` as a command substitution: the returned Deferred
+        fires with its captured stdout, trailing newlines stripped, once the
+        subshell finishes -- the evaluator awaits it, as bash blocks on the
+        substitution pipe.
+
+        The inner source runs in a capture subshell with the same sequencing
+        as a top-level line: a same-line assignment is visible to later
+        statements, ``$?`` carries across them, and ``&&`` / ``||``
+        short-circuit. Output is captured instead of reaching the terminal.
         """
-        shell = HoneyPotShell(self.protocol, interactive=False, redirect=True)
-        self.protocol.cmdstack.append(shell)
-        try:
-            return shell._capture_statements(self.bashparser.parse(source)).rstrip("\n")
-        finally:
-            # Remove the capture shell by identity: an `exit` inside the
-            # substitution already removed it (ending the subshell), and a
-            # blind pop() would remove the real shell instead, leaving the
-            # cmdstack empty and crashing the next command's instantiation.
-            if shell in self.protocol.cmdstack:
-                self.protocol.cmdstack.remove(shell)
 
-    def _capture_statements(self, statements: list[Statement]) -> str:
-        """Run statements in this capture shell, concatenating their stdout and
-        honoring &&/|| short-circuit between them (a subshell's gate covers the
-        whole group)."""
-        output = ""
-        for statement in statements:
-            if self not in self.protocol.cmdstack:
-                # An `exit` in the substitution ended this subshell; the
-                # remaining statements never run, as in bash.
-                break
-            if not isinstance(statement, (Command, Subshell)):
-                continue  # ignore a syntax error inside a substitution
-            if self._short_circuit(statement.op):
-                continue
-            if isinstance(statement, Subshell):
-                output += self._capture_statements(statement.statements)
-            else:
-                output += self._capture_command(statement)
-        return output
+        def finished(subshell: HoneyPotShell) -> str:
+            # The subshell's status becomes $? for the rest of the expansion
+            # and, via _subst_status, for a statement of only assignments
+            # (`x=$(false)` leaves $? = 1).
+            self.last_exit_code = subshell.last_exit_code
+            self._subst_status = subshell.last_exit_code
+            # The captured output is attacker bytes and need not be valid UTF-8.
+            return subshell.captured.decode(errors="replace").rstrip("\n")
+
+        statements = self.bashparser.parse(source)
+        fds, buf = self._capture_fds()
+        return self.run_child(statements, fds=fds, capture_buf=buf).addCallback(
+            finished
+        )
+
+    def _capture_fds(self) -> tuple[dict[int, tuple[str, Any]], bytearray]:
+        """An fd table whose stdout is a fresh capture sink; stderr is
+        inherited from this shell, so a substitution's or stage's errors reach
+        the terminal (or the enclosing capture) as bash does."""
+        buf = bytearray()
+        return {1: (FD_CAPTURE, buf), 2: self.fds[2]}, buf
+
+    def run_child(
+        self,
+        statements: list[Statement],
+        *,
+        fds: dict[int, tuple[str, Any]],
+        capture_buf: bytearray | None = None,
+        stdin: bytes | None = None,
+        inherits_stdin: bool = False,
+    ) -> Deferred[HoneyPotShell]:
+        """Run ``statements`` in a child shell, as a forked process would, and
+        return a Deferred that fires with the finished child -- its status in
+        ``last_exit_code`` and, when ``capture_buf`` is its stdout sink, its
+        output in ``captured``.
+
+        ``fds`` is the child's stdout/stderr table. ``stdin`` is the pipe
+        buffer the child reads; without one, an ``inherits_stdin`` child reads
+        whatever this shell reads (a pipeline's first stage, a "(...)" group)
+        and any other child sees EOF. The child starts with copies of this
+        shell's environment, working directory and identity, so nothing it
+        changes persists here.
+
+        The child runs its statements through the normal cmdpending /
+        _advance machinery, so a command that pauses on a Deferred (wget)
+        keeps the child alive until it completes -- the returned Deferred is
+        the parent's blocking read on the pipe. When every statement completes
+        synchronously the Deferred has already fired by the time this returns.
+        """
+        shell = HoneyPotShell(self.protocol, interactive=False)
+        shell.fds = fds
+        shell._capture = capture_buf
+        shell.stdin = stdin
+        shell.inherits_stdin = inherits_stdin
+        done: Deferred[HoneyPotShell] = Deferred()
+        shell.done = done
+        self.protocol.cmdstack.append(shell)
+        shell._queue_statements(statements)
+        shell._advance()
+        return done
+
+    def _complete_child(self) -> None:
+        """Fire ``done`` with this finished child shell: it is gone and the
+        parent's read on its pipe sees EOF."""
+        if self.done is None:
+            return
+        done, self.done = self.done, None
+        done.callback(self)
+
+    def exit_shell(self, code: int) -> None:
+        """End this shell from the ``exit`` builtin: record the final status
+        for whoever launched it, leave the cmdstack, and complete a capture
+        subshell's substitution."""
+        self.last_exit_code = code
+        if self in self.protocol.cmdstack:
+            self.protocol.cmdstack.remove(self)
+        self._complete_child()
 
     def lineReceived(self, line: str) -> None:
         """Parse a command line with the Lark grammar and run the result."""
         self.protocol.events.dispatch(
             "cowrie.command.input", "CMD: %(input)s", input=line
         )
-        self._queue_statements(self.bashparser.parse(line))
+        if self._reject_oversized(line):
+            self._advance()
+            return
+        self._queue_statements(self.bashparser.parse(line), line)
         self._advance()
 
     def queue_line(self, line: str) -> None:
@@ -190,85 +359,117 @@ class HoneyPotShell:
         self.protocol.events.dispatch(
             "cowrie.command.input", "CMD: %(input)s", input=line
         )
-        self._queue_statements(self.bashparser.parse(line))
+        if self._reject_oversized(line):
+            return
+        self._queue_statements(self.bashparser.parse(line), line)
 
-    def _queue_statements(self, statements: list[Statement]) -> bool:
+    def _reject_oversized(self, line: str) -> bool:
+        """Refuse a line longer than max_input_size before it reaches the
+        parser, reporting it like a syntax error. The input is still
+        dispatched as a cowrie.command.input event: what the attacker sent
+        is worth logging even when it is not worth parsing."""
+        if len(line) <= max_input_size():
+            return False
+        self._report_syntax_error(SyntaxError_(token=""))
+        return True
+
+    def _queue_statements(self, statements: list[Statement], source: str = "") -> bool:
         """Append parsed statements to ``cmdpending`` for sequential execution.
 
         A subshell is queued as one unit so its join operator (e.g. the || in
         `x || (a; b)`) gates the whole group; runCommand splices the inner
-        statements in only when the group actually runs. Cowrie does not
-        emulate a subshell's isolated environment (``cwd`` and friends live on
-        the protocol, not the shell), so the inner statements then run in the
-        parent shell.
+        statements in only when the group actually runs. Cowrie does not give
+        a ``(...)`` group its own isolated shell, so the inner statements run
+        in the parent shell and their ``cd`` / variable effects persist.
 
-        Returns False to stop queueing after a syntax error: commands already
-        queued before the error still run, as in bash.
+        A syntax error is queued in place of the statement holding it and
+        ends the queue: as in bash, earlier lines run, then the error is
+        reported and nothing after it runs. Returns False at a syntax error.
         """
         for statement in statements:
-            if isinstance(statement, SyntaxError_):
-                self._report_syntax_error(statement)
-                return False
-            if isinstance(statement, Subshell) and not self._reject_inner_error(
-                statement.statements
-            ):
+            error = self._find_syntax_error([statement])
+            if error is not None:
+                lines = source.split("\n")
+                if not error.source and 0 < error.lineno <= len(lines):
+                    error.source = lines[error.lineno - 1]
+                self.cmdpending.append(error)
                 return False
             self.cmdpending.append(statement)
         return True
 
-    def _reject_inner_error(self, statements: list[Statement]) -> bool:
-        """Report a syntax error nested anywhere inside a subshell, since the
-        whole line is rejected at parse time. Returns False once reported."""
+    def _find_syntax_error(self, statements: list[Statement]) -> SyntaxError_ | None:
+        """The first syntax error at the top level or nested anywhere inside a
+        subshell or pipeline, since bash rejects the whole line holding it."""
         for statement in statements:
             if isinstance(statement, SyntaxError_):
-                self._report_syntax_error(statement)
-                return False
-            if isinstance(statement, Subshell) and not self._reject_inner_error(
-                statement.statements
-            ):
-                return False
-        return True
+                return statement
+            if isinstance(statement, Subshell):
+                inner = statement.statements
+            elif isinstance(statement, Pipeline):
+                inner = statement.stages
+            else:
+                continue
+            error = self._find_syntax_error(inner)
+            if error is not None:
+                return error
+        return None
 
     def _report_syntax_error(self, statement: SyntaxError_) -> None:
         """Write the message bash prints for a syntax error and set $? to 2."""
+        self.current_line = self.line_base + (statement.lineno or 1)
         if statement.token:
-            self.protocol.terminal.write(
-                f"-bash: syntax error near unexpected token `{statement.token}'\n".encode()
-            )
+            text = f"syntax error near unexpected token `{statement.token}'"
         else:
-            self.protocol.terminal.write(
-                b"-bash: syntax error: unexpected end of file\n"
-            )
+            text = "syntax error: unexpected end of file"
+        if self.line_numbers:
+            # A non-interactive bash also quotes the offending line.
+            label = f"{self.name}: "
+            if self.syntax_label:
+                label += f"{self.syntax_label}: "
+            label += f"line {self.current_line}: "
+            message = f"{label}{text}\n"
+            if statement.token:
+                message += f"{label}`{statement.source}'\n"
+        else:
+            message = f"{self.name}: {text}\n"
+        self._write_shell_error(message.encode())
         self.last_exit_code = 2  # bash uses 2 for a syntax error
 
-    def _capture_command(self, command: Command) -> str:
-        """Run one command in this capture shell and return its captured stdout.
-
-        The command's words are expanded against the capture shell's live
-        environment, so it sees inherited and same-substitution variables.
-        ``protocol.pp`` is cleared first so a statement that builds no pipe
-        (a bare assignment, or a command-not-found) reads as empty output
-        rather than re-reading the previous statement's capture.
-        """
-        self.protocol.pp = None
-        self.cmdpending.append(command)
-        self.runCommand()
-        pp = self.protocol.pp
-        return pp.redirected_data.decode() if pp is not None else ""
+    def _write_shell_error(
+        self, message: bytes, ops: list[dict[str, Any]] | None = None
+    ) -> None:
+        """Write an error the shell itself reports to its stderr (fd 2), with
+        ``ops`` -- the failing command's own redirections -- applied, so
+        `x 2>&1 | cat` and `( x ) 2>/dev/null` reroute it."""
+        pp = self._make_pipe(None, [], None, ops)
+        pp.errReceived(message)
+        for real_path, virtual_path in pp.redirect_real_files:
+            self.protocol.terminal.redirFiles.add((real_path, virtual_path))
 
     def _finish(self) -> None:
         """The command queue is drained: do the shell's idle action.
 
-        An interactive shell shows the next prompt. A top-level non-interactive
-        shell (an exec session) ends the process. A nested non-interactive shell
-        that runs a script or ``-c`` commands (sh/bash/su) removes itself from
-        the cmdstack and resumes the command that launched it -- this is what
-        hands control back once the script's async commands (wget/curl) have all
-        finished. A command-substitution / redirect capture shell is left alone:
-        its creator pops it in a finally when capture returns.
+        An interactive shell shows the next prompt. A shell reading commands
+        from live stdin stays resident awaiting the next line or EOF. A
+        top-level non-interactive shell (an exec session) ends the process. A
+        nested non-interactive shell that runs a script or ``-c`` commands
+        (sh/bash/su) removes itself from the cmdstack and resumes the command
+        that launched it -- this is what hands control back once the script's
+        async commands (wget/curl) have all finished. A command-substitution
+        capture subshell removes itself and completes its substitution.
         """
         if self.interactive:
             self.showPrompt()
+        elif self.reads_stdin:
+            # Idle, not done: the channel will deliver more lines or EOF.
+            pass
+        elif self.done is not None:
+            # Child shell: its program has run to completion, so the parent's
+            # read on its pipe sees EOF. The parent carries on from the done
+            # callback, so no resume() of the shell below is needed here.
+            if self in self.protocol.cmdstack:
+                self.protocol.cmdstack.remove(self)
+            self._complete_child()
         elif len(self.protocol.cmdstack) == 1:
             # Top-level non-interactive shell (an exec session): end the process
             # with the last command's status so the SSH channel reports a real
@@ -276,16 +477,23 @@ class HoneyPotShell:
             self.protocol.terminal.transport.processEnded(
                 process_status(self.last_exit_code)
             )
-        elif not self.redirect and self.protocol.cmdstack[-1] is self:
+        elif self.protocol.cmdstack[-1] is self:
             # Nested script / `-c` shell whose queue is drained: unwind it and
             # let the launching command carry on. Done here rather than with an
             # unconditional pop() at the call site because an async command
             # (wget/curl) leaves this shell mid-stack until it later resumes and
-            # drains us. A redirect/command-substitution capture shell is
-            # excluded -- it is popped by its own creator in a finally.
+            # drains us.
             self.protocol.cmdstack.remove(self)
             if self.protocol.cmdstack:
                 self.protocol.cmdstack[-1].resume()
+
+    def _statement_failed(self, failure: Failure) -> None:
+        """An error escaped a statement's expansion or setup: log it, give the
+        statement bash's generic failure status, and carry on with the queue --
+        a shell that stops responding would fingerprint the honeypot."""
+        self._log.failure("shell statement failed", failure=failure)
+        self.last_exit_code = 1
+        self._advance()
 
     def _short_circuit(self, op: str | None) -> bool:
         """Whether a statement joined by ``op`` should be skipped given the last
@@ -317,11 +525,23 @@ class HoneyPotShell:
                 self._advance_pending = False
                 if self.cmdpending:
                     self.runCommand()
+                elif self._busy():
+                    # The queue is drained but something this shell started is
+                    # still running (an async download, or a pipeline stage
+                    # waiting on one). The statement is not over: whatever is
+                    # above resumes this shell when it finishes.
+                    return
                 else:
                     self._finish()
                 running = self._advance_pending
         finally:
             self._advancing = False
+
+    def _busy(self) -> bool:
+        """Whether something this shell started is still on the cmdstack above
+        it -- a command that has not exited, or a shell it launched."""
+        stack = self.protocol.cmdstack
+        return bool(stack) and self in stack and stack[-1] is not self
 
     # -- flow control -------------------------------------------------------
     #
@@ -353,7 +573,15 @@ class HoneyPotShell:
 
     def _run_for(self, node: ForClause) -> None:
         """``for VAR in WORDS; do BODY; done`` over the expanded word list."""
-        values = self.bashparser.evaluate(node.items) if node.items else []
+        if node.items:
+            d = Deferred.fromCoroutine(self.bashparser.evaluate(node.items))
+        else:
+            d = succeed([])
+        d.addCallback(self._run_for_expanded, node)
+        d.addErrback(self._statement_failed)
+
+    def _run_for_expanded(self, values: list[str], node: ForClause) -> None:
+        """Loop over the expanded ``in`` list, one body pass per word."""
         values = values[:MAX_FOR_ITEMS]
         if not values:
             # A loop over an empty list runs the body zero times and succeeds.
@@ -439,7 +667,16 @@ class HoneyPotShell:
 
     def _run_case(self, node: CaseClause) -> None:
         """``case WORD in PATTERN) BODY ;; ... esac`` -- first match wins."""
-        word = " ".join(self.bashparser.evaluate(node.word)) if node.word else ""
+        if node.word:
+            d = Deferred.fromCoroutine(self.bashparser.evaluate(node.word))
+        else:
+            d = succeed([])
+        d.addCallback(self._run_case_expanded, node)
+        d.addErrback(self._statement_failed)
+
+    def _run_case_expanded(self, tokens: list[str], node: CaseClause) -> None:
+        """Match the expanded case word against each pattern arm."""
+        word = " ".join(tokens)
         for patterns, body in node.items:
             for pattern in patterns:
                 if fnmatch.fnmatchcase(word, self._strip_quotes(pattern)):
@@ -492,16 +729,31 @@ class HoneyPotShell:
         self.cmdpending[0:0] = [*body, _Continuation(restore)]
         self._advance()
 
+    def _strip_exec(self, tokens: list[str]) -> tuple[bool, bool]:
+        """Consume a leading ``exec`` and its options from ``tokens`` in place.
+
+        Returns ``(exec_seen, replaces_shell)``. ``exec cmd`` runs the remaining
+        command through the normal machinery and, when it replaces the shell,
+        the shell terminates once the command finishes. exec's own options do
+        not change what runs (``-a NAME`` supplies argv[0], ``-c`` cleans the
+        environment, ``-l`` makes it a login shell), so they are dropped. A
+        backgrounded (``&``) command runs in a subshell, so ``exec`` there
+        never replaces this shell; a bare ``exec`` (possibly with only
+        redirections) runs no command and the shell survives it.
+        """
+        if not tokens or tokens[0] != "exec":
+            return False, False
+        tokens.pop(0)
+        while tokens and tokens[0].startswith("-"):
+            opt = tokens.pop(0)
+            if opt == "--":
+                break
+            if "a" in opt and tokens:
+                tokens.pop(0)
+        replaces = bool(tokens) and tokens[-1] != "&"
+        return True, replaces
+
     def runCommand(self):
-        pp = None
-
-        # Mid-pipeline: an earlier stage just finished but a downstream command
-        # has not run yet. Let the pipe machinery drive the rest before touching
-        # the next statement -- otherwise `a | b; c` would run c before b and
-        # drop b's output.
-        if self.protocol.pp is not None and self.protocol.pp.next_command is not None:
-            return
-
         # A pending break / continue: drop the rest of the current loop body up
         # to the innermost loop continuation, which consumes the signal.
         if self._loop_signal is not None:
@@ -527,7 +779,7 @@ class HoneyPotShell:
             command.fn()
             return
 
-        # A syntax error nested in a compound body surfaces here when reached.
+        # A syntax error surfaces here when execution reaches its line.
         if isinstance(command, SyntaxError_):
             self._report_syntax_error(command)
             self._advance()
@@ -539,196 +791,266 @@ class HoneyPotShell:
             self._advance()
             return
 
-        if isinstance(command, Subshell):
-            # The group runs: splice its statements to the front so they run in
-            # order. The group's own gate was checked above; each inner
-            # statement keeps its own &&/|| relative to its siblings.
-            self.cmdpending[0:0] = command.statements
-            self._advance()
+        # A redirection on a compound command ("(...) > f", "done 2>&1")
+        # applies to the whole group: evaluate its target words, then run the
+        # group with the redirection applied to the shell's fds.
+        if isinstance(command, REDIRECTABLE) and command.redirections is not None:
+            self._run_redirected(command, command.redirections)
             return
 
-        if isinstance(command, BraceGroup):
+        if not isinstance(command, Command):
+            # A compound command (subshell, pipeline, group, loop, ...).
+            self._run_compound(command)
+            return
+
+        # Expand the statement's words against the *current* environment, just
+        # before it runs, so a same-line `x=hi; echo $x` sees the value. A
+        # command substitution in a word suspends the expansion until its
+        # subshell finishes; the statement then runs from the callback. With
+        # only synchronous substitutions the Deferred has already fired and
+        # the statement runs before this returns.
+        if command.lineno:
+            self.current_line = self.line_base + command.lineno
+        self._subst_status = None
+        d = Deferred.fromCoroutine(self.bashparser.evaluate(command))
+        d.addCallback(self._run_expanded)
+        d.addErrback(self._statement_failed)
+
+    def _run_compound(self, command: Statement) -> None:
+        """Dispatch a compound command (or a function definition), past the
+        short-circuit and redirection checks in :meth:`runCommand`."""
+        if isinstance(command, Subshell):
+            self._run_subshell(command)
+        elif isinstance(command, Pipeline):
+            self._run_pipeline(command)
+        elif isinstance(command, BraceGroup):
             # A { ...; } group runs its statements in the current shell.
             self.cmdpending[0:0] = command.statements
             self._advance()
-            return
-
-        if isinstance(command, FunctionDef):
+        elif isinstance(command, ForClause):
+            self._run_for(command)
+        elif isinstance(command, IfClause):
+            self._run_if(command)
+        elif isinstance(command, WhileClause):
+            self._run_while(command)
+        elif isinstance(command, CaseClause):
+            self._run_case(command)
+        elif isinstance(command, FunctionDef):
             # Defining a function records its body and succeeds.
             self.functions[command.name] = command.body
             self.last_exit_code = 0
             self._advance()
-            return
 
-        if isinstance(command, ForClause):
-            self._run_for(command)
-            return
+    def _run_subshell(self, command: Subshell) -> None:
+        """Run a "(...)" group in a child shell, so a cd, an assignment or an
+        exit inside it does not reach this shell. It inherits this shell's fd
+        table, so it writes where this shell writes (terminal, file, or the
+        shared capture sink)."""
+        stdin, self.stdin = self.stdin, None
+        self.run_child(
+            command.statements,
+            fds=dict(self.fds),
+            capture_buf=self._capture,
+            stdin=stdin,
+            inherits_stdin=True,
+        ).addCallback(self._child_finished)
 
-        if isinstance(command, IfClause):
-            self._run_if(command)
-            return
+    def _child_finished(self, child: HoneyPotShell) -> None:
+        """A "(...)" group's child shell is done: take its status and carry on.
+        Its output went straight to this shell's fds (terminal, file or the
+        shared capture sink), so there is nothing to fold in here."""
+        self.last_exit_code = child.last_exit_code
+        self._advance()
 
-        if isinstance(command, WhileClause):
-            self._run_while(command)
-            return
+    def _run_redirected(self, command: Statement, redirections: Command) -> None:
+        """Run a compound command with a trailing redirection ("(...) > f").
 
-        if isinstance(command, CaseClause):
-            self._run_case(command)
-            return
+        Its target words are evaluated, then the redirection is applied to the
+        shell's fd table for the group's duration and restored afterwards. A
+        subshell copies the table into its child; an in-place group ({ }, a
+        loop, if, case) reads the swapped table directly and the restore
+        continuation, queued before the body, runs once the body drains.
+        """
 
-        # Expand the statement's words against the *current* environment, just
-        # before it runs, so a same-line `x=hi; echo $x` sees the value.
-        cmdAndArgs = self.bashparser.evaluate(command)
+        def apply(tokens: list[str]) -> None:
+            _, ops = self.parser.parse_redirections(tokens)
+            fds, error = self._open_redirection_fds(ops)
+            if error:
+                # bash reports the failure (already written) and skips the group.
+                self.last_exit_code = 1
+                self._advance()
+                return
+            saved, self.fds = self.fds, fds
+            self.cmdpending.insert(0, _Continuation(lambda: self._restore_fds(saved)))
+            self._run_compound(command)
+
+        d = Deferred.fromCoroutine(self.bashparser.evaluate(redirections))
+        d.addCallback(apply)
+        d.addErrback(self._statement_failed)
+
+    def _restore_fds(self, saved: dict[int, tuple[str, Any]]) -> None:
+        """Restore the shell's fd table after a redirected group finishes."""
+        self.fds = saved
+        self._advance()
+
+    def _open_redirection_fds(
+        self, ops: list[dict[str, Any]]
+    ) -> tuple[dict[int, tuple[str, Any]], bool]:
+        """Apply redirection ops over this shell's fd table, opening any files
+        once for the whole group, and register their backing files. Returns the
+        new table and whether a redirection failed."""
+        pp = self._make_pipe(None, [], None, ops)
+        for real_path, virtual_path in pp.redirect_real_files:
+            self.protocol.terminal.redirFiles.add((real_path, virtual_path))
+        return {1: pp.targets[1], 2: pp.targets[2]}, pp.has_redirection_error
+
+    def _run_pipeline(self, node: Pipeline) -> None:
+        """Run the stages left to right, each in its own child shell, the
+        stdout of one buffered as the stdin of the next, as a shell forks one
+        process per stage. The first stage reads what this shell reads and
+        the last writes where this shell writes; the pipeline's status is the
+        last stage's, as in bash without pipefail.
+
+        Stages that complete synchronously are driven by the loop here rather
+        than by nested callbacks, so a long pipeline does not grow the Python
+        stack by one frame per stage (issue #40352).
+        """
+        stages = node.stages
+        output: bytes | None = None
+
+        def stage_finished(child: HoneyPotShell) -> None:
+            nonlocal output
+            output = child.captured
+            self.last_exit_code = child.last_exit_code
+
+        def continue_from(_child: None, index: int) -> None:
+            run_from(index)
+
+        def run_from(index: int) -> None:
+            while index < len(stages):
+                last = index == len(stages) - 1
+                if last:
+                    # The last stage writes where this shell writes (terminal,
+                    # a file, or the enclosing capture sink).
+                    fds, buf = dict(self.fds), self._capture
+                else:
+                    # An intermediate stage's stdout is captured to feed the
+                    # next; its stderr still reaches this shell.
+                    fds, buf = self._capture_fds()
+                d = self.run_child(
+                    [stages[index]],
+                    fds=fds,
+                    capture_buf=buf,
+                    stdin=output,
+                    inherits_stdin=index == 0,
+                )
+                index += 1
+                finished = d.addCallback(stage_finished)
+                if not d.called:
+                    # The stage paused on a Deferred; carry on when it ends.
+                    finished.addCallback(continue_from, index)
+                    return
+            self._advance()
+
+        run_from(0)
+
+    def _run_expanded(self, cmdAndArgs: list[str]) -> None:
+        """Run one expanded simple command: split off leading assignments,
+        resolve it to a command class, wire its stdin and redirections, and
+        start it."""
+        pp = None
 
         # Probably no reason to be this comprehensive for just PATH...
         environ = copy.copy(self.environ)
         cmd_tokens: list[str] = []
-        cmd_array: list[dict[str, Any]] = []
         while cmdAndArgs:
             piece = cmdAndArgs.pop(0)
-            if piece.count("="):
+            if ASSIGNMENT_WORD.match(piece):
                 key, val = piece.split("=", 1)
                 environ[key] = val
                 continue
             cmd_tokens = [piece, *cmdAndArgs]
             break
 
+        exec_seen, exec_replace = self._strip_exec(cmd_tokens)
+
         if not cmd_tokens:
             # A statement of only assignments (no command) persists those
             # variables for the rest of the session. They are shell variables,
-            # not exported, so self.exported is left untouched. A bare
-            # assignment succeeds, so $? is 0.
+            # not exported, so self.exported is left untouched. Its status is
+            # that of the last command substitution its words ran, as in bash
+            # (`x=$(false)` leaves $? = 1); with no substitution a bare
+            # assignment succeeds.
             self.environ = environ
-            self.last_exit_code = 0
+            self.last_exit_code = (
+                self._subst_status if self._subst_status is not None else 0
+            )
             self._advance()
             return
 
         # A call to a shell function defined earlier runs its body with the
-        # positional parameters bound to the call arguments. A pipeline that
-        # includes the function name is left to the normal command machinery.
-        if cmd_tokens[0] in self.functions and "|" not in cmd_tokens:
+        # positional parameters bound to the call arguments. `exec` never
+        # sees functions: it only runs files.
+        if not exec_replace and cmd_tokens[0] in self.functions:
             self._call_function(cmd_tokens[0], cmd_tokens[1:])
             return
 
-        pipe_indices = [i for i, x in enumerate(cmd_tokens) if x == "|"]
-        multipleCmdArgs: list[list[str]] = []
-        pipe_indices.append(len(cmd_tokens))
-        start = 0
-
-        # Gather all arguments with pipes
-
-        for _index, pipe_indice in enumerate(pipe_indices):
-            multipleCmdArgs.append(cmd_tokens[start:pipe_indice])
-            start = pipe_indice + 1
-
-        first_args, first_ops = self.parser.parse_redirections(multipleCmdArgs.pop(0))
-        if not first_args:
-            if first_ops:
+        args, ops = self.parser.parse_redirections(cmd_tokens)
+        if not args:
+            if ops:
                 # Handle redirection without command (e.g. > file). This
                 # creates the backing files via _setup_redirections; register
                 # them so they are hashed/renamed or removed at session close
                 # instead of being orphaned in the download directory.
-                pp = PipeProtocol(
-                    self.protocol,
-                    None,
-                    [],
-                    None,
-                    None,
-                    self.redirect,
-                    first_ops,
-                )
+                pp = self._make_pipe(None, [], None, ops)
                 for real_path, virtual_path in pp.redirect_real_files:
                     self.protocol.terminal.redirFiles.add((real_path, virtual_path))
             self._advance()
             return
 
-        cmd_array.append(
-            {
-                "command": first_args.pop(0),
-                "rargs": first_args,
-                "redirects": first_ops,
-            }
+        cmd = args.pop(0)
+        cmdclass = self.protocol.getCommand(
+            cmd, environ.get("PATH", "").split(":"), self.cwd
         )
-
-        for cmd_args in multipleCmdArgs:
-            args, ops = self.parser.parse_redirections(cmd_args)
-            if not args:
-                continue
-            cmd_array.append(
-                {
-                    "command": args.pop(0),
-                    "rargs": args,
-                    "redirects": ops,
-                }
+        if not cmdclass:
+            self.protocol.events.dispatch(
+                "cowrie.command.failed",
+                "Command not found: %(input)s",
+                input=cmd + " " + " ".join(args),
             )
-
-        lastpp = None
-        cmdclass = None
-        for index, cmd in reversed(list(enumerate(cmd_array))):
-            cmdclass = self.protocol.getCommand(
-                cmd["command"], environ.get("PATH", "").split(":")
-            )
-            if cmdclass:
-                self._log.info(
-                    "Command found: {input}",
-                    input=cmd["command"] + " " + " ".join(cmd["rargs"]),
-                )
-                if index == len(cmd_array) - 1:
-                    lastpp = PipeProtocol(
-                        self.protocol,
-                        cmdclass,
-                        cmd["rargs"],
-                        None,
-                        None,
-                        self.redirect,
-                        cmd.get("redirects", []),
-                    )
-                    pp = lastpp
-                else:
-                    pp = PipeProtocol(
-                        self.protocol,
-                        cmdclass,
-                        cmd["rargs"],
-                        None,
-                        lastpp,
-                        self.redirect,
-                        cmd.get("redirects", []),
-                    )
-                    lastpp = pp
+            if exec_seen:
+                # exec reports a failed lookup as its own error.
+                message = f"{self.error_prefix()}exec: {cmd}: not found\n".encode()
             else:
-                self.protocol.events.dispatch(
-                    "cowrie.command.failed",
-                    "Command not found: %(input)s",
-                    input=cmd["command"] + " " + " ".join(cmd["rargs"]),
-                )
-                message = self.command_not_found_message(cmd["command"]).encode("utf8")
-                redirects = cmd.get("redirects", [])
-                if redirects:
-                    temp_pp = PipeProtocol(
-                        self.protocol,
-                        None,
-                        [],
-                        None,
-                        None,
-                        self.redirect,
-                        redirects,
-                    )
-                    temp_pp.errReceived(message)
-                    for real_path, virtual_path in temp_pp.redirect_real_files:
-                        self.protocol.terminal.redirFiles.add((real_path, virtual_path))
-                else:
-                    self.protocol.terminal.write(message)
+                message = self.command_not_found_message(cmd).encode("utf8")
+            self._write_shell_error(message, ops)
 
-                self.last_exit_code = 127  # command not found
-                self._advance()
-                pp = None  # Got a error. Don't run any piped commands
-                break
-        if pp and getattr(pp, "has_redirection_error", False):
+            self.last_exit_code = 127  # command not found
+            if exec_replace and not self.interactive:
+                # A failed exec ends a non-interactive shell with 127; an
+                # interactive one survives it (bash without execfail).
+                self._terminate(127)
+                return
             self._advance()
             return
 
-        if pp:
-            self.protocol.call_command(pp, cmdclass, *cmd_array[0]["rargs"])
+        self._log.info("Command found: {input}", input=cmd + " " + " ".join(args))
+        # The pipe buffer feeding this shell is offered to every command and
+        # drained by the first one that consumes stdin, as a shared pipe is;
+        # a stdin redirection on the command replaces it.
+        stdin = self.stdin
+        if cmdclass.consumes_stdin:
+            self.stdin = None
+        pp = self._make_pipe(cmdclass, args, stdin, ops)
+        pp.stdin_from_pipe = stdin is not None
+        # The name the command was invoked by, its argv[0].
+        pp.argv0 = cmd
+        if pp.has_redirection_error:
+            self._advance()
+            return
+
+        self._exec_replaced = exec_replace
+        self.protocol.call_command(pp, cmdclass, *args)
 
     def command_not_found_message(self, cmd: str) -> str:
         """
@@ -739,19 +1061,50 @@ class HoneyPotShell:
         directory" (ENOENT). Anything else yields "command not found".
         """
         if cmd[:1] in (".", "/"):
-            path = self.protocol.fs.resolve_path(cmd, self.protocol.cwd)
+            path = self.protocol.fs.resolve_path(cmd, self.cwd)
             if self.protocol.fs.isdir(path):
-                return f"-bash: {cmd}: Is a directory\n"
+                return f"{self.error_prefix()}{cmd}: Is a directory\n"
             if not self.protocol.fs.exists(path):
-                return f"-bash: {cmd}: No such file or directory\n"
-        return f"-bash: {cmd}: command not found\n"
+                return f"{self.error_prefix()}{cmd}: No such file or directory\n"
+        return f"{self.error_prefix()}{cmd}: command not found\n"
 
     def resume(self) -> None:
+        if self._exec_replaced:
+            # The command that replaced this shell via `exec` has finished;
+            # there is no shell to come back to.
+            self._terminate(self.last_exit_code)
+            return
         if self.interactive:
             self.protocol.setInsertMode()
         # Go through the _advance trampoline so a command that resumes us
         # synchronously does not deepen the Python stack (see _advance).
         self._advance()
+
+    def _terminate(self, code: int) -> None:
+        """End this shell, as when `exec` replaces it: unwind to whatever ran
+        it, or end the process with ``code`` when nothing else is running.
+
+        This mirrors the `exit` builtin's teardown: the shell leaves the
+        cmdstack and either the launching command carries on (nested shell) or,
+        with the cmdstack empty, the process ends and the SSH channel reports
+        ``code`` to the client.
+        """
+        self.last_exit_code = code
+        if self in self.protocol.cmdstack:
+            self.protocol.cmdstack.remove(self)
+        if self.done is not None:
+            # The parent carries on from the done callback; resuming the shell
+            # below as well would drive it twice.
+            self._complete_child()
+            return
+        if self.protocol.cmdstack:
+            self.protocol.cmdstack[-1].resume()
+        else:
+            # The client may already be disconnected, leaving no transport.
+            try:
+                self.protocol.terminal.transport.processEnded(process_status(code))
+            except AttributeError:
+                pass
 
     def showPrompt(self) -> None:
         if not self.interactive:
@@ -762,17 +1115,11 @@ class HoneyPotShell:
             prompt = CowrieConfig.get("honeypot", "prompt")
             prompt += " "
         else:
-            # Use effective_user if set (from su), otherwise use session user
-            if self.effective_user:
-                username = self.effective_user["username"]
-                uid = self.effective_user["uid"]
-                home = self.effective_user["home"]
-            else:
-                username = self.protocol.user.username
-                uid = self.protocol.user.uid
-                home = self.protocol.user.avatar.home
+            username = self.user["username"]
+            uid = self.user["uid"]
+            home = self.user["home"]
 
-            cwd = self.protocol.cwd
+            cwd = self.cwd
             homelen = len(home)
             if cwd == home:
                 cwd = "~"
@@ -787,15 +1134,21 @@ class HoneyPotShell:
             else:
                 prompt += "$ "  # "Non-Root" user
 
-        self.protocol.terminal.write(prompt.encode("ascii"))
-        self.protocol.ps = (prompt.encode("ascii"), b"> ")
+        # The username is attacker input from SSH/Telnet auth and is decoded
+        # with errors="replace" rather than restricted to ASCII, so the prompt
+        # goes to the terminal as UTF-8, the way a real shell writes it.
+        self.protocol.terminal.write(prompt.encode("utf-8"))
+        self.protocol.ps = (prompt.encode("utf-8"), b"> ")
 
     def eofReceived(self) -> None:
         """
-        EOF with the shell as the active reader (no command running) logs out.
+        EOF with the shell as the active reader (no command running) logs out,
+        exiting with the last command's status ($?) as bash does.
         """
         self._log.info("received eof, logging out")
-        self.protocol.terminal.transport.processEnded(process_status(0))
+        self.protocol.terminal.transport.processEnded(
+            process_status(self.last_exit_code)
+        )
 
     def handle_CTRL_C(self) -> None:
         self.protocol.lineBuffer = []
@@ -806,6 +1159,12 @@ class HoneyPotShell:
     def handle_TAB(self) -> None:
         """
         lineBuffer is an array of bytes
+
+        These are the raw keystrokes typed so far, so they need not be valid
+        UTF-8: an ordinary multi-byte character is an incomplete sequence
+        until its last byte arrives. Decoding is lossy for the same reason
+        lineReceived's is -- completing on a line must not raise out of the
+        protocol and kill the session.
         """
         if not self.protocol.lineBuffer:
             return
@@ -814,21 +1173,21 @@ class HoneyPotShell:
         if line[-1:] == b" ":
             clue = ""
         else:
-            clue = line.split()[-1].decode("utf8")
+            clue = line.split()[-1].decode("utf8", errors="replace")
 
         # clue now contains the string to complete or is empty.
         # line contains the buffer as bytes
-        basedir = os.path.dirname(clue)
+        basedir = posixpath.dirname(clue)
         if basedir and basedir[-1] != "/":
             basedir += "/"
 
         if not basedir:
-            tmppath = self.protocol.cwd
+            tmppath = self.cwd
         else:
             tmppath = basedir
 
         try:
-            r = self.protocol.fs.resolve_path(tmppath, self.protocol.cwd)
+            r = self.protocol.fs.resolve_path(tmppath, self.cwd)
         except Exception:
             return
 
@@ -840,7 +1199,7 @@ class HoneyPotShell:
             if clue == "":
                 files.append(x)
                 continue
-            if not x[fs.A_NAME].startswith(os.path.basename(clue)):
+            if not x[fs.A_NAME].startswith(posixpath.basename(clue)):
                 continue
             files.append(x)
 
@@ -855,7 +1214,10 @@ class HoneyPotShell:
         newbuf = ""
         if len(files) == 1:
             newbuf = " ".join(
-                [*line.decode("utf8").split()[:-1], f"{basedir}{files[0][fs.A_NAME]}"]
+                [
+                    *line.decode("utf8", errors="replace").split()[:-1],
+                    f"{basedir}{files[0][fs.A_NAME]}",
+                ]
             )
             if files[0][fs.A_TYPE] == fs.T_DIR:
                 newbuf += "/"
@@ -863,17 +1225,23 @@ class HoneyPotShell:
                 newbuf += " "
             newbyt = newbuf.encode("utf8")
         else:
-            if os.path.basename(clue):
-                prefix = os.path.commonprefix([x[fs.A_NAME] for x in files])
+            if posixpath.basename(clue):
+                prefix = posixpath.commonprefix([x[fs.A_NAME] for x in files])
             else:
                 prefix = ""
-            first = line.decode("utf8").split(" ")[:-1]
+            first = line.decode("utf8", errors="replace").split(" ")[:-1]
             newbuf = " ".join([*first, f"{basedir}{prefix}"])
             newbyt = newbuf.encode("utf8")
             if newbyt == b"".join(self.protocol.lineBuffer):
                 self.protocol.terminal.write(b"\n")
                 maxlen = max(len(x[fs.A_NAME]) for x in files) + 1
-                perline = int(self.protocol.user.windowSize[1] / (maxlen + 1))
+                # windowSize is only set once the client sent a window-change
+                # request; fall back to 80 columns like __init__ does above.
+                if hasattr(self.protocol.user, "windowSize"):
+                    columns = self.protocol.user.windowSize[1]
+                else:
+                    columns = 80
+                perline = max(1, int(columns / (maxlen + 1)))
                 count = 0
                 for file in files:
                     if count == perline:

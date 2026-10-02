@@ -11,8 +11,15 @@ FROM debian:trixie-slim AS builder
 
 WORKDIR /
 
+# 999 is the id useradd -r has been allocating here all along, so an
+# existing bind-mounted var/ keeps its owner across an upgrade. Pinning it
+# means a rebuild cannot silently move it, and lets USER name the account
+# numerically, which is the only form a host can resolve without this
+# image's passwd file (Kubernetes runAsNonRoot, hadolint DL3066).
 ENV COWRIE_GROUP=cowrie \
     COWRIE_USER=cowrie \
+    COWRIE_UID=999 \
+    COWRIE_GID=999 \
     COWRIE_HOME=/cowrie
 
 # Set locale to UTF-8, otherwise upstream libraries have bytes/string conversion issues
@@ -20,8 +27,10 @@ ENV LC_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8 \
     LANGUAGE=en_US.UTF-8
 
-RUN groupadd -r ${COWRIE_GROUP} && \
-    useradd -r -d ${COWRIE_HOME} -m -g ${COWRIE_GROUP} ${COWRIE_USER}
+# -l keeps useradd from sizing the lastlog and faillog databases to the
+# uid, which would add a large sparse file to the image.
+RUN groupadd -r -g "${COWRIE_GID}" "${COWRIE_GROUP}" && \
+    useradd -r -l -u "${COWRIE_UID}" -d "${COWRIE_HOME}" -m -g "${COWRIE_GROUP}" "${COWRIE_USER}"
 
 # Set up Debian prereqs
 RUN export DEBIAN_FRONTEND=noninteractive; \
@@ -43,7 +52,10 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
       rustc && \
     rm -rf /var/lib/apt/lists/*
 
-USER ${COWRIE_USER}
+# Spelled out rather than ${COWRIE_UID}, so that what the image declares
+# it runs as is readable without resolving this build's variables. Keep in
+# step with COWRIE_UID and COWRIE_GID above.
+USER 999:999
 WORKDIR ${COWRIE_HOME}
 
 # Copy requirements first to use Docker caching better
@@ -55,7 +67,8 @@ RUN python3 -m venv cowrie-env && \
     pip install -q --no-cache-dir --upgrade pip setuptools wheel && \
     pip install -q --no-cache-dir --upgrade cffi && \
     pip install -q --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements.txt && \
-    pip install -q --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements-output.txt
+    pip install -q --no-cache-dir --upgrade -r ${COWRIE_HOME}/cowrie-git/requirements-output.txt && \
+    pip uninstall -q -y pip setuptools wheel
 
 COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
 
@@ -64,6 +77,8 @@ COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
 
 FROM gcr.io/distroless/python3-debian13:latest AS runtime
 #FROM gcr.io/distroless/python3-debian13:debug AS runtime
+
+ARG SOURCE_DATE_EPOCH
 
 LABEL org.opencontainers.image.authors="Michel Oosterhof <michel@oosterhof.net>"
 LABEL org.opencontainers.image.url="https://cowrie.org/"
@@ -74,6 +89,7 @@ LABEL org.opencontainers.image.vendor="Cowrie"
 LABEL org.opencontainers.image.licenses="BSD-3-Clause"
 LABEL org.opencontainers.image.title="Cowrie SSH/Telnet Honeypot"
 LABEL org.opencontainers.image.description="Cowrie SSH/Telnet Honeypot"
+LABEL org.opencontainers.image.created="${SOURCE_DATE_EPOCH}"
 #LABEL org.opencontainers.image.base.digest="7beb0248fd81"
 LABEL org.opencontainers.image.base.name="gcr.io/distroless/python3-debian13"
 
@@ -81,8 +97,8 @@ ENV COWRIE_GROUP=cowrie \
     COWRIE_USER=cowrie \
     COWRIE_HOME=/cowrie
 
-#RUN groupadd -r ${COWRIE_GROUP} && \
-#    useradd -r -d ${COWRIE_HOME} -m -g ${COWRIE_GROUP} ${COWRIE_USER}
+# The account comes over from the builder: distroless carries no shell for
+# useradd to run in, and the id must resolve for the COPY --chown below.
 COPY --from=builder --chown=0:0 /etc/passwd /etc/group /etc/
 
 #RUN export DEBIAN_FRONTEND=noninteractive; \
@@ -102,11 +118,15 @@ COPY --from=builder --chown=0:0 /etc/passwd /etc/group /etc/
 
 COPY --from=builder --chown=${COWRIE_USER}:${COWRIE_GROUP} ${COWRIE_HOME} ${COWRIE_HOME}
 
-RUN [ "python3", "-m", "compileall", "-q", "/cowrie/cowrie-git/src", "/cowrie/cowrie-env/", "/usr/lib/python3.13"]
+# Exec form runs python directly with no shell; the -c argument is Python,
+# not shell, so ShellCheck's SC1088 parse error on its parentheses is spurious.
+# hadolint ignore=SC1088
+RUN [ "python3", "-c", "import sys, compileall; v=str(sys.version_info.major)+'.'+str(sys.version_info.minor); compileall.compile_dir('/cowrie/cowrie-git/src', quiet=1); compileall.compile_dir('/cowrie/cowrie-env/', quiet=1); compileall.compile_dir('/usr/lib/python'+v, quiet=1)" ]
 
 VOLUME [ "/cowrie/cowrie-git/var", "/cowrie/cowrie-git/etc" ]
 
-USER ${COWRIE_USER}
+# The uid the builder stage created, numeric for the same reason.
+USER 999:999
 WORKDIR ${COWRIE_HOME}/cowrie-git
 
 ENV PATH=${COWRIE_HOME}/cowrie-env/bin:${PATH}
@@ -116,6 +136,8 @@ ENV PYTHONUNBUFFERED=1
 RUN [ "python3", "/cowrie/cowrie-git/bin/regen-dropin.cache" ]
 
 EXPOSE 2222 2223
+
+STOPSIGNAL SIGTERM
 
 ENTRYPOINT [ "/cowrie/cowrie-env/bin/python3" ]
 CMD [ "/cowrie/cowrie-env/bin/twistd", "-n", "--umask=0022", "--pidfile=", "--logger", "cowrie.python.logfile.stdoutLogger", "cowrie" ]

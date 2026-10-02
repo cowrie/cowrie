@@ -58,7 +58,8 @@ class Output(cowrie.core.output.Output):
             self._log.info("output_mongodb: Error: {error}", error=e)
 
     def stop(self):
-        self.mongo_client.close()
+        if hasattr(self, "mongo_client"):
+            self.mongo_client.close()
 
     def write(self, event):
         for i in list(event):

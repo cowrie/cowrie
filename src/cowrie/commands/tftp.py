@@ -15,7 +15,14 @@ from twisted.logger import Logger
 
 from cowrie.core.artifact import Artifact
 from cowrie.core.config import CowrieConfig
-from cowrie.core.network import communication_allowed
+from cowrie.core.download import outbound_rate_limiter
+from cowrie.core.network import (
+    DownloadLimitExceeded,
+    communication_allowed,
+    is_ip_address,
+    is_valid_port,
+    outbound_bind_address,
+)
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.customparser import CustomParser, ExitException, OptionNotFound
 
@@ -24,6 +31,10 @@ if TYPE_CHECKING:
     from twisted.python.failure import Failure
 
 commands = {}
+
+# Bound how many outbound TFTP transfers per destination a session can trigger,
+# so the honeypot cannot be used to flood a victim host.
+tftp_rate_limiter = outbound_rate_limiter("tftp")
 
 # TFTP Opcodes (RFC 1350)
 OPCODE_RRQ = 1  # Read request
@@ -52,6 +63,38 @@ TFTP_TIMEOUT = 5  # seconds
 TFTP_MAX_RETRIES = 3
 
 
+def parse_host_port(target: str, default_port: int) -> tuple[str, int] | None:
+    """Split a tftp target into (host, port).
+
+    Accepts host, host:port, bare IPv6 (two or more colons), [IPv6], and
+    [IPv6]:port. Returns None when the host is empty or the port invalid.
+    """
+    host = target
+    port_str: str | None = None
+
+    if target.startswith("["):
+        bracket_end = target.find("]")
+        if bracket_end == -1:
+            return None
+        host = target[1:bracket_end]
+        rest = target[bracket_end + 1 :]
+        if rest:
+            if not rest.startswith(":"):
+                return None
+            port_str = rest[1:]
+    elif target.count(":") == 1:
+        host, port_str = target.split(":")
+    # Two or more colons without brackets: a bare IPv6 address, no port.
+
+    if not host:
+        return None
+    if port_str is None:
+        return (host, default_port)
+    if not is_valid_port(port_str):
+        return None
+    return (host, int(port_str))
+
+
 class TFTPClient(DatagramProtocol):
     """
     Async TFTP client using Twisted's DatagramProtocol
@@ -60,11 +103,20 @@ class TFTPClient(DatagramProtocol):
 
     _log = Logger()
 
-    def __init__(self, host: str, port: int, filename: str, artifact: Artifact):
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        filename: str,
+        artifact: Artifact,
+        limit_size: int = 0,
+    ):
         self.host = host
         self.port = port
         self.filename = filename
         self.artifact = artifact
+        # Bytes after which to abort the transfer; 0 means unlimited.
+        self.limit_size = limit_size
         self.deferred: defer.Deferred[None] = defer.Deferred()
         self.current_block = 0
         self.last_packet = b""
@@ -75,7 +127,15 @@ class TFTPClient(DatagramProtocol):
 
     def startProtocol(self) -> None:
         """Called when protocol starts - send initial RRQ"""
-        self.sendRRQ()
+        try:
+            self.sendRRQ()
+        except Exception as e:
+            # Twisted's UDP transport raises synchronously here for a bad
+            # destination (e.g. a hostname). startProtocol() runs inside
+            # listenUDP(), before the caller has wired the transfer callbacks,
+            # so route the failure through the deferred instead of letting it
+            # escape and orphan the download.
+            self.deferred.errback(e)
 
     def stopProtocol(self) -> None:
         """Called when protocol stops"""
@@ -143,6 +203,26 @@ class TFTPClient(DatagramProtocol):
 
         # Check if this is the expected block
         if block_num == self.current_block + 1:
+            # An attacker chooses the file, so the server can stream without
+            # end. Stop once the configured limit is exceeded rather than
+            # writing an unbounded artifact to disk.
+            if (
+                self.limit_size > 0
+                and self.bytes_received + len(data) > self.limit_size
+            ):
+                self._log.info(
+                    "TFTP: transfer exceeded download limit of {limit} bytes, aborting",
+                    limit=self.limit_size,
+                )
+                if self.timeout_call is not None and self.timeout_call.active():
+                    self.timeout_call.cancel()
+                self.deferred.errback(
+                    DownloadLimitExceeded(
+                        f"Transfer exceeded download limit of {self.limit_size} bytes"
+                    )
+                )
+                return
+
             self.current_block = block_num
             self.bytes_received += len(data)
 
@@ -217,6 +297,7 @@ class Command_tftp(HoneyPotCommand):
 
     port: int = 69
     hostname: str | None = None
+    host_ip: str
     file_to_get: str
     limit_size = CowrieConfig.getint("honeypot", "download_limit_size", fallback=0)
     artifactFile: Artifact
@@ -263,20 +344,57 @@ class Command_tftp(HoneyPotCommand):
             self.exit(1)
             return
 
-        # Parse port from hostname if provided
-        if self.hostname.find(":") != -1:
-            host, port_str = self.hostname.split(":")
-            self.hostname = host
-            self.port = int(port_str)
+        # Parse port from the target, handling IPv6 literals
+        parsed = parse_host_port(self.hostname, self.port)
+        if parsed is None:
+            self.write(f"tftp: bad port spec '{self.hostname}'\n")
+            self.exit(1)
+            return
+        self.hostname, self.port = parsed
 
-        # Check if communication is allowed
-        allowed = yield communication_allowed(self.hostname)
+        # Check rate limit before any outbound traffic
+        if not tftp_rate_limiter.check(self.hostname):
+            self._log.info(
+                "tftp: rate limit exceeded for host: {host}. Simulating transfer timeout",
+                host=self.hostname,
+            )
+            self.write("tftp: Transfer timed out\n")
+            self.exit(1)
+            return
+
+        # Resolve the target to a numeric IP before any UDP I/O: Twisted's UDP
+        # transport rejects hostnames and raises InvalidAddressError. Done before
+        # the artifact is created so a resolution failure leaves nothing behind.
+        # A target that is already numeric (including an IPv6 literal, which the
+        # IPv4-only default resolver cannot look up) is used as given.
+        if is_ip_address(self.hostname) is not None:
+            self.host_ip = self.hostname
+        else:
+            try:
+                self.host_ip = yield reactor.resolve(self.hostname)
+            except Exception:
+                self._log.info(
+                    "TFTP: could not resolve host {host}", host=self.hostname
+                )
+                self.write(f"tftp: {self.hostname}: Name or service not known\n")
+                self.exit(1)
+                return
+
+        # Validate the address that will actually be contacted. Resolving the
+        # hostname a second time here would let a DNS answer that changes
+        # between lookups (rebinding) point the transfer at a private or
+        # metadata address after a public one passed the check.
+        allowed = yield communication_allowed(self.host_ip)
         if not allowed:
+            self._log.info(
+                "TFTP: attempt to access blocked network address {ip}",
+                ip=self.host_ip,
+            )
             self.exit(1)
             return
 
         # Resolve local file path
-        self.fakeoutfile = self.fs.resolve_path(self.file_to_get, self.protocol.cwd)
+        self.fakeoutfile = self.fs.resolve_path(self.file_to_get, self.cwd)
         path = self.fakeoutfile.rsplit("/", 1)[0] if "/" in self.fakeoutfile else "/"
 
         if not self.fs.exists(path) or not self.fs.isdir(path):
@@ -300,13 +418,21 @@ class Command_tftp(HoneyPotCommand):
         """
         assert self.hostname is not None  # Checked in start()
 
-        # Create TFTP client
+        # Create TFTP client. host_ip is the numeric address resolved in
+        # start(); the UDP transport requires it (a hostname would be rejected).
         self.tftp_client = TFTPClient(
-            self.hostname, self.port, self.file_to_get, self.artifactFile
+            self.host_ip,
+            self.port,
+            self.file_to_get,
+            self.artifactFile,
+            limit_size=self.limit_size,
         )
 
-        # Listen on random UDP port
-        self.udp_port = reactor.listenUDP(0, self.tftp_client)  # type: ignore[attr-defined]
+        # Listen on a random UDP port, bound to the configured outbound source
+        # address so the transfer does not leak the honeypot's real IP.
+        self.udp_port = reactor.listenUDP(  # type: ignore[attr-defined]
+            0, self.tftp_client, interface=outbound_bind_address()
+        )
 
         # Clean up port when done
         def cleanup(result: Any) -> Any:
@@ -356,8 +482,8 @@ class Command_tftp(HoneyPotCommand):
             size = self.tftp_client.bytes_received if self.tftp_client else 0
             self.fs.mkfile(
                 self.fakeoutfile,
-                self.current_user["uid"],
-                self.current_user["gid"],
+                self.user["uid"],
+                self.user["gid"],
                 size,
                 33188,
             )
@@ -365,7 +491,7 @@ class Command_tftp(HoneyPotCommand):
                 self.fs.getfile(self.fakeoutfile), self.artifactFile.shasumFilename
             )
             self.fs.chown(
-                self.fakeoutfile, self.current_user["uid"], self.current_user["gid"]
+                self.fakeoutfile, self.user["uid"], self.user["gid"]
             )
 
         self._safe_exit()

@@ -28,15 +28,16 @@ See ``squid.conf`` for an example configuration.
 Cowrie Configuration for Squid
 ==============================
 
-Uncomment and update the following entries to ``etc/cowrie.cfg`` under the SSH section::
+Uncomment and update the following entries in ``etc/cowrie.cfg`` under the SSH section::
 
     [ssh]
     forward_tunnel = true
     forward_tunnel_80 = 127.0.0.1:3128
     forward_tunnel_443 = 127.0.0.1:3128
 
-## Restart Cowrie
+Restart Cowrie
+==============
 
-Restart::
+Restart Cowrie from your honeypot state directory::
 
-    $ bin/cowrie restart
+    (cowrie-env) $ cowrie restart

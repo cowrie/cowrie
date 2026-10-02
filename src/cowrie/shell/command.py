@@ -43,25 +43,15 @@ class HoneyPotCommand:
     # created without __init__ (tests).
     exited: bool = False
 
-    @property
-    def current_user(self) -> dict[str, str | int]:
-        """
-        Get the current effective user info.
-        Returns effective_user from the nearest shell in cmdstack (set by su)
-        if present, otherwise returns the session user's info.
-        """
-        # Search cmdstack for a shell with effective_user (from su)
-        # Walk from top to bottom of stack
-        for item in reversed(self.protocol.cmdstack):
-            if hasattr(item, "effective_user") and item.effective_user:
-                return dict(item.effective_user)
-        # Fall back to session user
-        return {
-            "uid": self.protocol.user.uid,
-            "gid": self.protocol.user.gid,
-            "username": self.protocol.user.username,
-            "home": self.protocol.user.avatar.home,
-        }
+    # This command's stdio wiring, set at spawn (see __init__). Class-level so
+    # it holds even for instances created without __init__ (tests).
+    pp: Any = None
+
+    # Whether the command reads its stdin: set True by exactly the commands
+    # that use self.input_data. A pipe feeding a shell is drained by the first
+    # such command and is then empty for the rest, as in bash; a command that
+    # does not read stdin (cd, echo, sleep ...) leaves the data for the next.
+    consumes_stdin: bool = False
 
     def __init__(self, protocol, *args):
         self.protocol = protocol
@@ -71,22 +61,36 @@ class HoneyPotCommand:
         self.exit_code: int = 0
         self.environ = self.protocol.cmdstack[-1].environ
         self.exported = self.protocol.cmdstack[-1].exported
+        # The shell this command runs in (the nearest shell on the cmdstack at
+        # spawn -- wrapper commands like busybox may sit in between). cwd and
+        # user identity are snapshot at spawn, as a spawned process inherits
+        # its parent's; the cd and su builtins mutate shell state, not their
+        # own.
+        self.shell = next(
+            item
+            for item in reversed(self.protocol.cmdstack)
+            if hasattr(item, "queue_line")
+        )
+        self.cwd: str = self.shell.cwd
+        self.user: dict[str, Any] = dict(self.shell.user)
         self.fs = self.protocol.fs
         self.data: bytes = b""  # output data
-        self.input_data: None | (
-            bytes
-        ) = None  # used to store STDIN data passed via PIPE
+        # used to store STDIN data passed via PIPE
+        self.input_data: bytes | None = None
+        # This command's own stdio: the fd table and its redirections, handed
+        # over at spawn. Held per command because a command that finishes late
+        # (an async download) must still write to and clean up the fds it was
+        # started with, not whichever command is running by the time it ends.
         pp: Any = getattr(self.protocol, "pp", None)
+        self.pp: Any = pp
         self.writefn: Callable[[bytes], None]
         self.errorWritefn: Callable[[bytes], None]
         if pp and hasattr(pp, "write_stdout") and hasattr(pp, "write_stderr"):
             self.writefn = cast("Callable[[bytes], None]", pp.write_stdout)
             self.errorWritefn = cast("Callable[[bytes], None]", pp.write_stderr)
         else:
-            self.writefn = cast("Callable[[bytes], None]", self.protocol.pp.outReceived)
-            self.errorWritefn = cast(
-                "Callable[[bytes], None]", self.protocol.pp.errReceived
-            )
+            self.writefn = cast("Callable[[bytes], None]", pp.outReceived)
+            self.errorWritefn = cast("Callable[[bytes], None]", pp.errReceived)
 
     def write(self, data: str) -> None:
         """
@@ -109,7 +113,7 @@ class HoneyPotCommand:
     def check_arguments(self, application, args):
         files = []
         for arg in args:
-            path = self.fs.resolve_path(arg, self.protocol.cwd)
+            path = self.fs.resolve_path(arg, self.cwd)
             if self.fs.isdir(path):
                 self.errorWrite(
                     f"{application}: error reading `{arg}': Is a directory\n"
@@ -145,13 +149,16 @@ class HoneyPotCommand:
         self.exited = True
         if code is not None:
             self.exit_code = code
+        # Register this command's own redirection backing files for hashing at
+        # session close. Read from self.pp, not the protocol's current pipe: a
+        # command that finishes after a later one started would otherwise
+        # register that command's files and orphan its own.
         if (
             self.protocol
             and self.protocol.terminal
-            and hasattr(self.protocol, "pp")
-            and getattr(self.protocol.pp, "redirect_real_files", None)
+            and getattr(self.pp, "redirect_real_files", None)
         ):
-            for real_path, virtual_path in self.protocol.pp.redirect_real_files:
+            for real_path, virtual_path in self.pp.redirect_real_files:
                 self.protocol.terminal.redirFiles.add((real_path, virtual_path))
 
         if len(self.protocol.cmdstack):
@@ -173,6 +180,16 @@ class HoneyPotCommand:
             except AttributeError:
                 pass
 
+    def exec_command(self, pp: Any, cmdclass: Any, *args: str) -> None:
+        """Replace this command with another, as exec(2) does: leave the
+        cmdstack and start the new command in this one's place, so its exit
+        status goes to the shell that ran this command. The wrappers that
+        dispatch to a real command (busybox, sudo) use this."""
+        self.exited = True
+        if self in self.protocol.cmdstack:
+            self.protocol.cmdstack.remove(self)
+        self.protocol.call_command(pp, cmdclass, *args)
+
     def handle_CTRL_C(self) -> None:
         self._log.info("Received CTRL-C, exiting..")
         self.write("^C\n")
@@ -183,8 +200,12 @@ class HoneyPotCommand:
         # Queue on the innermost shell, the next stdin reader once this
         # command exits: an outer shell only resumes after the shells above
         # it unwind, so a line queued there would wait on the whole stack.
+        # A transient child shell (a "$(...)" substitution, a "(...)" group or
+        # a pipeline stage -- any shell with a ``done`` Deferred) is skipped:
+        # its program is fixed source text, and typed input is stdin data for
+        # the next real reader, never a command to run inside the child.
         for item in reversed(self.protocol.cmdstack):
-            if hasattr(item, "queue_line"):
+            if hasattr(item, "queue_line") and getattr(item, "done", None) is None:
                 item.queue_line(line)
                 return
 

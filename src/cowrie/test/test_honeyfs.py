@@ -40,21 +40,6 @@ def _root(children: list) -> list:
     return _dir_entry("/", children)
 
 
-class GetTreeTests(unittest.TestCase):
-    """get_tree() returns a deep copy of the cached tree."""
-
-    def test_returns_a_list(self) -> None:
-        tree = honeyfs.get_tree()
-        self.assertIsInstance(tree, list)
-
-    def test_returns_fresh_copy_each_call(self) -> None:
-        first = honeyfs.get_tree()
-        second = honeyfs.get_tree()
-        self.assertIsNot(first, second)
-        first.append("mutation")
-        self.assertNotIn("mutation", second)
-
-
 class ReadFileTests(unittest.TestCase):
     """read_file extracts bytes from A_CONTENTS, otherwise raises."""
 

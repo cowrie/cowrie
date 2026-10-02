@@ -12,7 +12,7 @@ Do I need to copy all the content of cowrie.cfg.dist to cowrie.cfg?
 No, Cowrie merges your local settings in ``cowrie.cfg`` and
 the default settings will automatically be read from ``cowrie.cfg.dist``
 
-Why certain commands aren't implemented?
+Why aren't certain commands implemented?
 ****************************************
 
 Implementing all possible UNIX commands in Python is not worth the
@@ -47,7 +47,7 @@ Rename the user in the filesystem tree too::
 
 (For a custom copy of the pickle, copy it out first, set
 ``[shell] filesystem`` to point at it, and edit there — see
-INSTALL.rst's "Customising the honeypot" section.)
+INSTALL.rst's "Customizing the honeypot" section.)
 
 And then restart Cowrie::
 

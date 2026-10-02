@@ -1,0 +1,55 @@
+# SPDX-FileCopyrightText: 2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+---
+name: Security Audit
+
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - main
+
+  pull_request:
+
+  schedule:
+    # Run every Monday at 03:00 UTC, after the weekly release and before
+    # Dependabot, so audit warnings arrive early in the week.
+    - cron: '0 3 * * 1'
+
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  pip-audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip -q install --upgrade pip setuptools setuptools-scm wheel
+          python -m pip -q install -e .
+          python -m pip -q install pip-audit
+
+      - name: Run pip-audit on core dependencies
+        run: pip-audit -r requirements.txt
+
+      - name: Run pip-audit on output dependencies
+        # Continue on error since output deps may have known issues
+        continue-on-error: true
+        run: pip-audit -r requirements-output.txt

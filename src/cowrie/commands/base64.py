@@ -21,6 +21,8 @@ class Command_base64(HoneyPotCommand):
     author: Ivan Korolev (@fe7ch)
     """
 
+    consumes_stdin = True
+
     _log = Logger()
 
     mode: str
@@ -108,7 +110,7 @@ Try 'base64 --help' for more information.
                 self.exit()
                 return
 
-            pname = self.fs.resolve_path(args[0], self.protocol.cwd)
+            pname = self.fs.resolve_path(args[0], self.cwd)
             if not self.fs.isdir(pname):
                 try:
                     self.dojob(self.fs.file_contents(pname))
@@ -148,7 +150,7 @@ Try 'base64 --help' for more information.
             input=line,
         )
 
-        self.dojob(line.encode("ascii"))
+        self.dojob(line.encode("utf-8"))
 
     def eofReceived(self) -> None:
         self.exit()

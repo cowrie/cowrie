@@ -26,6 +26,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from cowrie.shell.bashparse import max_input_size
 from cowrie.shell.fs import FileNotFound
 
 if TYPE_CHECKING:
@@ -83,11 +84,13 @@ def run_script_file(
     command: HoneyPotCommand,
     path: str,
     *,
+    name: str,
     not_found_message: str,
     binary_message: str,
 ) -> None:
     """Read ``path`` from the emulated filesystem and run it as a shell script.
 
+    ``name`` is the script as invoked, which names it in its own errors.
     ``not_found_message`` / ``binary_message`` are the errors to write (with the
     caller's preferred ``bash:`` / ``-bash:`` prefix) when the file is missing or
     is an executable binary. The command's ``exit_code`` is set to the status of
@@ -100,17 +103,25 @@ def run_script_file(
     protocol = command.protocol
     depth = getattr(protocol, "_script_depth", 0)
     if depth >= MAX_SCRIPT_DEPTH:
-        command.errorWrite(f"-bash: {path}: too many levels of recursion\n")
+        command.errorWrite(
+            f"{command.shell.error_prefix()}{name}: too many levels of recursion\n"
+        )
         return
 
     try:
         contents = command.fs.file_contents(path)
     except (FileNotFound, FileNotFoundError):
         command.errorWrite(not_found_message)
+        command.exit_code = 127
         return
 
-    if is_executable_binary(contents):
+    # A file past the input cap is refused like a binary: parsing it would be
+    # superlinearly expensive (see max_input_size), and a legitimate shell
+    # script that large does not occur as a honeypot payload -- oversized
+    # "scripts" are binaries or web pages fetched from a dead payload URL.
+    if len(contents) > max_input_size() or is_executable_binary(contents):
         command.errorWrite(binary_message)
+        command.exit_code = 126
         return
 
     text = contents.decode("utf-8", errors="replace")
@@ -120,6 +131,9 @@ def run_script_file(
     protocol._script_depth = depth + 1
     try:
         shell = HoneyPotShell(protocol, interactive=False)
+        # Errors in a script name it as invoked, with the line: "./x.sh: line 3:".
+        shell.name = name
+        shell.syntax_label = None
         protocol.cmdstack.append(shell)
         # Hand the whole script to the parser: newlines separate statements and
         # "#" lines (the shebang included) are comments, so flow control that

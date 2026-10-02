@@ -14,24 +14,11 @@ import unittest
 from unittest.mock import MagicMock
 
 try:
-    from cowrie.output.misp import Output, file_md5
+    from cowrie.output.misp import Output
 
     have_misp = True
 except ImportError:
     have_misp = False
-
-
-@unittest.skipIf(not have_misp, "pymisp not installed")
-class TestFileMd5(unittest.TestCase):
-    """file_md5 returns the MD5 hex digest of a file's contents."""
-
-    def test_file_md5(self) -> None:
-        data = b"cowrie malware sample\n"
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            f.write(data)
-            path = f.name
-        self.addCleanup(os.remove, path)
-        self.assertEqual(file_md5(path), hashlib.md5(data).hexdigest())
 
 
 @unittest.skipIf(not have_misp, "pymisp not installed")

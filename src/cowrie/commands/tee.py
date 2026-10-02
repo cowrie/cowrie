@@ -10,7 +10,7 @@ tee command
 from __future__ import annotations
 
 import getopt
-import os
+import posixpath
 
 from twisted.logger import Logger
 
@@ -24,6 +24,8 @@ class Command_tee(HoneyPotCommand):
     """
     tee command
     """
+
+    consumes_stdin = True
 
     _log = Logger()
 
@@ -57,20 +59,20 @@ class Command_tee(HoneyPotCommand):
                 self.ignoreInterupts = True
 
         for arg in args:
-            pname = self.fs.resolve_path(arg, self.protocol.cwd)
+            pname = self.fs.resolve_path(arg, self.cwd)
             if self.fs.isdir(pname):
                 self.errorWrite(f"tee: {arg}: Is a directory\n")
                 continue
 
-            folder_path = os.path.dirname(pname)
-            fname = self.fs.resolve_path(folder_path, self.protocol.cwd)
+            folder_path = posixpath.dirname(pname)
+            fname = self.fs.resolve_path(folder_path, self.cwd)
             if not self.fs.isdir(fname):
                 self.errorWrite(f"tee: {arg}: No such file or directory\n")
                 continue
 
             try:
                 self.fs.mkfile(
-                    pname, self.current_user["uid"], self.current_user["gid"], 0, 0o644
+                    pname, self.user["uid"], self.user["gid"], 0, 0o644
                 )
             except FileNotFound:
                 self.errorWrite(f"tee: {arg}: No such file or directory\n")
@@ -91,7 +93,8 @@ class Command_tee(HoneyPotCommand):
         This is the tee output, if no file supplied
         """
         if inb:
-            inp = inb.decode("utf-8")
+            # Piped input is attacker bytes and need not be valid UTF-8.
+            inp = inb.decode("utf-8", errors="replace")
         else:
             return
 

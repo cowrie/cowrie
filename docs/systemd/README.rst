@@ -7,9 +7,9 @@ Automatically starting Cowrie with systemd
 
 NOTE: untested
 
-* Copy the file ``docs/systemd/system/cowrie.socket`` to ``/etc/systemd/system``
+* Copy the file ``docs/systemd/etc/systemd/system/cowrie.socket`` to ``/etc/systemd/system``
 
-* Copy the file ``docs/systemd/system/cowrie.service`` to ``/etc/systemd/system``
+* Copy the file ``docs/systemd/etc/systemd/system/cowrie.service`` to ``/etc/systemd/system``
 
 * Examine ``/etc/systemd/system/cowrie.service`` and ensure the paths are correct for your installation if you use non-standard file system locations.
 

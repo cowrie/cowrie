@@ -7,14 +7,12 @@
 
 from __future__ import annotations
 
-import os
-import re
 import stat
-import time
 from typing import TYPE_CHECKING, Any
 
 from twisted.logger import Logger
 
+from cowrie.core.artifact import temp_download_path
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
 
@@ -24,7 +22,6 @@ if TYPE_CHECKING:
 # FD target type constants
 FD_STDIN = "stdin"
 FD_TERMINAL = "terminal"
-FD_PIPE = "pipe"
 FD_CAPTURE = "capture"
 FD_FILE = "file"
 FD_FILE_INPUT = "file_input"
@@ -45,39 +42,46 @@ class PipeProtocol:
         cmd: Any,
         cmdargs: list[str],
         input_data: bytes | None,
-        next_command: Any,
-        redirect: bool = False,
+        base_targets: dict[int, tuple[str, Any]] | None = None,
         redirections: list[dict[str, Any]] | None = None,
+        *,
+        cwd: str,
+        user: dict[str, Any],
+        error_prefix: str = "-bash: ",
     ) -> None:
         self.cmd = cmd
+        # The name the command was invoked by (argv[0]), when a shell starts it.
+        self.argv0: str | None = None
+        # How the shell that opens the redirections names itself in errors
+        # ("-bash: " at a login prompt, "bash: line 3: " under bash -c).
+        self.error_prefix = error_prefix
         self.cmdargs = cmdargs
         self.input_data: bytes | None = input_data
-        self.next_command = next_command
-        # True once an upstream command has been wired to write to this
-        # command's stdin via a pipe; used to decide whether stdin should be
-        # closed (EOF) when no terminal will ever feed it.
+        # Working directory and user identity of the shell that started this
+        # command: redirection targets resolve against the cwd, and the files
+        # they create are owned by the user.
+        self.cwd = cwd
+        self.user = user
+        # True when ``input_data`` came from a pipe (an upstream pipeline
+        # stage); stdin is then closed (EOF) once it is read, as no terminal
+        # will ever feed it.
         self.stdin_from_pipe: bool = False
-        self.redirected_data: bytes = b""
-        self.err_data: bytes = b""
         self.protocol = protocol
-        self.redirect = redirect  # don't send to terminal if enabled
+        # The command inherits its shell's fd table for stdout/stderr (fds 1
+        # and 2), as a forked process inherits its parent's open files, then
+        # applies its own redirections on top. Without one it writes to the
+        # terminal.
+        self.base_targets = base_targets
         self.redirections = redirections or []
 
-        # FD Table: fd -> (type, value)
-        # Types: "file", "pipe", "terminal", "devnull"
+        # FD Table: fd -> (type, value). Types: "terminal", "capture" (value
+        # is a bytearray sink), "file" (value is a file_info dict), "devnull".
         self.targets: dict[int, tuple[str, Any]] = {}
 
         self.redirection_error = False
         self.redirect_real_files: list[tuple[str, str]] = []
-        self._stdout_written = 0
-        self._stderr_written = 0
         self._setup_redirections()
-        self.has_redirection_error = self.redirection_error or (
-            getattr(self.next_command, "has_redirection_error", False)
-            if self.next_command
-            else False
-        )
-        self.has_redirections = bool(self.redirections)
+        self.has_redirection_error = self.redirection_error
 
     def _out_of_range_fd(self, op: dict[str, Any]) -> int | None:
         """Return the first file descriptor in ``op`` that exceeds the open-file
@@ -97,16 +101,15 @@ class PipeProtocol:
 
     def _setup_redirections(self) -> None:
         """Process redirection operations to build the FD table."""
-        # Initialize default FDs
+        # Inherit the shell's stdout/stderr (fds 1 and 2), or default to the
+        # terminal; then apply this command's own redirections on top.
         self.targets[0] = (FD_STDIN, None)
-        self.targets[1] = (FD_PIPE, None) if self.next_command else (FD_TERMINAL, None)
-        self.targets[2] = (FD_TERMINAL, None)
-
-        # If redirect is True (command substitution), the *last* stage's stdout
-        # is captured. An earlier pipe stage must keep writing to the pipe, or
-        # the downstream command gets no input (`$(echo x | cat)` -> "x").
-        if self.redirect and not self.next_command:
-            self.targets[1] = (FD_CAPTURE, None)
+        if self.base_targets is not None:
+            self.targets[1] = self.base_targets.get(1, (FD_TERMINAL, None))
+            self.targets[2] = self.base_targets.get(2, (FD_TERMINAL, None))
+        else:
+            self.targets[1] = (FD_TERMINAL, None)
+            self.targets[2] = (FD_TERMINAL, None)
 
         # Defer stdin reading until after all redirections are processed
         # This ensures that if an output redirection truncates a file also used for input,
@@ -119,7 +122,7 @@ class PipeProtocol:
                 # bash reports the offending fd and drops the redirection, but
                 # still runs the command -- its other fds are unaffected.
                 self._write_to_terminal(
-                    f"bash: {bad_fd}: Bad file descriptor\n".encode()
+                    f"{self.error_prefix}{bad_fd}: Bad file descriptor\n".encode()
                 )
                 continue
 
@@ -133,10 +136,6 @@ class PipeProtocol:
                         self.targets[fd] = (FD_DEVNULL, None)
                     else:
                         self.targets[fd] = (FD_FILE, file_info)
-                        if fd == 1:
-                            self._stdout_written = file_info.get("start_size", 0)
-                        elif fd == 2:
-                            self._stderr_written = file_info.get("start_size", 0)
 
             elif op["type"] == "stdin":
                 fd = op["fd"]
@@ -164,22 +163,24 @@ class PipeProtocol:
     def _prepare_stdin(self, target: str) -> None:
         """Load stdin from a redirected file path into input_data."""
         try:
-            path = self.protocol.fs.resolve_path(target, self.protocol.cwd)
+            path = self.protocol.fs.resolve_path(target, self.cwd)
             data = self.protocol.fs.file_contents(path)
         except fs.FileNotFound:
             self._emit_redirection_error(
-                f"-bash: {target}: No such file or directory\n"
+                f"{self.error_prefix}{target}: No such file or directory\n"
             )
             return
         except fs.PermissionDenied:
-            self._emit_redirection_error(f"-bash: {target}: Permission denied\n")
+            self._emit_redirection_error(
+                f"{self.error_prefix}{target}: Permission denied\n"
+            )
             return
         else:
             self.input_data = data
 
     def _prepare_output_file(self, target: str, append: bool) -> dict[str, Any] | None:
         """Resolve and ready an output file, returning metadata for writing."""
-        outfile = self.protocol.fs.resolve_path(target, self.protocol.cwd)
+        outfile = self.protocol.fs.resolve_path(target, self.cwd)
         p = self.protocol.fs.getfile(outfile)
         if outfile == "/dev/null":
             return {
@@ -206,7 +207,7 @@ class PipeProtocol:
             "virtual": outfile,
             "real": safeoutfile,
             "append": append,
-            "start_size": start_size,
+            "written": start_size,
         }
 
     def _needs_new_backing(self, p: Any) -> bool:
@@ -221,31 +222,28 @@ class PipeProtocol:
 
     def _create_redirect_target(self, outfile: str) -> str | None:
         """Create a new backing file for a redirected output target."""
-        tmp_fname = "{}-{}-{}-redir_{}".format(
-            time.strftime("%Y%m%d-%H%M%S"),
-            self.protocol.getProtoTransport().transportId,
-            self.protocol.terminal.transport.session.id,
-            re.sub("[^A-Za-z0-9]", "_", outfile),
-        )
-        safeoutfile = os.path.join(
-            CowrieConfig.get("honeypot", "download_path"), tmp_fname
-        )
+        # The backing file is renamed to its sha256 once the session ends
+        # and session attribution travels with the event, so the name only
+        # needs to be unique (#40351).
+        safeoutfile = temp_download_path("redir")
         perm = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH
         try:
             self.protocol.fs.mkfile(
                 outfile,
-                self.protocol.user.uid,
-                self.protocol.user.gid,
+                self.user["uid"],
+                self.user["gid"],
                 0,
                 stat.S_IFREG | perm,
             )
         except fs.FileNotFound:
             self._emit_redirection_error(
-                f"-bash: {outfile}: No such file or directory\n"
+                f"{self.error_prefix}{outfile}: No such file or directory\n"
             )
             return None
         except fs.PermissionDenied:
-            self._emit_redirection_error(f"-bash: {outfile}: Permission denied\n")
+            self._emit_redirection_error(
+                f"{self.error_prefix}{outfile}: Permission denied\n"
+            )
             return None
 
         with open(safeoutfile, "ab"):
@@ -292,31 +290,11 @@ class PipeProtocol:
         """
         self.write_stdout(data)
 
-    def insert_command(self, command):
-        """
-        Insert the next command into the list.
-        """
-        command.next_command = self.next_command
-        self.next_command = command
-
     def errReceived(self, data: bytes) -> None:
         self.write_stderr(data)
 
     def inConnectionLost(self) -> None:
         pass
-
-    def outConnectionLost(self) -> None:
-        """
-        Called from HoneyPotBaseProtocol.call_command() to run a next command in the chain
-        """
-
-        if self.next_command:
-            npcmd = self.next_command.cmd
-            npcmdargs = self.next_command.cmdargs
-            # This command is done writing, so the downstream command's stdin
-            # is now closed; mark it so call_command delivers EOF.
-            self.next_command.stdin_from_pipe = True
-            self.protocol.call_command(self.next_command, npcmd, *npcmdargs)
 
     def errConnectionLost(self) -> None:
         pass
@@ -335,18 +313,6 @@ class PipeProtocol:
             status=reason.value.exitCode,
         )
 
-    def _pipe_to_next(self, data: bytes) -> bool:
-        """
-        Pass data to the next command in the pipeline if present.
-        """
-        if not self.next_command:
-            return False
-        if self.next_command.input_data is None:
-            self.next_command.input_data = data
-        else:
-            self.next_command.input_data += data
-        return True
-
     def _write_to_terminal(self, data: bytes) -> None:
         if self.protocol is not None and self.protocol.terminal is not None:
             self.protocol.terminal.write(data)
@@ -357,7 +323,6 @@ class PipeProtocol:
         self._write_to_fd(1, data)
 
     def write_stderr(self, data: bytes) -> None:
-        self.err_data = self.err_data + data
         self._write_to_fd(2, data)
 
     def _write_to_fd(self, fd: int, data: bytes) -> None:
@@ -370,18 +335,16 @@ class PipeProtocol:
 
         if t_type == FD_TERMINAL:
             self._write_to_terminal(data)
-        elif t_type == FD_PIPE:
-            self._pipe_to_next(data)
         elif t_type == FD_CAPTURE:
-            self.redirected_data += data
+            # The sink is a bytearray shared by every command writing to this
+            # fd (a capture subshell, or a pipeline stage feeding the next).
+            t_val += data
         elif t_type == FD_FILE:
-            self._write_to_file(t_val, data, is_stdout=(fd == 1))
+            self._write_to_file(t_val, data)
         elif t_type == FD_DEVNULL:
             pass
 
-    def _write_to_file(
-        self, file_info: dict[str, Any], data: bytes, is_stdout: bool
-    ) -> None:
+    def _write_to_file(self, file_info: dict[str, Any], data: bytes) -> None:
         real_path = file_info["real"]
         try:
             with open(real_path, "ab") as f:
@@ -390,11 +353,8 @@ class PipeProtocol:
             self._log.info("Failed to write redirected output: {error}", error=e)
             return
 
-        if is_stdout:
-            self._stdout_written += len(data)
-            written = self._stdout_written
-        else:
-            self._stderr_written += len(data)
-            written = self._stderr_written
-
-        self.protocol.fs.update_size(file_info["virtual"], written)
+        # The write offset lives in the shared file record, so several commands
+        # redirected to the same file (a group's `{ ...; } > f`) keep a correct
+        # cumulative size, as they share one inherited fd in a real shell.
+        file_info["written"] += len(data)
+        self.protocol.fs.update_size(file_info["virtual"], file_info["written"])

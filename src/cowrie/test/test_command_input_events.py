@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import os
+import tempfile
 import unittest
 from typing import TypeVar
 
@@ -17,7 +18,7 @@ from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
-os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = "/tmp"
+os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = tempfile.gettempdir()
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
 T = TypeVar("T", bound=HoneyPotCommand)
@@ -135,6 +136,17 @@ class CommandInputEventTests(unittest.TestCase):
 
         cmd = self.make_command(Command_grep, "grep", "stdin")
         self.assert_direct_input_event(cmd, "cowrie.command.input", "grep")
+
+    def test_scp_input_event(self) -> None:
+        from cowrie.commands.scp import Command_scp
+
+        cmd = self.make_command(Command_scp, "scp", "-t", "/tmp")
+        self.assert_direct_input_event(cmd, "cowrie.session.input", "scp")
+        # The stdin line is input, not a captured file transfer.
+        self.assertNotIn(
+            "cowrie.session.file_download",
+            [e["eventid"] for e in self.tr.dispatchedEvents],
+        )
 
     def test_tail_input_event(self) -> None:
         self.assert_input_event(b"tail", "cowrie.command.input", "tail")

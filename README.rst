@@ -14,7 +14,7 @@ designed to log brute force attacks and the shell interaction
 performed by the attacker. In medium interaction mode (shell) it
 emulates a UNIX system in Python, in high interaction mode (proxy)
 it functions as an SSH and telnet proxy to observe attacker behavior
-to another system. In LLM mode, it uses large language models to
+on another system. In LLM mode, it uses large language models to
 generate dynamic responses to attacker commands.
 
 `Cowrie <http://github.com/cowrie/cowrie/>`_ is maintained by Michel Oosterhof.
@@ -48,7 +48,7 @@ Features
 
 For both settings:
 
-* Session logs are stored in a `UML Compatible <http://user-mode-linux.sourceforge.net/>`_  format for easy replay with the `playlog` utility.
+* Session logs are stored in a `User Mode Linux <http://user-mode-linux.sourceforge.net/>`_ compatible format for easy replay with the `playlog` utility.
 * SFTP and SCP support for file upload
 * Support for SSH exec commands
 * Logging of direct-tcp connection attempts (ssh proxying)
@@ -58,10 +58,11 @@ For both settings:
 Installation
 *****************************************
 
-There are currently three ways to install Cowrie: `git clone`, `Docker` and `pip`.
-`Docker` is the easiest to try and run, but to configure and modify you'll need a good understanding of containers and volumes.
-`git clone` is recommended if you want to change the configuration of the honeypot.
-`pip` mode is still under development.
+There are three ways to install Cowrie: ``pip``, Docker, and a ``git`` checkout.
+For your first honeypot, ``pip`` and Docker are the easiest paths.
+Use a ``git`` checkout for development or advanced scenarios where you want to
+modify Cowrie itself. Full instructions for all three are in
+`the installation guide <https://docs.cowrie.org/en/latest/INSTALL.html>`_.
 
 Docker
 *****************************************
@@ -80,14 +81,18 @@ Docker
 PyPI
 *****************************************
 
-`Cowrie is available on PyPI <https://pypi.org/project/cowrie>`_, to install run::
+`Cowrie is available on PyPI <https://pypi.org/project/cowrie>`_. To install it
+into a virtual environment and start it::
 
-    $ pip install cowrie
-    $ twistd cowrie
+    $ mkdir my-honeypot && cd my-honeypot
+    $ python3 -m venv cowrie-env
+    $ source cowrie-env/bin/activate
+    (cowrie-env) $ pip install cowrie
+    (cowrie-env) $ cowrie init
+    (cowrie-env) $ cowrie start
 
-When installed this way, it will behave differently from having a full directory download.
-
-This is still in beta and may not work as expected, `git clone` or `docker` methods are preferred.
+``cowrie init`` writes the configuration file ``etc/cowrie.cfg`` in the current
+directory; logs and downloads land under ``var/``.
 
 Requirements
 *****************************************

@@ -180,8 +180,8 @@ pages for more information and options.
             self.write(f"Setting up {p} ({self.packages[p]['version']}) ...\n")
             self.fs.mkfile(
                 f"/usr/bin/{p}",
-                self.protocol.user.uid,
-                self.protocol.user.gid,
+                self.user["uid"],
+                self.user["gid"],
                 random.randint(10000, 90000),
                 33188,
             )

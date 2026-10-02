@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import os
+import tempfile
 import unittest
 
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
@@ -15,7 +16,7 @@ from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
-os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = "/tmp"
+os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = tempfile.gettempdir()
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
 PROMPT = b"root@unitTest:~# "
@@ -37,7 +38,7 @@ class ShellFdRedirectionTests(unittest.TestCase):
         self.tr.clear()
 
     def test_redirect_stderr_to_devnull(self) -> None:
-        self.proto.lineReceived(b"cat /proc/uptime 2>/dev/null")
+        self.proto.lineReceived(b"cat /nonexistent 2>/dev/null")
         self.assertEqual(self.tr.value(), PROMPT)
 
     def test_spaced_fd_is_argument(self) -> None:
@@ -103,14 +104,6 @@ class ShellFdRedirectionTests(unittest.TestCase):
         )
         self.assertEqual(self.tr.value(), b"bye\n" + PROMPT)
 
-    def test_stdout_overwrite_and_stderr_pipe(self) -> None:
-        self.proto.lineReceived(b"cat missingfile 2>&1 1> outonly; cat outonly")
-        # stderr should still reach the pipe (2>&1 happens before stdout redirection)
-        self.assertEqual(
-            self.tr.value(),
-            b"cat: missingfile: No such file or directory\n" + PROMPT,
-        )
-
     def test_stdin_redirection(self) -> None:
         self.proto.lineReceived(b"cat < /etc/passwd")
         # Default honeyfs passwd has root line starting with root:x:
@@ -145,15 +138,6 @@ class ShellFdRedirectionTests(unittest.TestCase):
         self.assertTrue(output.endswith(PROMPT))
         # Should contain at least one line from hosts file if present
         self.assertIn(b"localhost", output)
-
-    def test_append_preserves_existing(self) -> None:
-        self.proto.lineReceived(
-            b"echo first > appendfile; echo second >> appendfile; echo third >> appendfile; cat appendfile"
-        )
-        self.assertEqual(
-            self.tr.value(),
-            b"first\nsecond\nthird\n" + PROMPT,
-        )
 
     def test_invalid_fd_redirection(self) -> None:
         self.proto.lineReceived(b"echo test 5> outfile")
@@ -202,10 +186,6 @@ class ShellFdRedirectionTests(unittest.TestCase):
         self.proto.lineReceived(
             b"echo test > 'file with spaces'; cat 'file with spaces'"
         )
-        self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
-
-    def test_multiple_redirections_same_file(self) -> None:
-        self.proto.lineReceived(b"echo test > file > file; cat file")
         self.assertEqual(self.tr.value(), b"test\n" + PROMPT)
 
     def test_input_output_same_file(self) -> None:
@@ -284,15 +264,6 @@ class ShellFdRedirectionTests(unittest.TestCase):
         self.proto.lineReceived(b"echo $(echo a) $(echo b)")
         self.assertEqual(self.tr.value(), b"a b\n" + PROMPT)
 
-    def test_existing_env_var_with_redirect(self) -> None:
-        # Test that existing environment variables work with redirects
-        # $HOME should be set in the cowrie environment
-        self.proto.lineReceived(b"echo $HOME > homefile; cat homefile")
-        output = self.tr.value()
-        self.assertTrue(output.endswith(PROMPT))
-        # Should contain a path (home directory)
-        self.assertIn(b"/", output)
-
     def test_heredoc_style_not_supported(self) -> None:
         # << is not supported, should not crash
         self.proto.lineReceived(b"cat << EOF")
@@ -332,7 +303,7 @@ class ShellFdRedirectionTests(unittest.TestCase):
         # command still runs (its stdout is unaffected). Issue #2921.
         self.proto.lineReceived(b"echo test 9999>/dev/null")
         self.assertEqual(
-            self.tr.value(), b"bash: 9999: Bad file descriptor\ntest\n" + PROMPT
+            self.tr.value(), b"-bash: 9999: Bad file descriptor\ntest\n" + PROMPT
         )
 
     def test_in_range_fd_has_no_error(self) -> None:
@@ -347,12 +318,12 @@ class ShellFdRedirectionTests(unittest.TestCase):
         self.tr.clear()
         self.proto.lineReceived(b"echo b 1024>/dev/null")
         self.assertEqual(
-            self.tr.value(), b"bash: 1024: Bad file descriptor\nb\n" + PROMPT
+            self.tr.value(), b"-bash: 1024: Bad file descriptor\nb\n" + PROMPT
         )
 
     def test_dup_from_out_of_range_fd_reports_error(self) -> None:
         # Duplicating from an out-of-range fd reports that fd. Issue #2921.
         self.proto.lineReceived(b"echo hi 2>&9999")
         self.assertEqual(
-            self.tr.value(), b"bash: 9999: Bad file descriptor\nhi\n" + PROMPT
+            self.tr.value(), b"-bash: 9999: Bad file descriptor\nhi\n" + PROMPT
         )

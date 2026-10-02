@@ -11,19 +11,19 @@
 # geoip2
 
 # elasticsearch
-elasticsearch==9.4.1
+elasticsearch==9.5.1
 
 # hpfeeds
 hpfeeds==3.1.0
 
 # mysql
-mysql-connector-python==9.7.0
+mysql-connector-python==26.7.0
 
 # mongodb
-pymongo==4.17.0
+pymongo==4.18.0
 
 # postgresql
-psycopg2-binary==2.9.12
+psycopg2-binary==2.9.13
 
 # rethinkdblog
 rethinkdb==2.4.10.post1
@@ -43,17 +43,20 @@ influxdb==5.3.2
 # wokkel==18.0.0
 
 # misp
-pymisp==2.5.34.1
+pymisp==2.5.34.4
 
 # redis
-redis==8.0.1
+redis==8.1.0
 
 # Oracle Cloud
 # Disabled 2024-10-31 because downgrades our cryptography package to vulnerable version
 # oci==2.129.2
 
 # rabbitmq
-pika==1.4.1
+pika==1.4.4
 
 # prometheus
-prometheus_client==0.25.0
+prometheus_client==0.26.0
+
+# kafka
+aiokafka==0.14.0

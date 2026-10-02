@@ -6,10 +6,18 @@ import ipaddress
 import re
 import socket
 from collections.abc import Generator
+from typing import TYPE_CHECKING, cast
 
 from twisted.internet.defer import Deferred, inlineCallbacks
+from twisted.internet.protocol import Protocol
 from twisted.logger import Logger
 from twisted.names import client, dns
+from twisted.web.iweb import IResponse
+
+from cowrie.core.config import CowrieConfig
+
+if TYPE_CHECKING:
+    from twisted.internet.interfaces import IPushProducer
 
 _log = Logger()
 
@@ -25,8 +33,66 @@ BLOCKED_IPS = [
     "224.0.0.0/4",  # Multicast addresses
     "240.0.0.0/4",  # Reserved addresses
     "255.255.255.255",  # Limited broadcast address
-    "::1",  # IPv6 loopback range
+    "::1",  # IPv6 loopback
+    "fe80::/10",  # IPv6 link-local
+    "fc00::/7",  # IPv6 unique-local (private)
+    "ff00::/8",  # IPv6 multicast
 ]
+
+# NAT64 well-known prefix (RFC 6052): 64:ff9b::/96 embeds an IPv4 address in
+# its low 32 bits, just like an IPv4-mapped address does.
+_NAT64_PREFIX = ipaddress.ip_network("64:ff9b::/96")
+
+# IPv4-compatible prefix (::a.b.c.d, deprecated by RFC 4291): also embeds an
+# IPv4 address in its low 32 bits. ::/96 also contains ::1 and ::, whose
+# embedded 0.0.0.x values are non-global and stay blocked.
+_IPV4_COMPATIBLE_PREFIX = ipaddress.ip_network("::/96")
+
+
+def _embedded_ipv4(
+    ip: ipaddress.IPv6Address,
+) -> ipaddress.IPv4Address | None:
+    """
+    Return the IPv4 address embedded in an IPv6 address, or None if there is
+    none. Covers IPv4-mapped (``::ffff:0:0/96``), 6to4 (``2002::/16``), NAT64
+    (``64:ff9b::/96``), and IPv4-compatible (``::/96``) forms, all of which can
+    reach an IPv4 target through an IPv6 wrapper.
+    """
+    if ip.ipv4_mapped is not None:
+        return ip.ipv4_mapped
+    if ip.sixtofour is not None:
+        return ip.sixtofour
+    if ip in _NAT64_PREFIX or ip in _IPV4_COMPATIBLE_PREFIX:
+        return ipaddress.IPv4Address(int(ip) & 0xFFFFFFFF)
+    return None
+
+
+def _is_blocked(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+    """
+    Return True if the address must not be contacted. An IPv6 address that
+    embeds an IPv4 address is also checked as that IPv4 address, so a private
+    or metadata target cannot be reached through an IPv6 wrapper.
+
+    A candidate is blocked if it is not globally routable or if it falls
+    within an explicit blocked range. The explicit list stays authoritative
+    for targets that are not globally routable yet not covered by is_global
+    (e.g. the Alibaba metadata IP) and guards against interpreter versions
+    whose is_global misclassifies IPv4-mapped addresses.
+    """
+    candidates: list[ipaddress.IPv4Address | ipaddress.IPv6Address] = [ip]
+    if isinstance(ip, ipaddress.IPv6Address):
+        embedded = _embedded_ipv4(ip)
+        if embedded is not None:
+            candidates.append(embedded)
+
+    for candidate in candidates:
+        if not candidate.is_global:
+            return True
+        for blocked in BLOCKED_IPS:
+            if candidate in ipaddress.ip_network(blocked, strict=False):
+                return True
+    return False
+
 
 # Valid TCP/UDP port range: 1-65535
 # https://www.debuggex.com/r/jjEFZZQ34aPvCBMA
@@ -38,6 +104,16 @@ PORT_PATTERN = re.compile(
 def is_valid_port(port: str) -> bool:
     """Check if port string is a valid TCP/UDP port number (1-65535)"""
     return bool(PORT_PATTERN.match(port))
+
+
+def outbound_bind_address() -> str:
+    """Source IP to bind outbound connections to, from ``[honeypot] out_addr``.
+
+    Defaults to ``0.0.0.0`` (let the OS pick the source address). Binding
+    downloads (wget, curl, tftp) to a configured address keeps the honeypot's
+    real interface IP out of traffic that would otherwise reveal it.
+    """
+    return CowrieConfig.get("honeypot", "out_addr", fallback="0.0.0.0")
 
 
 def is_ip_address(
@@ -107,9 +183,15 @@ def resolve_cname(
 
 
 @inlineCallbacks
-def communication_allowed(address: str) -> Generator[Deferred, None, bool]:
+def resolve_allowed(address: str) -> Generator[Deferred, None, str | None]:
     """
-    Return True if communication to this address is allowed, False if blocked (for both IPs and DNS names).
+    Resolve an IP or DNS name once, validate the resolved IP against the
+    blocklist, and return that exact IP (or None if unresolvable or blocked).
+
+    Callers making outbound connections must connect to the returned IP, not
+    the original hostname: re-resolving the hostname at connect time lets a
+    malicious DNS server answer the validation lookup with a public IP and
+    the connection lookup with a private/internal one (DNS rebinding).
     """
     # First, check if it's already a valid IP address (either IPv4 or IPv6)
     ip = is_ip_address(address)
@@ -123,19 +205,57 @@ def communication_allowed(address: str) -> Generator[Deferred, None, bool]:
 
         # If no IP was resolved, it's not allowed
         if result is None:
-            return False
+            return None
         else:
             resolved_ip = result  # type: ignore
 
     # At this point, resolved_ip should always be a valid string (IPv4 or IPv6)
     try:
         ip = ipaddress.ip_address(resolved_ip)
-
-        # Check if the resolved IP falls within any blocked IP ranges
-        for blocked in BLOCKED_IPS:
-            if ip in ipaddress.ip_network(blocked, strict=False):
-                return False  # Blocked IP found
     except ValueError:
-        return False  # If the resolved IP is not a valid IP address, return False
+        return None  # If the resolved IP is not a valid IP address
 
-    return True  # Communication is allowed
+    if _is_blocked(ip):
+        return None  # Blocked IP found
+
+    return resolved_ip
+
+
+@inlineCallbacks
+def communication_allowed(address: str) -> Generator[Deferred, None, bool]:
+    """
+    Return True if communication to this address is allowed, False if blocked (for both IPs and DNS names).
+    """
+    resolved = yield resolve_allowed(address)
+    return resolved is not None
+
+
+class DownloadLimitExceeded(Exception):
+    """A transfer exceeded the configured download_limit_size.
+
+    Raised from a treq collector: treq closes the connection when the
+    collector raises, so raising this aborts the transfer instead of
+    silently draining the rest of the body.
+    """
+
+
+class _BodyAbort(Protocol):
+    """Connects to a response body only to stop its producer."""
+
+    def connectionMade(self) -> None:
+        # The body transport deliverBody connects is a producer proxy for the
+        # HTTP connection; stopping it forcibly closes that connection.
+        producer = cast("IPushProducer", self.transport)
+        producer.stopProducing()
+
+
+def abort_body(response: IResponse) -> None:
+    """
+    Abort an HTTP response body without reading it.
+
+    An undelivered body is buffered in memory by twisted while the server
+    keeps sending. Stopping the body transport's producer forcibly closes
+    the connection, so an unwanted transfer (e.g. one over
+    download_limit_size) stops instead of downloading to completion.
+    """
+    response.deliverBody(_BodyAbort())

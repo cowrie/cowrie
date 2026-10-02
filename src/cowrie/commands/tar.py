@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-import os
+import posixpath
 import tarfile
 
 from twisted.logger import Logger
@@ -27,8 +27,8 @@ class Command_tar(HoneyPotCommand):
             if p and not self.fs.exists(p):
                 self.fs.mkdir(
                     p,
-                    self.current_user["uid"],
-                    self.current_user["gid"],
+                    self.user["uid"],
+                    self.user["gid"],
                     4096,
                     f.mode,
                     f.mtime,
@@ -49,7 +49,7 @@ class Command_tar(HoneyPotCommand):
         if "v" in self.args[0]:
             verbose = True
 
-        path = self.fs.resolve_path(filename, self.protocol.cwd)
+        path = self.fs.resolve_path(filename, self.cwd)
         if not path or not self.protocol.fs.exists(path):
             self.errorWrite(
                 f"tar: {filename}: Cannot open: No such file or directory\n"
@@ -75,7 +75,7 @@ class Command_tar(HoneyPotCommand):
             return
 
         for f in t:
-            dest = self.fs.resolve_path(f.name.strip("/"), self.protocol.cwd)
+            dest = self.fs.resolve_path(f.name.strip("/"), self.cwd)
             if verbose:
                 self.write(f"{f.name}\n")
             if not extract or not len(dest):
@@ -83,18 +83,18 @@ class Command_tar(HoneyPotCommand):
             if f.isdir():
                 self.fs.mkdir(
                     dest,
-                    self.current_user["uid"],
-                    self.current_user["gid"],
+                    self.user["uid"],
+                    self.user["gid"],
                     4096,
                     f.mode,
                     f.mtime,
                 )
             elif f.isfile():
-                self.mkfullpath(os.path.dirname(dest), f)
+                self.mkfullpath(posixpath.dirname(dest), f)
                 self.fs.mkfile(
                     dest,
-                    self.current_user["uid"],
-                    self.current_user["gid"],
+                    self.user["uid"],
+                    self.user["gid"],
                     f.size,
                     f.mode,
                     f.mtime,

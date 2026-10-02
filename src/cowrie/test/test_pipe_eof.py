@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import os
+import tempfile
 import unittest
 
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
@@ -15,14 +16,14 @@ from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
-os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = "/tmp"
+os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = tempfile.gettempdir()
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
 PROMPT = b"root@unitTest:~# "
 
 # Commands that read stdin and would park forever if no input ever arrives.
-# /proc/uptime exists in fs.pickle with empty content, so the upstream `cat`
-# produces no stdout, which is the trigger for the leak.
+# /dev/null is empty, so the upstream `cat` produces no stdout, which is the
+# trigger for the leak.
 TAIL_COMMANDS = ["cut -d. -f1", "uniq", "base64", "tee", "dd", "chpasswd", "sh", "bash"]
 
 
@@ -54,7 +55,7 @@ class PipeEofTests(unittest.TestCase):
         for tail_cmd in TAIL_COMMANDS:
             with self.subTest(tail_cmd=tail_cmd):
                 before, after, output = run_line(
-                    f'x=$(cat /proc/uptime 2>/dev/null | {tail_cmd}); echo "X:$x"'.encode()
+                    f'x=$(cat /dev/null 2>/dev/null | {tail_cmd}); echo "X:$x"'.encode()
                 )
                 self.assertEqual(
                     after,
@@ -71,9 +72,7 @@ class PipeEofTests(unittest.TestCase):
 
     def test_interactive_empty_pipe_returns_to_prompt(self) -> None:
         """A filter downstream of an empty pipe must exit on EOF, not park."""
-        before, after, output = run_line(
-            b"cat /proc/uptime 2>/dev/null | cut -d. -f1\n"
-        )
+        before, after, output = run_line(b"cat /dev/null 2>/dev/null | cut -d. -f1\n")
         self.assertEqual(after, before, f"cmdstack leaked: {before} -> {after}")
         self.assertTrue(
             output.endswith(PROMPT),

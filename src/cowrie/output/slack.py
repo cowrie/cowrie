@@ -26,10 +26,11 @@ class Output(cowrie.core.output.Output):
         self.name = "slack output engine"
         self.slack_channel = CowrieConfig.get("output_slack", "channel")
         self.slack_token = CowrieConfig.get("output_slack", "token")
+        self.sc = WebClient(self.slack_token)
         self.simplified = CowrieConfig.getboolean(
             "output_slack", "simplified", fallback=False
         )
-        self.show_timestamp = not CowrieConfig.getboolean(
+        self.show_timestamp = CowrieConfig.getboolean(
             "output_slack", "timestamp", fallback=True
         )
         self.verbose = CowrieConfig.getboolean("output_slack", "verbose", fallback=True)
@@ -88,10 +89,6 @@ class Output(cowrie.core.output.Output):
 
         # Dictionary of event handlers
         event_handlers = {
-            "cowrie.client.connect": lambda: (
-                f":large_green_circle: *CONNECT* :large_green_circle: New {event.get('protocol', '').upper()} "
-                + f"connection `{event.get('src_ip', 'unknown')}`, port: `{event.get('src_port', 'unknown')}`"
-            ),
             "cowrie.session.connect": lambda: (
                 f":large_green_circle: *CONNECT* :large_green_circle: New {event.get('protocol', '').upper()} "
                 + f"connection `{event.get('src_ip', 'unknown')}`, port: `{event.get('src_port', 'unknown')}`"
@@ -137,11 +134,8 @@ class Output(cowrie.core.output.Output):
                 f"*CMD* : :arrow_right_hook: *Failed* `{event.get('input', 'unknown')}` > "
                 + f"`{event.get('message', 'unknown')}`"
             ),
-            "cowrie.session.file_download_failed": lambda: (
+            "cowrie.session.file_download.failed": lambda: (
                 f"*FILE* : :x: *Download Failed* `{event.get('message', 'unknown')}`"
-            ),
-            "cowrie.session.file_upload_failed": lambda: (
-                f"*FILE* : :x: *Upload Failed* `{event.get('message', 'unknown')}`"
             ),
         }
 
@@ -183,16 +177,13 @@ class Output(cowrie.core.output.Output):
             if i.startswith("log_"):
                 del event[i]
 
-        self.sc = WebClient(self.slack_token)
-
         # Check for verbose events to skip in case of not verbose mode
         verbose_events = (
             "cowrie.client.kex",
-            "cowrie.client.connect",
             "cowrie.client.size",
             "cowrie.client.var",
             "cowrie.log.closed",
-            "cowrie.log.opened",
+            "cowrie.log.open",
             "cowrie.session.params",
         )
         eventid = event.get("eventid", "")

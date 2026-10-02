@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import functools
+import random
 import socket
 import time
 from importlib import import_module
@@ -20,12 +22,24 @@ from twisted.protocols.policies import TimeoutMixin
 import cowrie.commands
 from cowrie.core.config import CowrieConfig
 from cowrie.core.resources import read_data_bytes
-from cowrie.shell import command, honeypot
+from cowrie.shell import command, fs, honeypot
 
 if TYPE_CHECKING:
     from twisted.python import failure
 
     from cowrie.core.events import EventLog
+
+
+@functools.cache
+def boot_offset() -> float:
+    """Seconds between the emulated machine's boot and cowrie's start, from
+    [honeypot] boot_offset. Unset, it is chosen once per process between one
+    and ninety days, so a restarted honeypot does not report seconds of
+    uptime and installs do not share one value."""
+    configured = CowrieConfig.getint("honeypot", "boot_offset", fallback=-1)
+    if configured >= 0:
+        return float(configured)
+    return float(random.randint(86400, 90 * 86400))
 
 
 class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
@@ -51,6 +65,11 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.environ = avatar.environ
         self.hostname: str = self.user.server.hostname
         self.fs = self.user.server.fs
+        # The stdio wiring being handed to the command now starting, which the
+        # command keeps as its own (HoneyPotCommand.pp). It stays set to the
+        # most recently started command's afterwards, which is what a capture
+        # shell reads to collect a command's captured output. Only ever one at
+        # a time: commands run strictly in sequence.
         self.pp = None
         self.logintime: float
         self.realClientIP: str
@@ -61,10 +80,6 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.sessionno: int
         self.factory = None
 
-        if self.fs.exists(self.user.avatar.home):
-            self.cwd = self.user.avatar.home
-        else:
-            self.cwd = "/"
         self.data = None
         self.password_input = False
         self.cmdstack = []
@@ -92,6 +107,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.logintime = time.time()
 
         self.events.dispatch("cowrie.session.params", "", arch=self.user.server.arch)
+        self.fs.generated_files["/proc/uptime"] = self.proc_uptime
 
         idle_timeout = CowrieConfig.getint("honeypot", "idle_timeout", fallback=180)
         self.setTimeout(idle_timeout)
@@ -156,21 +172,23 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
         return Command_txtcmd
 
-    def scriptcmd(self, path: str) -> object:
+    def scriptcmd(self, path: str, name: str) -> object:
         """Return a command class that executes a shell script from the virtual filesystem."""
         from cowrie.shell.script import run_script_file
 
         class Command_scriptcmd(command.HoneyPotCommand):
-            def call(self_cmd):
+            def call(self):
                 # Running ./file or /path/file: the kernel rejects a binary with
                 # ENOEXEC ("cannot execute binary file"); a shell script is run
                 # through the parser (the shebang is parsed as a comment).
+                prefix = self.shell.error_prefix()
                 run_script_file(
-                    self_cmd,
+                    self,
                     path,
-                    not_found_message=f"-bash: {path}: No such file or directory\n",
+                    name=name,
+                    not_found_message=f"{prefix}{name}: No such file or directory\n",
                     binary_message=(
-                        f"-bash: {path}: cannot execute binary file: "
+                        f"{prefix}{name}: cannot execute binary file: "
                         "Exec format error\n"
                     ),
                 )
@@ -183,18 +201,18 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """
         return True if cmd in self.commands else False
 
-    def getCommand(self, cmd, paths):
+    def getCommand(self, cmd, paths, cwd):
         if not cmd.strip():
             return None
         path = None
         if cmd in self.commands:
             return self.commands[cmd]
         if cmd[0] in (".", "/"):
-            path = self.fs.resolve_path(cmd, self.cwd)
+            path = self.fs.resolve_path(cmd, cwd)
             if not self.fs.exists(path):
                 return None
         else:
-            for i in [f"{self.fs.resolve_path(x, self.cwd)}/{cmd}" for x in paths if x]:
+            for i in [f"{self.fs.resolve_path(x, cwd)}/{cmd}" for x in paths if x]:
                 if self.fs.exists(i):
                     path = i
                     break
@@ -224,7 +242,9 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             return self.commands[path]
 
         if self.fs.isfile(path):
-            return self.scriptcmd(path)
+            # bash names a command typed with a slash as typed, and one found
+            # through PATH by its full path.
+            return self.scriptcmd(path, cmd if "/" in cmd else path)
 
         self._log.info("Can't find command {cmd}", cmd=cmd)
         return None
@@ -234,8 +254,12 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         IMPORTANT
         Before this, all data is 'bytes'. Here it converts to 'string' and
         commands work with string rather than bytes.
+
+        Invalid UTF-8 (binary piped or pasted into the shell) becomes
+        replacement characters: the line must not raise out of the protocol
+        and kill the session.
         """
-        string = line.decode("utf8")
+        string = line.decode("utf8", errors="replace")
 
         if self.cmdstack:
             self.cmdstack[-1].lineReceived(string)
@@ -245,14 +269,14 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             self.terminal.transport.processEnded(stat)
 
     def call_command(self, pp, cmd, *args):
+        """Run a command with the stdio wiring ``pp``. A command that runs
+        another synchronously during ``start()`` (``su -c``, ``sh -c``, a
+        nested shell, busybox) reaches back here and executes it inline."""
         self.pp = pp
         obj = cmd(self, *args)
         obj.set_input_data(pp.input_data)
         self.cmdstack.append(obj)
         obj.start()
-
-        if self.pp:
-            self.pp.outConnectionLost()
 
         # Mirror ProcessProtocol.transport.closeStdin(): if the command parked
         # waiting for stdin but nothing will ever write to it, signal EOF so it
@@ -263,6 +287,12 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         # command reads buffered output, so it gets EOF here.
         if self.cmdstack and self.cmdstack[-1] is obj:
             parent = self.cmdstack[-2] if len(self.cmdstack) >= 2 else None
+            # A child shell that inherits its parent's stdin (a pipeline's
+            # first stage, a "(...)" group) is looked through to the shell
+            # that owns the stdin.
+            while parent is not None and getattr(parent, "inherits_stdin", False):
+                index = self.cmdstack.index(parent)
+                parent = self.cmdstack[index - 1] if index > 0 else None
             live_stdin = (
                 not getattr(pp, "stdin_from_pipe", False)
                 and parent is not None
@@ -277,13 +307,28 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             if not live_stdin:
                 obj.eofReceived()
 
+    def boot_time(self) -> float:
+        """When the emulated machine booted: boot_offset before cowrie
+        started."""
+        return float(self.getProtoTransport().factory.starttime) - boot_offset()
+
     def uptime(self):
         """
         Uptime
         """
-        pt = self.getProtoTransport()
-        r = time.time() - pt.factory.starttime
-        return r
+        return time.time() - self.boot_time()
+
+    def proc_uptime(self) -> bytes:
+        """/proc/uptime: seconds since boot, and idle seconds summed over the
+        CPUs listed in /proc/cpuinfo, as a lightly loaded machine reports."""
+        uptime = self.uptime()
+        try:
+            cpuinfo = self.fs.file_contents("/proc/cpuinfo")
+        except (fs.FileNotFound, IsADirectoryError):
+            cpuinfo = b""
+        processors = [x for x in cpuinfo.splitlines() if x.startswith(b"processor")]
+        cpus = max(1, len(processors))
+        return f"{uptime:.2f} {uptime * cpus * 0.97:.2f}\n".encode()
 
     def eofReceived(self) -> None:
         """
@@ -304,16 +349,28 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
     # input_data is static buffer for stdin received from remote client
     input_data = b""
 
+    # Longest accepted stdin line in line mode, bash's per-argument limit
+    # (MAX_ARG_STRLEN). Bytes beyond it are dropped so an endless
+    # unterminated stream cannot grow memory without bound.
+    STDIN_LINE_MAX = 131072
+
     def __init__(self, avatar, execcmd):
         """
         IMPORTANT
         Before this, execcmd is 'bytes'. Here it converts to 'string' and
         commands work with string rather than bytes.
         """
-        try:
-            self.execcmd = execcmd.decode("utf8")
-        except UnicodeDecodeError:
-            self._log.error("Unusual execcmd: {execcmd!r}", execcmd=execcmd)
+        # The exec command is attacker input and need not be valid UTF-8.
+        # Every caller reads execcmd right after construction, so it must
+        # always be set.
+        self.execcmd = execcmd.decode("utf8", errors="replace")
+
+        # When the exec'd command is a shell reading commands from the channel
+        # (`ssh host bash`), stdin is delivered to the cmdstack line by line
+        # instead of being buffered raw in input_data.
+        self.stdin_line_mode: bool = False
+        self._stdin_line = bytearray()
+        self._stdin_last_cr: bool = False
 
         HoneyPotBaseProtocol.__init__(self, avatar)
 
@@ -326,7 +383,56 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         self.cmdstack[0].lineReceived(self.execcmd)
 
     def keystrokeReceived(self, keyID, modifier):
-        self.input_data += keyID
+        if not self.stdin_line_mode:
+            self.input_data += keyID
+            return
+        if not isinstance(keyID, bytes):
+            # A function key parsed from an escape sequence has no place in a
+            # line-based stdin stream.
+            return
+        last_cr = self._stdin_last_cr
+        self._stdin_last_cr = keyID == b"\r"
+        if keyID == b"\n" and last_cr:
+            # The \n of a \r\n pair; the \r already dispatched the line.
+            return
+        # Control bytes are handled as a tty would, which is only strictly
+        # right when the client requested a pty; in a plain pipe they are
+        # rare enough that the difference does not matter.
+        if keyID in (b"\r", b"\n"):
+            self._dispatch_stdin_line()
+        elif keyID == b"\x04" and not self._stdin_line:
+            # CTRL-D on an empty line is EOF for the shell reading stdin.
+            HoneyPotBaseProtocol.eofReceived(self)
+        elif keyID in (b"\x08", b"\x7f"):
+            # Backspace / delete: drop the last byte of the pending line.
+            del self._stdin_line[-1:]
+        elif keyID == b"\x03":
+            # CTRL-C: discard the pending line.
+            self._stdin_line.clear()
+        elif len(self._stdin_line) < self.STDIN_LINE_MAX:
+            self._stdin_line += keyID
+
+    def _dispatch_stdin_line(self) -> None:
+        """Run the accumulated stdin line through the command stack."""
+        line = bytes(self._stdin_line)
+        self._stdin_line.clear()
+        self.lineReceived(line)
+
+    def setInsertMode(self) -> None:
+        """Insert-mode toggle requested when an interactive shell resumes; an
+        exec channel has no recvline editor, so there is no mode to switch."""
+
+    def eofReceived(self) -> None:
+        if self.stdin_line_mode:
+            if self._stdin_line:
+                # A final line without a terminator still runs, as bash does
+                # when its stdin ends without a newline.
+                self._dispatch_stdin_line()
+            if not any(getattr(item, "reads_stdin", False) for item in self.cmdstack):
+                # The stdin-reading shell already exited (e.g. `exit`) and
+                # ended the process; nothing is left to deliver EOF to.
+                return
+        HoneyPotBaseProtocol.eofReceived(self)
 
 
 class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLine):

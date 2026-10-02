@@ -3,17 +3,17 @@
 ..
 .. SPDX-License-Identifier: BSD-3-Clause
 
-Analysing snapshots and downloaded content
+Analyzing snapshots and downloaded content
 ##########################################
 
-One interesting aspect of Cowrie is the capability to analyse any downloaded malware and
-content into the honeypot. The snapshot mechanism can be leveraged to analyse any download
+One interesting aspect of Cowrie is the capability to analyze any malware and
+content downloaded into the honeypot. The snapshot mechanism can be leveraged to analyze any download
 and any change performed against the base image, to determine which files have been changed.
 
-This guide shows how that can be achieved by leveraging using the ``libguestfs-tools`` package.
+This guide shows how that can be achieved using the ``libguestfs-tools`` package.
 
-Getting the a filesystem diff
-*****************************
+Getting a filesystem diff
+*************************
 
 The first step is getting the differences between each VM that was used and the base image provided.
 The tool we'll be using is ``virt-diff``, which provides a similar syntax to that of Unix's ``diff``.
@@ -32,7 +32,7 @@ from ``virt-diff`` is stored in a file diff.txt)
 
     $ grep -aE "^\+ |^- |^= " diff.txt
 
-Here is an example output, in a VM were we created a file called ``avirus``::
+Here is an example output, in a VM where we created a file called ``avirus``::
 
     = - 0644       1024 /boot/grub/grubenv
     = - 0600       1036 /root/.bash_history

@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import os
+import tempfile
 import unittest
 from typing import ClassVar
 
@@ -18,7 +19,7 @@ from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
-os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = "/tmp"
+os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = tempfile.gettempdir()
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
 PROMPT = b"root@unitTest:~# "
@@ -101,6 +102,35 @@ class ScriptExecutionTests(unittest.TestCase):
         self.assertIn(b"cannot execute binary file", output)
         self.assertNotIn(b"GARBAGE", output)
 
+    def test_binary_file_exit_status_is_126(self) -> None:
+        """Scripts test `cmd || fallback`; a binary that cannot run must
+        fail with bash's status for ENOEXEC."""
+        self.proto.lineReceived(b'printf "\\x00ELF" > binfile')
+        self.tr.clear()
+        self.proto.lineReceived(b"./binfile; echo rc=$?")
+        self.assertIn(b"rc=126\n", self.tr.value())
+
+    def test_binary_file_error_names_the_path_as_typed(self) -> None:
+        """bash reports a relative path the way it was typed, not resolved."""
+        self.proto.lineReceived(b'printf "\\x00ELF" > binfile')
+        self.tr.clear()
+        self.proto.lineReceived(b"./binfile")
+        self.assertEqual(
+            self.tr.value(),
+            b"-bash: ./binfile: cannot execute binary file: Exec format error\n"
+            + PROMPT,
+        )
+
+    def test_bash_binary_file_exit_status_is_126(self) -> None:
+        self.proto.lineReceived(b'printf "\\x7fELF\\x01\\x00" > /tmp/payload3.x86')
+        self.tr.clear()
+        self.proto.lineReceived(b"bash /tmp/payload3.x86; echo rc=$?")
+        self.assertIn(b"rc=126\n", self.tr.value())
+
+    def test_bash_missing_file_exit_status_is_127(self) -> None:
+        self.proto.lineReceived(b"bash /tmp/nonexistent.sh; echo rc=$?")
+        self.assertIn(b"rc=127\n", self.tr.value())
+
     def test_shebang_line_stripped(self) -> None:
         """Shebang line is not echoed or executed as a command."""
         self.proto.lineReceived(
@@ -175,15 +205,6 @@ class ScriptExecutionTests(unittest.TestCase):
         self.tr.clear()
         self.proto.lineReceived(b"sh /tmp/dl.sh")
         self.assertEqual(self.tr.value(), b"fetch a\n" + PROMPT)
-
-    def test_shebang_is_comment_not_executed(self) -> None:
-        """The shebang line is treated as a comment and produces no output."""
-        self.proto.lineReceived(
-            b"printf '#!/bin/sh\\necho after_shebang\\n' > /tmp/sb.sh"
-        )
-        self.tr.clear()
-        self.proto.lineReceived(b"sh /tmp/sb.sh")
-        self.assertEqual(self.tr.value(), b"after_shebang\n" + PROMPT)
 
     def test_script_exit_status_propagates(self) -> None:
         """A script's exit status is the status of its last command."""

@@ -211,7 +211,17 @@ class HoneyPotSSHUserAuthServer(userauth.SSHUserAuthServer):
             ...
             string response n
         """
-        assert self._pamDeferred is not None
+        if self._pamDeferred is None:
+            # A client can send this at any point during userauth. With no
+            # INFO_REQUEST outstanding it is either unsolicited or a repeat of
+            # a response already consumed, so refuse it the way the other
+            # sequence violations here do.
+            self.transport.sendDisconnect(  # type: ignore
+                DISCONNECT_PROTOCOL_ERROR,
+                "unexpected keyboard interactive response",
+            )
+            return
+
         d: defer.Deferred = self._pamDeferred
         self._pamDeferred = None
         resp: list

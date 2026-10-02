@@ -17,10 +17,10 @@ class Command_nohup(HoneyPotCommand):
             self.write("nohup: missing operand\n")
             self.write("Try `nohup --help' for more information.\n")
             return
-        path = self.fs.resolve_path("nohup.out", self.protocol.cwd)
+        path = self.fs.resolve_path("nohup.out", self.cwd)
         if self.fs.exists(path):
             return
-        self.fs.mkfile(path, self.current_user["uid"], self.current_user["gid"], 0, 33188)
+        self.fs.mkfile(path, self.user["uid"], self.user["gid"], 0, 33188)
         self.write("nohup: ignoring input and appending output to 'nohup.out'\n")
 
 

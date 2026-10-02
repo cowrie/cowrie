@@ -103,7 +103,7 @@ class Command_ssh(HoneyPotCommand):
             )
 
         self.host = host
-        self.user = user
+        self.remote_user = user
 
         self.write(
             f"The authenticity of host '{self.host} ({self.ip})' \
@@ -121,7 +121,7 @@ class Command_ssh(HoneyPotCommand):
             f"Warning: Permanently added '{self.host}' (RSA) to the \
             list of known hosts.\n"
         )
-        self.write(f"{self.user}@{self.host}'s password: ")
+        self.write(f"{self.remote_user}@{self.host}'s password: ")
         self.protocol.password_input = True
 
     def wait(self, line: str) -> None:
@@ -135,9 +135,8 @@ class Command_ssh(HoneyPotCommand):
         else:
             host = "localhost"
         self.protocol.hostname = host
-        self.protocol.cwd = "/root"
-        if not self.fs.exists(self.protocol.cwd):
-            self.protocol.cwd = "/"
+        # The fake remote login lands the running shell in root's home there.
+        self.shell.cwd = "/root" if self.fs.exists("/root") else "/"
         self.protocol.password_input = False
         self.write(
             f"Linux {self.protocol.hostname} 2.6.26-2-686 #1 SMP Wed Nov 4 20:45:37 \

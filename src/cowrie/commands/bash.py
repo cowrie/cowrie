@@ -21,13 +21,18 @@ commands: dict[str, Callable] = {}
 
 
 class Command_sh(HoneyPotCommand):
+    consumes_stdin = True
+
     def start(self) -> None:
         if self.args and self.args[0].strip() == "-c":
             line = " ".join(self.args[1:])
 
             # it might be sh -c 'echo "sometext"', so don't use line.strip('\'\"')
-            if (line[0] == "'" and line[-1] == "'") or (
-                line[0] == '"' and line[-1] == '"'
+            # "-c" with nothing after it leaves line empty, which bash runs as
+            # an empty command.
+            if line and (
+                (line[0] == "'" and line[-1] == "'")
+                or (line[0] == '"' and line[-1] == '"')
             ):
                 line = line[1:-1]
 
@@ -35,7 +40,8 @@ class Command_sh(HoneyPotCommand):
             self.exit()
 
         elif self.input_data:
-            self.execute_commands(self.input_data.decode("utf8"))
+            # Piped stdin is attacker bytes and need not be valid UTF-8.
+            self.execute_commands(self.input_data.decode("utf8", errors="replace"))
             self.exit()
 
         elif self.args and not self.args[0].startswith("-"):
@@ -45,16 +51,23 @@ class Command_sh(HoneyPotCommand):
         else:
             self.interactive_shell()
 
+    @property
+    def argv0(self) -> str:
+        """The name this shell was invoked by: bash, sh, /bin/bash ..."""
+        return getattr(self.pp, "argv0", None) or "bash"
+
     def execute_script_file(self, filename: str) -> None:
         # bash refuses to run a binary file and reports it the same way for a
         # missing one; the script contents otherwise go straight to the parser.
-        path = self.fs.resolve_path(filename, self.protocol.cwd)
+        path = self.fs.resolve_path(filename, self.cwd)
         run_script_file(
             self,
             path,
-            not_found_message=f"bash: {filename}: No such file or directory\n",
+            name=filename,
+            not_found_message=f"{self.argv0}: {filename}: No such file or directory\n",
             binary_message=(
-                f"bash: {filename}: cannot execute binary file: Exec format error\n"
+                f"{self.argv0}: {filename}: cannot execute binary file: "
+                "Exec format error\n"
             ),
         )
 
@@ -62,6 +75,7 @@ class Command_sh(HoneyPotCommand):
         # self.input_data holds commands passed via PIPE
         # create new HoneyPotShell for our a new 'sh' shell
         shell = HoneyPotShell(self.protocol, interactive=False)
+        shell.name = self.argv0
         self.protocol.cmdstack.append(shell)
 
         # call lineReceived method that indicates that we have some commands to parse
@@ -75,16 +89,49 @@ class Command_sh(HoneyPotCommand):
         # for a `-c` command that launched an async wget/curl is the in-flight
         # command, not this shell.
 
+    def exec_channel_stdin(self) -> bool:
+        """Whether this shell is the SSH exec command itself, with the live
+        channel as its stdin: nothing on the cmdstack beneath it but the exec
+        parser shell, and no pipe or buffered input feeding it."""
+        # Imported here: cowrie.shell.protocol loads the command modules while
+        # its module body is still executing, so a top-level import is circular.
+        from cowrie.shell.protocol import HoneyPotExecProtocol
+
+        return (
+            isinstance(self.protocol, HoneyPotExecProtocol)
+            and len(self.protocol.cmdstack) == 2
+            and self.input_data is None
+            and not getattr(self.pp, "stdin_from_pipe", False)
+        )
+
     def interactive_shell(self) -> None:
         parentshell = self.protocol.cmdstack[-2]
-        # A sub-shell launched from a non-interactive parent (pipe, redirect, or
-        # command substitution) will never have a terminal feeding its stdin, so
-        # spawning an interactive shell would leak it on the cmdstack and write a
-        # prompt into captured output via showPrompt(). Behave like EOF instead.
-        if not getattr(parentshell, "interactive", True):
+        if self.exec_channel_stdin():
+            # The shell was exec'd as the SSH command (`ssh host bash`): its
+            # stdin is the live channel, so keep reading command lines from it
+            # until EOF. A pty request (TERM set by getPty) makes the shell
+            # interactive, with a prompt.
+            interactive = "TERM" in self.protocol.environ
+            reads_stdin = True
+            self.protocol.stdin_line_mode = True
+        elif not getattr(parentshell, "interactive", True):
+            # A sub-shell launched from a non-interactive parent (pipe,
+            # redirect, or command substitution) will never have a terminal
+            # feeding its stdin, so spawning an interactive shell would leak it
+            # on the cmdstack and write a prompt into captured output via
+            # showPrompt(). Behave like EOF instead.
             self.exit()
             return
-        shell = HoneyPotShell(self.protocol, interactive=True)
+        else:
+            interactive = True
+            reads_stdin = False
+        shell = HoneyPotShell(
+            self.protocol, interactive=interactive, reads_stdin=reads_stdin
+        )
+        # A shell reading commands from stdin names itself as invoked; it has
+        # no -c string to name in its syntax errors.
+        shell.name = self.argv0
+        shell.syntax_label = None
         # TODO: copy more variables, but only exported variables
         try:
             shell.environ["SHLVL"] = str(int(parentshell.environ["SHLVL"]) + 1)
@@ -111,14 +158,14 @@ class Command_exit(HoneyPotCommand):
                 code = int(self.args[0]) & 0xFF
             except ValueError:
                 self.errorWrite(
-                    f"-bash: exit: {self.args[0]}: numeric argument required\n"
+                    f"{self.shell.error_prefix()}exit: {self.args[0]}: "
+                    "numeric argument required\n"
                 )
                 code = 2
         # The code is the dying shell's final status: whoever launched the
         # shell (sh -c, su -c, a substitution) reads it from last_exit_code.
-        shell.last_exit_code = code
         self.exit_code = code
-        self.protocol.cmdstack.remove(shell)
+        shell.exit_shell(code)
         # start() follows with exit(); with the shell gone that either resumes
         # the command that launched it (nested shell) or, on an empty cmdstack
         # (top-level shell), ends the session with this exit_code.

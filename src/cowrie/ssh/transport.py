@@ -16,19 +16,18 @@ import struct
 import time
 import uuid
 import zlib
-from hashlib import md5
 from typing import Any
 
 from twisted.conch.ssh import transport
 from twisted.conch.ssh.common import getNS
 from twisted.internet.protocol import connectionDone
 from twisted.logger import Logger
-from twisted.protocols.policies import TimeoutMixin
+from twisted.protocols.policies import ProtocolWrapper, TimeoutMixin
 from twisted.python import failure, randbytes
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.events import EventLog, transport_events
-from cowrie.core.utils import escape_nonprintable
+from cowrie.core.utils import escape_nonprintable, hassh_client
 
 
 class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
@@ -37,9 +36,14 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     gotVersion: bool = False
     buf: bytes
     transportId: str
-    # The session's event emitter, bound in connectionMade when the running
-    # application provides a dispatcher.
+    # The session's event emitter, bound in connectionMade (or, under the
+    # PROXY protocol, on the first dataReceived) when the running application
+    # provides a dispatcher.
     events: EventLog | None = None
+    # Set when running behind a PROXY-protocol proxy: cowrie.session.connect is
+    # held back until the PROXY header has been parsed and getPeer() reflects
+    # the real client.
+    _emit_connect_pending: bool = False
     ipv4rex = re.compile(r"^::ffff:(\d+\.\d+\.\d+\.\d+)$")
     auth_timeout: int = CowrieConfig.getint(
         "honeypot", "authentication_timeout", fallback=120
@@ -69,8 +73,32 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         self.buf = b""
 
         self.transportId = uuid.uuid4().hex[:12]
-        src_ip: str = self.transport.getPeer().host
 
+        if isinstance(self.transport, ProtocolWrapper):
+            # A protocol wrapper in front of us (the haproxy: endpoint's PROXY
+            # parser) only resolves the real client address once it has read
+            # the header, which happens on the first dataReceived(). Defer
+            # cowrie.session.connect until then so it carries the real IP
+            # rather than the proxy's.
+            self._emit_connect_pending = True
+        else:
+            self._emit_connect()
+
+        self.transport.write(self.ourVersionString + b"\r\n")
+        self.currentEncryptions = transport.SSHCiphers(
+            b"none", b"none", b"none", b"none"
+        )
+        self.currentEncryptions.setKeys(b"", b"", b"", b"", b"", b"")
+
+        self.startTime = time.time()
+        self.setTimeout(self.auth_timeout)
+
+    def _emit_connect(self) -> None:
+        """
+        Bind the session event log and announce cowrie.session.connect using
+        the current (possibly PROXY-resolved) peer address.
+        """
+        src_ip: str = self.transport.getPeer().host
         ipv4_search = self.ipv4rex.search(src_ip)
         if ipv4_search is not None:
             src_ip = ipv4_search.group(1)
@@ -82,15 +110,6 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             protocol="ssh",
             src_ip=src_ip,
         )
-
-        self.transport.write(self.ourVersionString + b"\r\n")
-        self.currentEncryptions = transport.SSHCiphers(
-            b"none", b"none", b"none", b"none"
-        )
-        self.currentEncryptions.setKeys(b"", b"", b"", b"", b"", b"")
-
-        self.startTime: float = time.time()
-        self.setTimeout(self.auth_timeout)
 
     def sendKexInit(self) -> None:
         """
@@ -122,6 +141,13 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         @type data: C{str}
         """
+        if self._emit_connect_pending:
+            # First bytes have arrived, which under the PROXY protocol means
+            # the header has been parsed and getPeer() now reflects the real
+            # client. Announce the connection before processing the data.
+            self._emit_connect_pending = False
+            self._emit_connect()
+
         self.buf = self.buf + data
         if not self.gotVersion:
             if b"\n" not in self.buf:
@@ -182,6 +208,8 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         Override because OpenSSH pads with 0 on KEXINIT
         """
+        if self.transport is None:
+            return
         if self._keyExchangeState != self._KEY_EXCHANGE_NONE:
             if not self._allowedKeyExchangeMessageType(messageType):
                 self._blockedByKeyExchange.append((messageType, payload))
@@ -218,20 +246,7 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             s.split(b",") for s in strings
         )
 
-        # hassh SSH client fingerprint
-        # https://github.com/salesforce/hassh
-        # backslashreplace, not escape_nonprintable: for every byte sequence
-        # that decodes as valid UTF-8 (all real clients) this is identical to a
-        # plain decode, so the hassh fingerprint is unchanged; it only avoids
-        # crashing on a malformed name-list that is not valid UTF-8.
-        ckexAlgs = ",".join(
-            [alg.decode("utf-8", "backslashreplace") for alg in kexAlgs]
-        )
-        cencCS = ",".join([alg.decode("utf-8", "backslashreplace") for alg in encCS])
-        cmacCS = ",".join([alg.decode("utf-8", "backslashreplace") for alg in macCS])
-        ccompCS = ",".join([alg.decode("utf-8", "backslashreplace") for alg in compCS])
-        hasshAlgorithms = f"{ckexAlgs};{cencCS};{cmacCS};{ccompCS}"
-        hassh = md5(hasshAlgorithms.encode("utf-8")).hexdigest()
+        hasshAlgorithms, hassh = hassh_client(kexAlgs, encCS, macCS, compCS)
 
         if self.events:
             self.events.dispatch(
@@ -281,7 +296,13 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         """
         self.setTimeout(None)
         transport.SSHServerTransport.connectionLost(self, reason)
-        self.transport.connectionLost(reason)
+        if self._emit_connect_pending:
+            # A proxied connection whose PROXY header carried no trailing data
+            # never reached dataReceived(), so the deferred announce never
+            # fired. getPeer() is resolved by now; announce it before closing
+            # so the connection is still logged (as a direct one would be).
+            self._emit_connect_pending = False
+            self._emit_connect()
         self.transport = None
         duration_ms = round((time.time() - self.startTime) * 1000)
         if self.events is not None:

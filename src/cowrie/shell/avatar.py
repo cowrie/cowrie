@@ -28,7 +28,9 @@ class CowrieUser(avatar.ConchUser):
 
     def __init__(self, username: bytes, server: server.CowrieServer) -> None:
         avatar.ConchUser.__init__(self)
-        self.username: str = username.decode("utf-8")
+        # The username is attacker input from SSH userauth and need not be
+        # valid UTF-8.
+        self.username: str = username.decode("utf-8", errors="replace")
         self.server = server
 
         self.channelLookup[b"session"] = sshsession.HoneyPotSSHSession

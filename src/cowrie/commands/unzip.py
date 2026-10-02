@@ -5,7 +5,8 @@
 
 from __future__ import annotations
 
-import os
+import posixpath
+import stat
 import zipfile
 
 from twisted.logger import Logger
@@ -27,10 +28,10 @@ class Command_unzip(HoneyPotCommand):
             if not self.fs.exists(directory):
                 self.fs.mkdir(
                     directory,
-                    self.current_user["uid"],
-                    self.current_user["gid"],
+                    self.user["uid"],
+                    self.user["gid"],
                     4096,
-                    33188,
+                    stat.S_IFDIR | 0o755,
                 )
 
     def call(self) -> None:
@@ -65,7 +66,7 @@ class Command_unzip(HoneyPotCommand):
 
         filename = self.args[0]
 
-        path = self.fs.resolve_path(filename, self.protocol.cwd)
+        path = self.fs.resolve_path(filename, self.cwd)
         if not path:
             self.write(
                 f"unzip:  cannot find or open {filename}, {filename}.zip or {filename}.ZIP.\n"
@@ -110,26 +111,26 @@ class Command_unzip(HoneyPotCommand):
             return
         self.write(f"Archive:  {filename}\n")
         for f in t:
-            dest = self.fs.resolve_path(f.filename.strip("/"), self.protocol.cwd)
+            dest = self.fs.resolve_path(f.filename.strip("/"), self.cwd)
             self.write(f"  inflating: {f.filename}\n")
             if not len(dest):
                 continue
             if f.is_dir():
                 self.fs.mkdir(
                     dest,
-                    self.current_user["uid"],
-                    self.current_user["gid"],
+                    self.user["uid"],
+                    self.user["gid"],
                     4096,
-                    33188,
+                    stat.S_IFDIR | 0o755,
                 )
             elif not f.is_dir():
-                self.mkfullpath(os.path.dirname(dest))
+                self.mkfullpath(posixpath.dirname(dest))
                 self.fs.mkfile(
                     dest,
-                    self.current_user["uid"],
-                    self.current_user["gid"],
+                    self.user["uid"],
+                    self.user["gid"],
                     f.file_size,
-                    33188,
+                    stat.S_IFREG | 0o644,
                 )
             else:
                 self._log.info("  skipping: {filename}\n", filename=f.filename)

@@ -232,6 +232,16 @@ class TelnetHandler:
             else:
                 self.sendFrontend(self.currentData)
 
+    def terminating_char(self) -> bytes:
+        """The byte the client sent after its CR, usually \\n or NUL.
+
+        There need not be one: a client may send a bare CR for Enter, or the
+        CR and its companion may land in separate reads. An empty result
+        forwards the bare CR to the backend as the client sent it.
+        """
+        after = self.currentData.index(b"\r") + 1
+        return self.currentData[after : after + 1]
+
     def processUsernameInput(self) -> None:
         self.sendData = False  # withold data until input is complete
 
@@ -248,9 +258,7 @@ class TelnetHandler:
 
         # check if done inputing
         if b"\r" in self.currentData:
-            terminatingChar = chr(
-                self.currentData[self.currentData.index(b"\r") + 1]
-            ).encode()  # usually \n or \x00
+            terminatingChar = self.terminating_char()
 
             # cleanup
             self.usernameState = process_backspaces(self.usernameState)
@@ -281,9 +289,7 @@ class TelnetHandler:
 
         # check if done inputing
         if b"\r" in self.currentData:
-            terminatingChar = chr(
-                self.currentData[self.currentData.index(b"\r") + 1]
-            ).encode()  # usually \n or \x00
+            terminatingChar = self.terminating_char()
 
             # cleanup
             self.passwordState = process_backspaces(self.passwordState)

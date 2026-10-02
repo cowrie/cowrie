@@ -163,8 +163,9 @@ timezone = UTC
 # ============================================================================
 
 
-# IP address to bind to when opening outgoing connections. Used by wget and
-# curl commands.
+# IP address to bind to when opening outgoing connections. Used by the wget,
+# curl, tftp and nc commands. Binding to a dedicated address keeps the
+# honeypot's real interface IP out of outbound traffic that would leak it.
 #
 # (default: not specified)
 #out_addr = 0.0.0.0
@@ -194,6 +195,14 @@ timezone = UTC
 # if none is found (e.g. IPv6 not available), no GUA line is shown.
 #
 #internet_facing_ipv6 = 2001:db8::1
+
+
+# How many seconds before Cowrie started the emulated machine booted. uptime,
+# /proc/uptime and last report the time since that boot, so a restarted
+# honeypot does not claim to have been up for a few seconds.
+#
+# (default: a random value between one and ninety days, chosen at startup)
+#boot_offset = 1209600
 
 
 
@@ -455,6 +464,35 @@ log_raw = false
 # conversational output and asks for raw command output only.
 #system_prompt_exec = You are simulating a Linux server. Respond with ONLY the raw output of the command, no commentary.
 
+# Rate limiting for commands sent to the LLM API, per client IP.
+#
+# Every command in LLM mode is a real, metered call to a paid provider,
+# unlike the shell backend's free local simulation, so this bounds how fast
+# one attacker or scanner can run up API cost. Commands over the limit are
+# answered with an empty response instead of calling the API.
+#
+# rate_limit_enabled: enable/disable the rate limiter (default: true)
+# rate_limit_requests: max commands per client IP per window (default: 20)
+# rate_limit_window: window length in seconds (default: 60)
+# rate_limit_max_hosts: max client IPs tracked simultaneously (default: 1000)
+#rate_limit_enabled = true
+#rate_limit_requests = 20
+#rate_limit_window = 60
+#rate_limit_max_hosts = 1000
+
+# Maximum length, in characters, of a single command line before it is added
+# to the LLM prompt and the running command history. Longer lines are
+# truncated.
+# (default: 4096)
+#max_command_length = 4096
+
+# Maximum size, in bytes, of a single LLM API response body. A slow or
+# misbehaving endpoint could otherwise keep streaming and grow the buffer
+# without bound while holding the request open. Responses past the cap are
+# truncated and the connection is closed.
+# (default: 1048576)
+#max_response_size = 1048576
+
 
 # ============================================================================
 # Shell Options
@@ -563,6 +601,67 @@ operating_system = GNU/Linux
 
 # SSH Version as printed by "ssh -V" in shell emulation
 ssh_version = OpenSSH_7.9p1, OpenSSL 1.1.1a  20 Nov 2018
+
+# Rate limiting for outbound connections made by the wget, curl, nc, ftpget
+# and tftp commands. Limits the number of connections per unique host within a
+# time window.
+# *_rate_limit_enabled: enable/disable the rate limiter (default: true)
+# *_rate_limit_requests: max connections per host per window (default: 5)
+# *_rate_limit_window: window length in seconds (default: 60)
+# *_rate_limit_max_hosts: max hosts tracked simultaneously (default: 1000)
+#wget_rate_limit_enabled = true
+#wget_rate_limit_requests = 5
+#wget_rate_limit_window = 60
+#wget_rate_limit_max_hosts = 1000
+#curl_rate_limit_enabled = true
+#curl_rate_limit_requests = 5
+#curl_rate_limit_window = 60
+#curl_rate_limit_max_hosts = 1000
+#nc_rate_limit_enabled = true
+#nc_rate_limit_requests = 5
+#nc_rate_limit_window = 60
+#nc_rate_limit_max_hosts = 1000
+#ftpget_rate_limit_enabled = true
+#ftpget_rate_limit_requests = 5
+#ftpget_rate_limit_window = 60
+#ftpget_rate_limit_max_hosts = 1000
+#tftp_rate_limit_enabled = true
+#tftp_rate_limit_requests = 5
+#tftp_rate_limit_window = 60
+#tftp_rate_limit_max_hosts = 1000
+
+# Maximum number of files one scp upload session will save. Every uploaded
+# file costs a real temp-file write, a sha256 hash and a rename on the host
+# filesystem, so a session uploading many tiny files can otherwise force a
+# disproportionate amount of real disk I/O. Files beyond the limit are
+# ignored.
+# (default: 20)
+#scp_max_files_per_session = 20
+
+# Maximum size (in bytes) of shell input parsed in one go: a command line, a
+# script file run with sh/bash/./file, or input piped into a shell. Parse cost
+# grows superlinearly with input size, so without a cap a large downloaded
+# file run as a script (for example an HTML error page fetched from a dead
+# payload URL) can hang the process. Longer input is refused: a script file
+# with "cannot execute binary file", a command line with a syntax error.
+# (default: 16384)
+#max_input_size = 16384
+
+# Length in characters of shell input that triggers a garbage-collection sweep after
+# parsing. Lark's Earley parser creates cyclic intermediate structures, which
+# normal reference counting cannot promptly reclaim. Set to 0 to collect after
+# every parse, or raise this to reduce collection work for larger input. Timed-out
+# parses are always collected, regardless of this threshold.
+# (default: 512)
+#gc_collect_threshold = 512
+
+# Maximum wall-clock seconds spent parsing one shell input. This protects the
+# single-threaded reactor from small but ambiguous commands whose parse cost is
+# much larger than their byte size. Set to 0 to disable it. The limit applies
+# only on POSIX in the main thread, and yields to an existing SIGALRM handler
+# or real-time alarm.
+# (default: 10)
+#parse_timeout_seconds = 10
 
 
 # ============================================================================
@@ -673,6 +772,12 @@ compression = zlib@openssh.com,zlib,none
 # Listening on multiple endpoints is supported with a single space separator
 # e.g listen_endpoints = "tcp:2222:interface=0.0.0.0 tcp:1022:interface=0.0.0.0" will result listening both on ports 2222 and 1022
 # use authbind for port numbers under 1024
+# When Cowrie sits behind a load balancer or proxy that speaks the HAProxy
+# PROXY protocol (HAProxy, AWS/GCP network load balancers, ...), prefix the
+# endpoint with "haproxy:" so the real client address is recorded instead of
+# the proxy's, e.g. listen_endpoints = haproxy:tcp:2222:interface=0.0.0.0
+# Every connection must then be prefixed with a PROXY header; a direct
+# connection without one is dropped.
 
 listen_endpoints = tcp:2222:interface=0.0.0.0
 
@@ -754,6 +859,9 @@ enabled = false
 # Listening on multiple endpoints is supported with a single space separator
 # e.g "listen_endpoints = tcp:2223:interface=0.0.0.0 tcp:2323:interface=0.0.0.0" will result listening both on ports 2223 and 2323
 # use authbind for port numbers under 1024
+# To accept the HAProxy PROXY protocol behind a load balancer or proxy,
+# prefix the endpoint with "haproxy:", e.g.
+# listen_endpoints = haproxy:tcp:2223:interface=0.0.0.0
 
 listen_endpoints = tcp:2223:interface=0.0.0.0
 
@@ -1007,9 +1115,9 @@ upload = True
 debug = False
 scan_file = True
 scan_url = True
-# Optional: Organize uploaded files and URLs in a VirusTotal collection
-# If not set, no collection will be created
-#collection = cowrie
+# Optional: Add uploaded files and URLs to an existing VirusTotal collection
+# (create it in the VT GUI first, then set its ID here)
+#collection_id = <collection-id-from-vt-gui-url>
 
 
 # Cuckoo output module
@@ -1027,6 +1135,16 @@ force = 0
 [output_malshare]
 api_key = 130928309823098
 enabled = false
+
+# Submit malware download URLs to URLhaus.
+# Register at https://auth.abuse.ch/ to get your Auth-Key
+[output_urlhaus]
+enabled = false
+api_key = yourkeyhere
+# Set to 1 to submit anonymously
+anonymous = 0
+# Comma-separated list of tags to attach to each submission
+tags = cowrie,honeypot
 
 # Sends Cowrie event notifications to a Slack channel.
 # Warning: This will produce a _lot_ of messages unless `simplified = true` 
@@ -1103,6 +1221,11 @@ port = 8086
 database_name = cowrie
 retention_policy_duration = 12w
 
+# Kafka output. Requires Twisted to run the asyncio reactor:
+#   cowrie start -- --reactor=asyncio
+# The plugin disables itself with an error when another reactor is in use.
+# Connections are plaintext and unauthenticated (no TLS/SASL support),
+# so only use a broker on a trusted network.
 [output_kafka]
 enabled = false
 host = 127.0.0.1
@@ -1161,12 +1284,6 @@ debug = false
 enabled = false
 bot_token = 123456789:AbCDEfGhiJkLmnOpQRstUVWxYZ
 chat_id = 987654321
-
-# The crashreporter sends data on Python exceptions to api.cowrie.org
-# To disable set `enabled = false` in cowrie.cfg
-[output_crashreporter]
-enabled = false
-debug = false
 
 # Reports login attempts to AbuseIPDB. A short guide is in the original
 # pull request on GitHub: https://github.com/cowrie/cowrie/pull/1346

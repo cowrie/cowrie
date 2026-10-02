@@ -22,7 +22,7 @@ Contents
 * :ref:`Step 1: System dependencies<INSTALL:Step 1: System dependencies>`
 * :ref:`Step 2: Create a user account<INSTALL:Step 2: Create a user account>`
 * :ref:`Step 3: Install Cowrie<INSTALL:Step 3: Install Cowrie>`
-* :ref:`Step 4: Initialise the state directory<INSTALL:Step 4: Initialise the state directory>`
+* :ref:`Step 4: Initialize the state directory<INSTALL:Step 4: Initialize the state directory>`
 * :ref:`Step 5: Configure<INSTALL:Step 5: Configure>`
 * :ref:`Step 6: Start Cowrie<INSTALL:Step 6: Start Cowrie>`
 * :ref:`Step 7: Listening on port 22 (OPTIONAL)<INSTALL:Step 7: Listening on port 22 (OPTIONAL)>`
@@ -31,7 +31,7 @@ Contents
 * :ref:`Configure Additional Output Plugins (OPTIONAL)<INSTALL:Configure Additional Output Plugins (OPTIONAL)>`
 * :ref:`Troubleshooting<INSTALL:Troubleshooting>`
 * :ref:`Updating Cowrie<INSTALL:Updating Cowrie>`
-* :ref:`Customising the honeypot<INSTALL:Customising the honeypot>`
+* :ref:`Customizing the honeypot<INSTALL:Customizing the honeypot>`
 
 Quick start: pip install
 ========================
@@ -133,7 +133,7 @@ test runner, and docs toolchain that match what CI uses.
 In source-checkout mode, the repo root *is* the state directory.
 ``cowrie start`` detects this and skips the ``cowrie init`` step.
 
-Step 4: Initialise the state directory
+Step 4: Initialize the state directory
 **************************************
 
 (Skip this step if you are using a source checkout.)
@@ -143,7 +143,7 @@ From inside the honeypot directory you created in Step 3, run::
     (cowrie-env) $ cowrie init
     Wrote etc/cowrie.cfg
     Created var/log/cowrie, var/lib/cowrie, var/lib/cowrie/downloads, var/lib/cowrie/tty, var/run
-    Edit etc/cowrie.cfg to customise hostname, ports, etc., then run `cowrie start`.
+    Edit etc/cowrie.cfg to customize hostname, ports, etc., then run `cowrie start`.
 
 ``cowrie init`` writes ``./etc/cowrie.cfg`` from the bundled template
 and creates the ``var/`` skeleton so the first ``cowrie start`` has
@@ -160,7 +160,7 @@ Step 5: Configure
 Configuration lives in ``./etc/cowrie.cfg`` relative to the directory
 you run Cowrie from. The full set of available settings and their
 defaults are documented in the bundled ``cowrie.cfg.dist`` (also
-materialised by ``cowrie init`` for browsing).
+materialized by ``cowrie init`` for browsing).
 
 Cowrie loads configuration in layers:
 
@@ -188,7 +188,7 @@ Cowrie runs in the current working directory. Logs land in
 ``./var/log/cowrie/`` and the PID file is ``./var/run/cowrie.pid``.
 
 ``cowrie start`` refuses to run from a directory that has not been
-initialised. If you see ``ERROR: cowrie is not initialised`` you are
+initialized. If you see ``ERROR: cowrie is not initialized`` you are
 probably in the wrong directory — ``cd`` into your state directory
 first, or run ``cowrie init``.
 
@@ -298,7 +298,7 @@ In ``/etc/supervisor/conf.d/cowrie.conf``::
     autorestart=true
     redirect_stderr=true
 
-The ``directory=`` must point at the state directory you initialised in
+The ``directory=`` must point at the state directory you initialized in
 Step 4.
 
 Configure Additional Output Plugins (OPTIONAL)
@@ -306,20 +306,19 @@ Configure Additional Output Plugins (OPTIONAL)
 
 Cowrie automatically outputs event data to text and JSON log files in
 ``./var/log/cowrie``. Additional output plugins can record the data
-elsewhere. Supported plugins include:
+elsewhere: every ``[output_*]`` section in the bundled ``cowrie.cfg.dist``
+is one plugin, covering SQL databases, SIEMs, chat notifications, threat
+intelligence services, and more.
 
-* Cuckoo
-* ELK (Elastic) Stack
-* Graylog
-* Splunk
-* SQL (MySQL, SQLite3, RethinkDB)
-
-See ``docs/[Output Plugin]/README.rst`` for details.
+Setup guides for several of them are in the documentation at
+`docs.cowrie.org <https://docs.cowrie.org/>`_ (the ``docs/`` directory of
+the source tree): Datadog, ELK (Elastic) Stack, Graylog, Prometheus,
+Azure Sentinel, Splunk, SQL (MySQL/PostgreSQL), and VirusTotal.
 
 Troubleshooting
 ***************
 
-cowrie is not initialised in this directory
+cowrie is not initialized in this directory
 ===========================================
 
 You ran ``cowrie start`` from a directory that does not look like a
@@ -379,12 +378,12 @@ Restart::
     (cowrie-env) $ cd ~/my-honeypot
     (cowrie-env) $ cowrie start
 
-Customising the honeypot
+Customizing the honeypot
 ************************
 
 The simulated filesystem and the default file contents that attackers
 see (``/etc/passwd``, ``/etc/hostname``, ``/proc/cpuinfo``, etc.) ship
-inside the bundled ``fs.pickle``. Three customisation paths:
+inside the bundled ``fs.pickle``. Three customization paths:
 
 Per-file operator override
 ==========================

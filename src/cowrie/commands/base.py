@@ -32,7 +32,7 @@ commands: dict[str, Callable] = {}
 
 class Command_whoami(HoneyPotCommand):
     def call(self) -> None:
-        self.write(f"{self.current_user['username']}\n")
+        self.write(f"{self.user['username']}\n")
 
 
 commands["/usr/bin/whoami"] = Command_whoami
@@ -105,7 +105,7 @@ class Command_w(HoneyPotCommand):
             "USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU WHAT\n"
         )
         self.write(
-            f"{self.current_user['username']:8s} pts/0    {self.protocol.clientIP[:17].ljust(17)} {time.strftime('%H:%M', time.localtime(self.protocol.logintime))}    0.00s  0.00s  0.00s w\n"
+            f"{self.user['username']:8s} pts/0    {self.protocol.clientIP[:17].ljust(17)} {time.strftime('%H:%M', time.localtime(self.protocol.logintime))}    0.00s  0.00s  0.00s w\n"
         )
 
 
@@ -116,7 +116,7 @@ commands["w"] = Command_w
 class Command_who(HoneyPotCommand):
     def call(self) -> None:
         self.write(
-            f"{self.current_user['username']:8s} pts/0        {time.strftime('%Y-%m-%d', time.localtime(self.protocol.logintime))} {time.strftime('%H:%M', time.localtime(self.protocol.logintime))} ({self.protocol.clientIP})\n"
+            f"{self.user['username']:8s} pts/0        {time.strftime('%Y-%m-%d', time.localtime(self.protocol.logintime))} {time.strftime('%H:%M', time.localtime(self.protocol.logintime))} ({self.protocol.clientIP})\n"
         )
 
 
@@ -174,33 +174,6 @@ commands["/bin/echo"] = Command_echo
 commands["echo"] = Command_echo
 
 
-class Command_printf(HoneyPotCommand):
-    def call(self) -> None:
-        if not self.args:
-            self.write("printf: usage: printf [-v var] format [arguments]\n")
-        else:
-            if "-v" not in self.args and len(self.args) < 2:
-                # replace r'\\x' with r'\x'
-                s = "".join(self.args[0]).replace("\\\\x", "\\x")
-
-                # replace single character escape \x0 with \x00
-                s = re.sub(r"(?<=\\)x([0-9a-fA-F])(?=\\|\"|\'|\s|$)", r"x0\g<1>", s)
-
-                # strip single and double quotes
-                s = s.strip("\"'")
-
-                # if the string ends with \c escape, strip it
-                if s.endswith("\\c"):
-                    s = s[:-2]
-
-                data: bytes = codecs.escape_decode(s)[0]
-                self.writeBytes(data)
-
-
-commands["/usr/bin/printf"] = Command_printf
-commands["printf"] = Command_printf
-
-
 class Command_clear(HoneyPotCommand):
     def call(self) -> None:
         self.protocol.terminal.reset()
@@ -215,7 +188,7 @@ commands["reset"] = Command_clear
 class Command_hostname(HoneyPotCommand):
     def call(self) -> None:
         if self.args:
-            if self.current_user["uid"] == 0:
+            if self.user["uid"] == 0:
                 self.protocol.hostname = self.args[0]
             else:
                 self.write("hostname: you must be root to change the host name\n")
@@ -228,8 +201,17 @@ commands["hostname"] = Command_hostname
 
 
 class Command_ps(HoneyPotCommand):
+    def columns(self) -> int:
+        """Width to truncate each line to. COLUMNS is an ordinary shell
+        variable that export sets to anything at all, so fall back to the
+        default width rather than trusting it to be a number."""
+        try:
+            return int(self.environ["COLUMNS"])
+        except (KeyError, ValueError):
+            return 80
+
     def call(self) -> None:
-        user = str(self.current_user["username"])
+        user = str(self.user["username"])
         args = ""
         if self.args:
             args = self.args[0].strip()
@@ -795,13 +777,7 @@ class Command_ps(HoneyPotCommand):
                 ]
             s = "".join([output_array[i][x] for x in line])
             if "w" not in args:
-                s = s[
-                    : (
-                        int(self.environ["COLUMNS"])
-                        if "COLUMNS" in self.environ
-                        else 80
-                    )
-                ]
+                s = s[: self.columns()]
             self.write(f"{s}\n")
 
 
@@ -811,7 +787,7 @@ commands["ps"] = Command_ps
 
 class Command_id(HoneyPotCommand):
     def call(self) -> None:
-        u = self.current_user
+        u = self.user
         self.write(
             f"uid={u['uid']}({u['username']}) gid={u.get('gid', u['uid'])}({u['username']}) groups={u.get('gid', u['uid'])}({u['username']})\n"
         )
@@ -946,7 +922,8 @@ class Command_history(HoneyPotCommand):
                 return
             count = 1
             for line in self.protocol.historyLines:
-                self.write(f" {count:4d}  {line.decode()}\n")
+                # A typed line need not be valid UTF-8.
+                self.write(f" {count:4d}  {line.decode(errors='replace')}\n")
                 count += 1
         except Exception:
             # Non-interactive shell, do nothing
@@ -1347,7 +1324,7 @@ class Command_test(HoneyPotCommand):
             # An empty path is not any kind of file: bash reports every file
             # test on "" as false. Short-circuit before resolving it.
             return False
-        path = self.fs.resolve_path(operand, self.protocol.cwd)
+        path = self.fs.resolve_path(operand, self.cwd)
         if op in ("-L", "-h"):
             try:
                 return bool(self.fs.islink(path))

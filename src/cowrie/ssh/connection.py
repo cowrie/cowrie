@@ -27,6 +27,12 @@ class CowrieSSHConnection(connection.SSHConnection):
 
     def ssh_CHANNEL_REQUEST(self, packet):
         localChannel = struct.unpack(">L", packet[:4])[0]
+        if localChannel not in self.channels:
+            self._log.info(
+                "Ignoring CHANNEL_REQUEST for unknown channel {channel_id}",
+                channel_id=localChannel,
+            )
+            return None
         requestType, rest = common.getNS(packet[4:])
         wantReply = ord(rest[0:1])
         channel = self.channels[localChannel]
@@ -46,10 +52,11 @@ class CowrieSSHConnection(connection.SSHConnection):
             d.addErrback(self._ebChannelRequest, localChannel)
         return d
 
-    # Some clients (observed: libssh2) send CHANNEL_EOF / CHANNEL_CLOSE for a
-    # channel whose close handshake already completed, often alongside the
-    # final DISCONNECT. Twisted's handlers look the channel up unguarded and
-    # raise KeyError to the reactor; ignore the stale message instead.
+    # Some clients (observed: libssh2) send CHANNEL_EOF / CHANNEL_CLOSE /
+    # CHANNEL_WINDOW_ADJUST for a channel whose close handshake already
+    # completed, often alongside the final DISCONNECT. Twisted's handlers look
+    # the channel up unguarded and raise KeyError to the reactor; ignore the
+    # stale message instead.
 
     def ssh_CHANNEL_EOF(self, packet):
         localChannel = struct.unpack(">L", packet[:4])[0]
@@ -70,3 +77,13 @@ class CowrieSSHConnection(connection.SSHConnection):
             )
             return
         connection.SSHConnection.ssh_CHANNEL_CLOSE(self, packet)
+
+    def ssh_CHANNEL_WINDOW_ADJUST(self, packet):
+        localChannel = struct.unpack(">L", packet[:4])[0]
+        if localChannel not in self.channels:
+            self._log.info(
+                "Ignoring CHANNEL_WINDOW_ADJUST for unknown channel {channel_id}",
+                channel_id=localChannel,
+            )
+            return
+        connection.SSHConnection.ssh_CHANNEL_WINDOW_ADJUST(self, packet)

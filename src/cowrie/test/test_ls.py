@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import os
+import tempfile
 import unittest
 
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
@@ -12,7 +13,7 @@ from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
-os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = "/tmp"
+os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = tempfile.gettempdir()
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
 PROMPT = b"root@unitTest:~# "
@@ -48,12 +49,16 @@ class ShellLsCommandTests(unittest.TestCase):
 
     def test_ls_command_003(self) -> None:
         self.proto.lineReceived(b"ls -l /\n")
-        self.assertIsNotNone(
-            self.tr.value(),
-        )
+        output = self.tr.value()
+        self.assertIn(b"drwxr-xr-x 1 root root 4096 ", output)
+        self.assertIn(b"lrwxrwxrwx 1 root root    7 ", output)
+        self.assertIn(b" bin -> usr/bin\n", output)
+        self.assertTrue(output.endswith(PROMPT))
 
     def test_ls_command_004(self) -> None:
         self.proto.lineReceived(b"ls -lh /\n")
-        self.assertIsNotNone(
-            self.tr.value(),
-        )
+        output = self.tr.value()
+        # -h prints human-readable sizes (4096 -> 4.0K)
+        self.assertIn(b"drwxr-xr-x 1 root root 4.0K ", output)
+        self.assertNotIn(b" 4096 ", output)
+        self.assertTrue(output.endswith(PROMPT))

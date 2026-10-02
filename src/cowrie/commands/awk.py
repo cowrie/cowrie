@@ -5,19 +5,22 @@
 """
 awk command
 
-limited implementation that only supports `print` command.
+limited implementation: `pattern { print ... }` rules with -F field
+separators, where print takes fields, NR, NF, string literals and
+concatenation.
 """
 
 from __future__ import annotations
 
 import getopt
 import re
-from re import Match
 
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.fs import FileNotFound
 
 commands = {}
+
+_STRING_ESCAPES = {"n": "\n", "t": "\t", "r": "\r", "\\": "\\", '"': '"', "/": "/"}
 
 
 class Command_awk(HoneyPotCommand):
@@ -25,12 +28,21 @@ class Command_awk(HoneyPotCommand):
     awk command
     """
 
+    consumes_stdin = True
+
     # code is an array of dictionaries contain the regexes to match and the code to execute
     code: list[dict[str, str]]
+    # The -F field separator; None splits on runs of whitespace.
+    separator: str | None = None
+    record_number: int = 0
 
     def start(self) -> None:
         try:
-            optlist, args = getopt.gnu_getopt(self.args, "Fvf", ["version"])
+            optlist, args = getopt.gnu_getopt(
+                self.args,
+                "F:v:f:",
+                ["field-separator=", "assign=", "file=", "help", "version"],
+            )
         except getopt.GetoptError as err:
             self.errorWrite(
                 f"awk: invalid option -- '{err.opt}'\nTry 'awk --help' for more information.\n"
@@ -38,7 +50,8 @@ class Command_awk(HoneyPotCommand):
             self.exit()
             return
 
-        for o, _a in optlist:
+        program = None
+        for o, value in optlist:
             if o in "--help":
                 self.help()
                 self.exit()
@@ -47,18 +60,33 @@ class Command_awk(HoneyPotCommand):
                 self.version()
                 self.exit()
                 return
-            elif o in ("-n", "--number"):
-                pass
+            elif o in ("-F", "--field-separator"):
+                self.separator = None if value == " " else value
+            elif o in ("-f", "--file"):
+                try:
+                    program = self.fs.file_contents(
+                        self.fs.resolve_path(value, self.cwd)
+                    ).decode("utf-8", errors="replace")
+                except FileNotFound:
+                    self.errorWrite(
+                        f"awk: fatal: can't open source file `{value}' for reading: "
+                        "No such file or directory\n"
+                    )
+                    self.exit_code = 2
+                    self.exit()
+                    return
 
         # first argument is program (generally between quotes if contains spaces)
         # second and onward arguments are files to operate on
 
-        if len(args) == 0:
-            self.help()
-            self.exit()
-            return
+        if program is None:
+            if len(args) == 0:
+                self.help()
+                self.exit()
+                return
+            program = args.pop(0)
 
-        self.code = self.awk_parser(args.pop(0))
+        self.code = self.awk_parser(program)
 
         if len(args) > 0:
             for arg in args:
@@ -66,7 +94,7 @@ class Command_awk(HoneyPotCommand):
                     self.output(self.input_data)
                     continue
 
-                pname = self.fs.resolve_path(arg, self.protocol.cwd)
+                pname = self.fs.resolve_path(arg, self.cwd)
 
                 if self.fs.isdir(pname):
                     self.errorWrite(f"awk: {arg}: Is a directory\n")
@@ -89,25 +117,78 @@ class Command_awk(HoneyPotCommand):
         /regex/ { }
         """
         code = []
-        re1 = r"\s*(\/(?P<pattern>\S+)\/\s+)?\{\s*(?P<code>[^\}]+)\}\s*"
-        matches = re.findall(re1, program)
-        for m in matches:
-            code.append({"regex": m[1], "code": m[2]})
+        rule = re.compile(
+            r"\s*(?:/(?P<pattern>(?:\\.|[^/\\])*)/)?\s*(?:\{(?P<code>[^}]*)\})?\s*;?"
+        )
+        pos = 0
+        while pos < len(program):
+            m = rule.match(program, pos)
+            if not m or m.end() == pos:
+                break
+            if m.group("pattern") is not None or m.group("code") is not None:
+                # A pattern without an action prints the matching line.
+                action = m.group("code") if m.group("code") is not None else "print"
+                code.append({"regex": m.group("pattern") or "", "code": action})
+            pos = m.end()
         return code
 
-    def awk_print(self, words: str) -> None:
-        """
-        This is the awk `print` command that operates on a single line only
-        """
-        self.write(words)
-        self.write("\n")
+    def split_fields(self, line: str) -> list[str]:
+        if self.separator is None:
+            return line.split()
+        if len(self.separator) == 1:
+            return line.split(self.separator)
+        try:
+            return re.split(self.separator, line)
+        except re.error:
+            return line.split(self.separator)
+
+    def evaluate_print(self, arguments: str, line: str, fields: list[str]) -> str:
+        """Evaluate a print statement's arguments: comma-separated
+        expressions, each a concatenation of fields ($N, $NF), NR, NF,
+        numbers and string literals."""
+        if not arguments.strip():
+            return line
+        values = [line, *fields]
+        term = re.compile(r'\s*(\$NF|\$\d+|NR|NF|"(?:\\.|[^"\\])*"|\d+|,)')
+        output: list[str] = []
+        current = ""
+        pos = 0
+        while pos < len(arguments):
+            m = term.match(arguments, pos)
+            if not m:
+                break
+            token = m.group(1)
+            pos = m.end()
+            if token == ",":
+                output.append(current)
+                current = ""
+            elif token == "$NF":
+                current += values[len(fields)] if fields else line
+            elif token.startswith("$"):
+                index = int(token[1:])
+                current += values[index] if index < len(values) else ""
+            elif token == "NR":
+                current += str(self.record_number)
+            elif token == "NF":
+                current += str(len(fields))
+            elif token.startswith('"'):
+                current += re.sub(
+                    r"\\(.)",
+                    lambda e: _STRING_ESCAPES.get(e.group(1), e.group(1)),
+                    token[1:-1],
+                )
+            else:
+                current += token
+        output.append(current)
+        return " ".join(output)
 
     def output(self, inb: bytes | None) -> None:
         """
         This is the awk output.
         """
         if inb:
-            inp = inb.decode("utf-8")
+            # Piped input is attacker bytes and need not be valid UTF-8.
+            inp = inb.decode("utf-8", errors="replace")
         else:
             return
 
@@ -115,31 +196,21 @@ class Command_awk(HoneyPotCommand):
         if inputlines[-1] == "":
             inputlines.pop()
 
-        def repl(m: Match) -> str:
-            try:
-                return words[int(m.group(1))]
-            except IndexError:
-                return ""
-
         for inputline in inputlines:
-            # split by whitespace and add full line in $0 as awk does.
-            # TODO: change here to use custom field separator
-            words = inputline.split()
-            words.insert(0, inputline)
-
+            self.record_number += 1
+            fields = self.split_fields(inputline)
             for c in self.code:
-                if re.match(c["regex"], inputline):
-                    line = c["code"]
-                    line = re.sub(r"\$(\d+)", repl, line)
-                    # print("LINE1: {}".format(line))
-                    if re.match(r"^print\s*", line):
-                        # remove `print` at the start
-                        line = re.sub(r"^\s*print\s+", "", line)
-                        # remove whitespace at the end
-                        line = line.strip()
-                        # replace whitespace and comma by single space
-                        line = re.sub(r"(,|\s+)", " ", line)
-                        self.awk_print(line)
+                try:
+                    if c["regex"] and not re.search(c["regex"], inputline):
+                        continue
+                except re.error:
+                    continue
+                for statement in c["code"].split(";"):
+                    m = re.match(r"\s*print\b(.*)", statement, re.DOTALL)
+                    if m:
+                        self.write(
+                            self.evaluate_print(m.group(1), inputline, fields) + "\n"
+                        )
 
     def lineReceived(self, line: str) -> None:
         """

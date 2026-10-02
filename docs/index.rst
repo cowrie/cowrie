@@ -12,34 +12,58 @@ Welcome to Cowrie's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Getting started
 
    README.rst
-   CONTRIBUTING.rst
-   LICENSE.rst
-   FAQ.rst
    INSTALL.rst
-   CHANGELOG.rst
-   PROXY.rst
-   LLM.rst
+   FAQ.rst
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Configuring the honeypot
+
    HONEYFS.rst
+   PROXY.rst
    BACKEND_POOL.rst
    SNAPSHOTS.rst
-   OUTPUT.rst
-   EVENT_PIPELINE.rst
-   datadog/README.rst
+   LLM.rst
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Deployment
+
    docker/README.rst
+   systemd/README.rst
+   supervisor/README.rst
+   squid/README.rst
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Output integrations
+
+   datadog/README.rst
    elk/README.rst
    graylog/README.rst
-   kippo-graph/README.rst
    prometheus/README.rst
    sentinel/README.rst
    splunk/README.rst
    sql/README.rst
-   squid/README.rst
-   supervisor/README.rst
-   systemd/README.rst
    virustotal/README.rst
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Reference
+
+   OUTPUT.rst
+   EVENT_PIPELINE.rst
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Project
+
+   CONTRIBUTING.rst
+   CHANGELOG.rst
+   LICENSE.rst
 
 Indices and tables
 ==================

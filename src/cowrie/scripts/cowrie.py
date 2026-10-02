@@ -46,7 +46,7 @@ def check_initialized() -> None:
     if any(m.is_file() for m in markers):
         return
     print(
-        "ERROR: cowrie is not initialised in this directory.\n"
+        "ERROR: cowrie is not initialized in this directory.\n"
         "  Expected one of:\n"
         "    ./etc/cowrie.cfg\n"
         "    ./etc/cowrie.cfg.dist\n"
@@ -280,7 +280,7 @@ def cowrie_init() -> None:
     print(f"Created {', '.join(state_dirs)}")
 
     print(
-        "Edit etc/cowrie.cfg to customise hostname, ports, etc., then run `cowrie start`."
+        "Edit etc/cowrie.cfg to customize hostname, ports, etc., then run `cowrie start`."
     )
 
 

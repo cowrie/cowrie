@@ -12,6 +12,7 @@ from __future__ import annotations
 import errno
 import functools
 import os
+import posixpath
 from collections.abc import Callable
 from typing import Any, TypeVar, cast
 
@@ -77,7 +78,13 @@ class CowrieSFTPFile:
     def __init__(self, sftpserver, filename, flags, attrs):
         self.sftpserver = sftpserver
         self.filename = filename
+        # Bytes that arrived, which is what the transfer quota is about.
         self.bytesReceived: int = 0
+        # The file's size, which is not the same number: SFTP writes are
+        # offset-addressed, so a client can resend a chunk it already sent
+        # (making the sum too large) or seek past the end (too small). The
+        # size is the highest offset ever written to.
+        self.size: int = 0
 
         openFlags = 0
         if flags & FXF_READ == FXF_READ and flags & FXF_WRITE == 0:
@@ -109,8 +116,8 @@ class CowrieSFTPFile:
             self.contents = self.sftpserver.fs.file_contents(self.filename)
 
     def close(self):
-        if self.bytesReceived > 0:
-            self.sftpserver.fs.update_size(self.filename, self.bytesReceived)
+        if self.size > 0:
+            self.sftpserver.fs.update_size(self.filename, self.size)
         return self.sftpserver.fs.close(self.fd)
 
     def readChunk(self, offset: int, length: int) -> bytes:
@@ -118,6 +125,7 @@ class CowrieSFTPFile:
 
     def writeChunk(self, offset: int, data: bytes) -> None:
         self.bytesReceived += len(data)
+        self.size = max(self.size, offset + len(data))
         if self.bytesReceivedLimit and self.bytesReceived > self.bytesReceivedLimit:
             raise filetransfer.SFTPError(filetransfer.FX_FAILURE, "Quota exceeded")
         self.sftpserver.fs.lseek(self.fd, offset, os.SEEK_SET)
@@ -166,8 +174,10 @@ class CowrieSFTPDirectory:
             attrs = self.server._getAttrs(s)
             return (f, longname, attrs)
         else:
-            s = self.server.fs.lstat(os.path.join(self.dir, f))
-            s2 = self.server.fs.lstat(os.path.join(self.dir, f))
+            # Virtual (emulated-Linux) paths always join with "/", never the
+            # host separator — os.path.join would use "\" on Windows.
+            s = self.server.fs.lstat(posixpath.join(self.dir, f))
+            s2 = self.server.fs.lstat(posixpath.join(self.dir, f))
             s2.st_uid = pwd.Passwd().getpwuid(s.st_uid)["pw_name"]
             s2.st_gid = pwd.Group().getgrgid(s.st_gid)["gr_name"]
             longname = twisted.conch.ls.lsLine(f, s2)
@@ -191,7 +201,9 @@ class SFTPServerForCowrieUser:
 
     def _absPath(self, path):
         home = self.avatar.home
-        return os.path.abspath(os.path.join(nativeString(home), nativeString(path)))
+        # Emulated-Linux path: normalise with posix semantics so the host OS
+        # separator (e.g. "\" on Windows) never leaks into a virtual path.
+        return posixpath.abspath(posixpath.join(nativeString(home), nativeString(path)))
 
     def _setAttrs(self, path, attrs):
         if "uid" in attrs and "gid" in attrs:

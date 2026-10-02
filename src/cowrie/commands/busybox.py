@@ -60,57 +60,48 @@ Currently defined functions:
 
 
 class Command_busybox(HoneyPotCommand):
-    """
-    Fixed by Ivan Korolev (@fe7ch)
-    The command should never call self.exit(), cause it will corrupt cmdstack
-    """
+    """``busybox APPLET [ARGS]``: the multi-call binary execs into the applet,
+    which then runs in busybox's place with its stdin, stdout and
+    redirections."""
+
+    consumes_stdin = True
 
     def help(self) -> None:
         for ln in busybox_help:
             self.errorWrite(f"{ln}\n")
 
-    def call(self) -> None:
+    def start(self) -> None:
         if len(self.args) == 0:
             self.help()
+            self.exit()
             return
 
         line = " ".join(self.args)
         cmd = self.args[0]
         cmdclass = self.protocol.getCommand(
-            cmd, self.environ.get("PATH", "").split(":")
+            cmd, self.environ.get("PATH", "").split(":"), self.cwd
         )
-        if cmdclass:
-            # log found command
-            self.protocol.events.dispatch(
-                "cowrie.command.success",
-                "Command found: %(input)s",
-                input=line,
-            )
-
-            # prepare command arguments, passing through the redirections the
-            # shell parsed for the outer busybox command so the dispatched
-            # applet's output is redirected the same as a direct invocation
-            pp = PipeProtocol(
-                self.protocol,
-                cmdclass,
-                self.protocol.pp.cmdargs[1:],
-                self.input_data,
-                None,
-                redirect=self.protocol.pp.redirect,
-                redirections=self.protocol.pp.redirections,
-            )
-
-            # insert the command as we do when chaining commands with pipes
-            self.protocol.pp.insert_command(pp)
-
-            # invoke inserted command
-            self.protocol.pp.outConnectionLost()
-
-            # Place this here so it doesn't write out only if last statement
-            if self.input_data:
-                self.writeBytes(self.input_data)
-        else:
+        if not cmdclass:
             self.write(f"{cmd}: applet not found\n")
+            self.exit()
+            return
+
+        self.protocol.events.dispatch(
+            "cowrie.command.success",
+            "Command found: %(input)s",
+            input=line,
+        )
+        pp = PipeProtocol(
+            self.protocol,
+            cmdclass,
+            self.args[1:],
+            self.input_data,
+            self.pp.targets,
+            cwd=self.cwd,
+            user=self.user,
+        )
+        pp.stdin_from_pipe = self.pp.stdin_from_pipe
+        self.exec_command(pp, cmdclass, *self.args[1:])
 
 
 commands["/bin/busybox"] = Command_busybox

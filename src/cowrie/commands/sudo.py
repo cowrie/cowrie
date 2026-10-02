@@ -70,6 +70,8 @@ Options:
 
 
 class Command_sudo(HoneyPotCommand):
+    consumes_stdin = True
+
     def short_help(self) -> None:
         for ln in sudo_shorthelp:
             self.errorWrite(f"{ln}\n")
@@ -94,7 +96,7 @@ class Command_sudo(HoneyPotCommand):
         parsed_arguments = []
         for count in range(0, len(self.args)):
             class_found = self.protocol.getCommand(
-                self.args[count], self.environ.get("PATH", "").split(":")
+                self.args[count], self.environ.get("PATH", "").split(":"), self.cwd
             )
             if class_found:
                 start_value = count
@@ -123,18 +125,23 @@ class Command_sudo(HoneyPotCommand):
         if len(parsed_arguments) > 0:
             cmd = parsed_arguments[0]
             cmdclass = self.protocol.getCommand(
-                cmd, self.environ.get("PATH", "").split(":")
+                cmd, self.environ.get("PATH", "").split(":"), self.cwd
             )
 
             if cmdclass:
-                command = PipeProtocol(
-                    self.protocol, cmdclass, parsed_arguments[1:], None, None
+                # sudo execs the command in its own place, with sudo's stdin,
+                # stdout and redirections.
+                pp = PipeProtocol(
+                    self.protocol,
+                    cmdclass,
+                    parsed_arguments[1:],
+                    self.input_data,
+                    self.pp.targets,
+                    cwd=self.cwd,
+                    user=self.user,
                 )
-                self.protocol.pp.insert_command(command)
-                # this needs to go here so it doesn't write it out....
-                if self.input_data:
-                    self.writeBytes(self.input_data)
-                self.exit()
+                pp.stdin_from_pipe = self.pp.stdin_from_pipe
+                self.exec_command(pp, cmdclass, *parsed_arguments[1:])
             else:
                 self.short_help()
         else:

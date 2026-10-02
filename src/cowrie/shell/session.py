@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import stat
+
 from twisted.conch.interfaces import ISession
 from twisted.internet.protocol import connectionDone
 from zope.interface import implementer
@@ -79,7 +81,9 @@ class SSHSessionForCowrieUser:
         self.server.initFileSystem(self.avatar.home)
 
         if self.avatar.temporary:
-            self.server.fs.mkdir(self.avatar.home, self.uid, self.gid, 4096, 755)
+            self.server.fs.mkdir(
+                self.avatar.home, self.uid, self.gid, 4096, stat.S_IFDIR | 0o755
+            )
 
     def openShell(self, processprotocol):
         self.protocol = insults.LoggingServerProtocol(
@@ -89,7 +93,9 @@ class SSHSessionForCowrieUser:
         processprotocol.makeConnection(ProtocolTransport(self.protocol))
 
     def getPty(self, terminal, windowSize, attrs):
-        self.environ["TERM"] = terminal.decode("utf-8")
+        # The terminal type is attacker input from the pty request and need
+        # not be valid UTF-8.
+        self.environ["TERM"] = terminal.decode("utf-8", errors="replace")
         self.avatar.conn.transport.events.dispatch(
             "cowrie.client.size",
             "Terminal Size: %(width)s %(height)s",

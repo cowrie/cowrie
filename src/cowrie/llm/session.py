@@ -36,7 +36,9 @@ class SSHSessionForCowrieUser:
         processprotocol.makeConnection(session.wrapProtocol(self.protocol))
 
     def getPty(self, terminal, windowSize, attrs):
-        self.environ["TERM"] = terminal.decode("utf-8")
+        # The terminal type is attacker input from the pty request and need
+        # not be valid UTF-8.
+        self.environ["TERM"] = terminal.decode("utf-8", errors="replace")
         self.avatar.conn.transport.events.dispatch(
             "cowrie.client.size",
             "Terminal Size: %(width)s %(height)s",

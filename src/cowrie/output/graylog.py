@@ -14,6 +14,7 @@ import time
 from io import BytesIO
 
 from twisted.internet import reactor, ssl
+from twisted.logger import Logger
 from twisted.web import client, http_headers
 from twisted.web.client import FileBodyProducer
 from twisted.web.iweb import IPolicyForHTTPS
@@ -24,6 +25,8 @@ from cowrie.core.config import CowrieConfig
 
 
 class Output(cowrie.core.output.Output):
+    _log = Logger()
+
     def start(self) -> None:
         self.url = CowrieConfig.get("output_graylog", "url").encode("utf8")
         contextFactory = WhitelistContextFactory()
@@ -56,7 +59,15 @@ class Output(cowrie.core.output.Output):
         )
 
         body = FileBodyProducer(BytesIO(json.dumps(entry).encode("utf8")))
-        self.agent.request(b"POST", self.url, headers, body)
+        d = self.agent.request(b"POST", self.url, headers, body)
+        d.addErrback(self._request_failed)
+
+    def _request_failed(self, failure):
+        # Best-effort telemetry: log a failed request (timeout, DNS, reset,
+        # ...) rather than leave it as an unhandled Deferred error.
+        self._log.info(
+            "Graylog request failed: {error}", error=failure.getErrorMessage()
+        )
 
 
 @implementer(IPolicyForHTTPS)

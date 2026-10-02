@@ -71,4 +71,12 @@ class Output(cowrie.core.output.Output):
         }
         headers = http_headers.Headers(base_headers)
         body = FileBodyProducer(BytesIO(json.dumps(entry).encode("utf8")))
-        self.agent.request(b"POST", self.url, headers, body)
+        d = self.agent.request(b"POST", self.url, headers, body)
+        d.addErrback(self._request_failed)
+
+    def _request_failed(self, failure):
+        # Best-effort telemetry: log a failed request (timeout, DNS, reset,
+        # ...) rather than leave it as an unhandled Deferred error.
+        self._log.info(
+            "Datadog request failed: {error}", error=failure.getErrorMessage()
+        )
