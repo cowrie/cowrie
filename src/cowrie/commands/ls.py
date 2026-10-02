@@ -96,7 +96,8 @@ class Command_ls(HoneyPotCommand):
                 file[fs.A_NAME] = name
                 files = [file]
         except Exception:
-            self.errorWrite(f"ls: cannot access {path}: No such file or directory\n")
+            self.errorWrite(f"ls: cannot access '{name}': No such file or directory\n")
+            self.exit_code = 2
             return
         return files
 

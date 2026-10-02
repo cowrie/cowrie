@@ -32,10 +32,10 @@ class ShellLsCommandTests(unittest.TestCase):
         self.proto.connectionLost()
 
     def test_ls_command_001(self) -> None:
-        self.proto.lineReceived(b"ls NonExisting\n")
+        self.proto.lineReceived(b"ls NonExisting; echo $?\n")
         self.assertEqual(
             self.tr.value(),
-            b"ls: cannot access /root/NonExisting: No such file or directory\n"
+            b"ls: cannot access 'NonExisting': No such file or directory\n2\n"
             + PROMPT,
         )
 
