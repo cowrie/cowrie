@@ -99,7 +99,7 @@ Requirements
 
 Software required to run locally:
 
-* Python 3.10+
+* Python 3.11+
 * python-virtualenv
 
 Files of interest:

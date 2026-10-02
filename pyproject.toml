@@ -15,7 +15,7 @@ license-files = [ "LICENSE.rst" ]
 authors = [ {name = "Michel Oosterhof", email="michel@oosterhof.net"}, ]
 maintainers = [ {name = "Michel Oosterhof", email="michel@oosterhof.net"}, ]
 keywords=["ssh", "telnet", "honeypot"]
-requires-python = ">=3.10, <4"
+requires-python = ">=3.11, <4"
 readme="README.rst"
 classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -196,7 +196,7 @@ root = "src/cowrie/test"
 reportPrivateUsage = "none"
 
 [tool.ty.environment]
-python-version = "3.10"
+python-version = "3.11"
 
 [tool.ty.src]
 exclude = ["src/cowrie/vendor/**"]
@@ -215,8 +215,8 @@ lint.ignore = ["A005", "E501", "UP007", "B019", "RUF001"]
 
 exclude = [ "src/cowrie/_version.py", "src/cowrie/vendor/" ]
 
-# Assume Python 3.10.
-target-version = "py310"
+# Assume Python 3.11.
+target-version = "py311"
 
 # Ignore `T201` (print) in all scripts
 [tool.ruff.lint.per-file-ignores]
@@ -236,13 +236,12 @@ version_file = "src/cowrie/_version.py"
 [tool.tox]
 legacy_tox_ini = """
     [tox]
-    envlist = lint,docs,typing,py310,py311,py312,py313,py314,py314t,py315,py315t,pypy311
+    envlist = lint,docs,typing,py311,py312,py313,py314,py314t,py315,py315t,pypy311
     deps = -r{toxinidir}/requirements.txt
     skip_missing_interpreters = True
 
     [gh-actions]
     python =
-        3.10: py310
         3.11: py311
         3.12: py312
         3.13: py313
@@ -292,7 +291,7 @@ legacy_tox_ini = """
         - yamllint {toxinidir}
         - pyright
         - pylint {toxinidir}/src
-    basepython = python3.10
+    basepython = python3.11
 
     [testenv:docs]
     setenv =
@@ -302,7 +301,7 @@ legacy_tox_ini = """
         dev
     commands =
         sphinx-build -W -b html -d {envtmpdir}/doctrees . {envtmpdir}/html
-    basepython = python3.10
+    basepython = python3.11
 
     [testenv:typing]
     description = run static type checkers
@@ -321,7 +320,7 @@ legacy_tox_ini = """
             {posargs:src}
         - pyre --noninteractive analyze
         - pyright {posargs:src}
-    basepython = python3.10
+    basepython = python3.11
 
     [testenv:audit]
     description = run dependency security audit

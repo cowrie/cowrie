@@ -10,6 +10,8 @@ Release 3.0.0
 
 **BREAKING CHANGES - ACTION REQUIRED:**
 
+* **Python 3.10 no longer supported**: Minimum Python version is now 3.11.
+
 * **State directory layout is now cwd-driven.** ``cowrie start`` no
   longer ``chdir``\s to a script-derived "root" path. The current
   working directory is the cowrie state directory: ``./etc/cowrie.cfg``
