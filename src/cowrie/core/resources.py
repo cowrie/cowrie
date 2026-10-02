@@ -14,13 +14,8 @@ from typing import IO, TYPE_CHECKING
 from cowrie import data
 
 if TYPE_CHECKING:
-    import sys
     from collections.abc import Generator
-
-    if sys.version_info >= (3, 11):
-        from importlib.resources.abc import Traversable
-    else:
-        from importlib.abc import Traversable
+    from importlib.resources.abc import Traversable
 
 
 def _data_resource(*parts: str) -> Traversable:

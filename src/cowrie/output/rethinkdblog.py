@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import rethinkdb as r
 
@@ -20,7 +20,7 @@ def iso8601_to_timestamp(value):
     stored must not shift with the honeypot host's own timezone.
     """
     parsed = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ")
-    return parsed.replace(tzinfo=timezone.utc).timestamp()
+    return parsed.replace(tzinfo=UTC).timestamp()
 
 
 RETHINK_DB_SEGMENT = "output_rethinkdblog"

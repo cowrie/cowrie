@@ -110,9 +110,9 @@ def python_version_warning() -> None:
     """Display Python version warnings if needed."""
     version_info = sys.version_info
 
-    if version_info < (3, 10):
+    if version_info < (3, 11):
         print()
-        print("DEPRECATION: Python<3.10 is no longer supported by Cowrie.")
+        print("DEPRECATION: Python<3.11 is no longer supported by Cowrie.")
         print()
 
 
