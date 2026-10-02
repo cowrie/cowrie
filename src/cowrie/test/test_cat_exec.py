@@ -15,6 +15,7 @@ from twisted.internet.protocol import connectionDone
 
 from cowrie.insults import insults
 from cowrie.shell import protocol
+from cowrie.test.config_override import override_config
 from cowrie.test.eventcapture import CaptureSink, make_exec_transport
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 
@@ -22,8 +23,6 @@ _DOWNLOAD_DIR = tempfile.mkdtemp(prefix="cowrie_cat_exec_")
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = _DOWNLOAD_DIR
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
-
-insults.LoggingServerProtocol.downloadPath = _DOWNLOAD_DIR
 
 
 def run_exec_cat_redirect(payload: bytes) -> bytes:
@@ -53,6 +52,9 @@ def run_exec_cat_redirect(payload: bytes) -> bytes:
 
 class CatExecRedirectTests(unittest.TestCase):
     """`cat > file` on an exec channel must write piped stdin to the file."""
+
+    def setUp(self) -> None:
+        override_config(self, "honeypot", "download_path", _DOWNLOAD_DIR)
 
     def test_cat_redirect_captures_piped_stdin(self) -> None:
         payload = b"one\ntwo\nthree\n"

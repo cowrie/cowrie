@@ -17,8 +17,7 @@ from twisted.internet.defer import inlineCallbacks
 from twisted.internet.protocol import ClientCreator, Protocol
 from twisted.protocols.ftp import CommandFailed, FTPClient
 
-from cowrie.core.artifact import Artifact
-from cowrie.core.config import CowrieConfig
+from cowrie.core.artifact import Artifact, download_limit_size
 from cowrie.core.download import outbound_rate_limiter
 from cowrie.core.network import outbound_bind_address, resolve_allowed
 from cowrie.shell.command import HoneyPotCommand
@@ -66,8 +65,7 @@ class Command_ftpget(HoneyPotCommand):
     ftpget command
     """
 
-    download_path = CowrieConfig.get("honeypot", "download_path", fallback=".")
-    limit_size: int = CowrieConfig.getint("honeypot", "download_limit_size", fallback=0)
+    limit_size: int
     verbose: bool
     host: str
     port: int
@@ -97,6 +95,7 @@ Download a file via FTP
 
     @inlineCallbacks
     def start(self):
+        self.limit_size = download_limit_size()
         try:
             optlist, args = getopt.getopt(self.args, "cvu:p:P:")
         except getopt.GetoptError:

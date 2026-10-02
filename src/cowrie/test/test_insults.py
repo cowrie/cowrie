@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
 import tempfile
 import unittest
@@ -15,6 +16,7 @@ from unittest import mock
 from twisted.python import log
 
 from cowrie.insults.insults import LoggingServerProtocol
+from cowrie.test.config_override import override_config
 
 
 class FakeTransport:
@@ -28,7 +30,7 @@ class FakeTransport:
 
 
 def make_protocol(channel_type: str) -> LoggingServerProtocol:
-    lsp = LoggingServerProtocol.__new__(LoggingServerProtocol)
+    lsp = LoggingServerProtocol()
     lsp.type = channel_type
     lsp.bytesSent = 0
     lsp.ttylogEnabled = False
@@ -132,6 +134,25 @@ class ConnectionLostStdinTestCase(unittest.TestCase):
             self.assertNotIn(lsp.stdinlogFile, opened)
             self.assertFalse(lsp.stdinlogOpen)
             self.assertFalse(os.path.exists(lsp.stdinlogFile))
+
+    def test_stdin_saved_in_download_path_configured_at_creation(self) -> None:
+        """The download path is read when the protocol is created, not when
+        the module is imported."""
+        with tempfile.TemporaryDirectory() as downloadPath:
+            override_config(self, "honeypot", "download_path", downloadPath)
+            lsp = make_protocol("e")
+            lsp.events = mock.MagicMock()
+            lsp.stdinlogOpen = True
+            lsp.stdinlogFile = os.path.join(downloadPath, "stdin.log")
+            lsp.redirFiles = set()
+            lsp.terminalProtocol = None
+            with open(lsp.stdinlogFile, "wb") as f:
+                f.write(b"id\n")
+
+            lsp.connectionLost()
+
+            shasum = hashlib.sha256(b"id\n").hexdigest()
+            self.assertTrue(os.path.exists(os.path.join(downloadPath, shasum)))
 
     def test_failure_saving_existing_stdin_log_is_logged(self) -> None:
         """A genuine I/O failure on an existing stdin log must not be silent.

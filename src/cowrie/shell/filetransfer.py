@@ -32,7 +32,7 @@ from twisted.python.compat import nativeString
 from zope.interface import implementer
 
 import twisted
-from cowrie.core.config import CowrieConfig
+from cowrie.core.artifact import download_limit_size
 from cowrie.shell import pwd
 from cowrie.shell.fs import FileNotFound, PermissionDenied
 
@@ -71,11 +71,9 @@ class CowrieSFTPFile:
     """
 
     contents: bytes
-    bytesReceivedLimit: int = CowrieConfig.getint(
-        "honeypot", "download_limit_size", fallback=0
-    )
 
     def __init__(self, sftpserver, filename, flags, attrs):
+        self.bytesReceivedLimit: int = download_limit_size()
         self.sftpserver = sftpserver
         self.filename = filename
         # Bytes that arrived, which is what the transfer quota is about.

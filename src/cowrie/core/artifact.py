@@ -36,21 +36,27 @@ if TYPE_CHECKING:
     from types import TracebackType
 
 
+def download_path() -> str:
+    """Directory where downloaded and uploaded files are saved."""
+    return CowrieConfig.get("honeypot", "download_path", fallback=".")
+
+
+def download_limit_size() -> int:
+    """Largest transfer, in bytes, that is saved; 0 means no limit."""
+    return CowrieConfig.getint("honeypot", "download_limit_size", fallback=0)
+
+
 def temp_download_path(prefix: str) -> str:
     """A unique download-dir path for a temp file that is renamed to its
     sha256 or serves as honeyfs realfile backing once written. The name
     carries no session or attacker-controlled text, only the prefix."""
-    return os.path.join(
-        CowrieConfig.get("honeypot", "download_path", fallback="."),
-        f"{prefix}_{uuid.uuid4().hex}",
-    )
+    return os.path.join(download_path(), f"{prefix}_{uuid.uuid4().hex}")
 
 
 class Artifact:
-    artifactDir: str = CowrieConfig.get("honeypot", "download_path", fallback=".")
-
     def __init__(self, label: str) -> None:
         self.label: str = label
+        self.artifactDir: str = download_path()
 
         self.fp = tempfile.NamedTemporaryFile(  # pylint: disable=R1732
             dir=self.artifactDir, delete=False

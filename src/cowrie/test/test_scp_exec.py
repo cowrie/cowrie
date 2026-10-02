@@ -17,6 +17,7 @@ from twisted.internet.protocol import connectionDone
 from cowrie.commands import scp
 from cowrie.insults import insults
 from cowrie.shell import protocol
+from cowrie.test.config_override import override_config
 from cowrie.test.eventcapture import CaptureSink, make_exec_transport
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 
@@ -25,13 +26,6 @@ os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 _DOWNLOAD_DIR = tempfile.mkdtemp(prefix="cowrie_scp_exec_")
 # Temp backing files land wherever config points when they are created.
 os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = _DOWNLOAD_DIR
-
-# Class-level download paths are read from config at import time, so another
-# test module importing these classes first can pin them elsewhere. Force them
-# to this module's scratch directory regardless of import order.
-insults.LoggingServerProtocol.downloadPath = _DOWNLOAD_DIR
-scp.Command_scp.download_path = _DOWNLOAD_DIR
-scp.Command_scp.download_path_uniq = _DOWNLOAD_DIR
 
 
 def run_exec_scp_push(
@@ -80,6 +74,7 @@ class ScpExecPushTests(unittest.TestCase):
     """An scp push over the exec channel must be saved as just its content."""
 
     def setUp(self) -> None:
+        override_config(self, "honeypot", "download_path", _DOWNLOAD_DIR)
         for name in os.listdir(_DOWNLOAD_DIR):
             full = os.path.join(_DOWNLOAD_DIR, name)
             if os.path.isfile(full):
@@ -163,6 +158,7 @@ class ScpExecHardeningTests(unittest.TestCase):
     """Malformed or abusive SCP wire data must not crash the upload handler."""
 
     def setUp(self) -> None:
+        override_config(self, "honeypot", "download_path", _DOWNLOAD_DIR)
         for name in os.listdir(_DOWNLOAD_DIR):
             full = os.path.join(_DOWNLOAD_DIR, name)
             if os.path.isfile(full):
