@@ -67,7 +67,7 @@ modify Cowrie itself. Full instructions for all three are in
 Docker
 *****************************************
 
-`Docker images <https://hub.docker.com/repository/docker/cowrie/cowrie>`_ are available on Docker Hub.
+`Docker images <https://hub.docker.com/r/cowrie/cowrie>`_ are available on Docker Hub.
 
 * To get started quickly and give Cowrie a try, run::
 
