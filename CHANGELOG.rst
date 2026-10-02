@@ -5,12 +5,152 @@
 Release Notes
 #############
 
-Release 3.0.0
+Release 3.1.0
 *************
 
 **BREAKING CHANGES - ACTION REQUIRED:**
 
 * **Python 3.10 no longer supported**: Minimum Python version is now 3.11.
+
+**NEW FEATURES:**
+
+* **New shell commands**: ``sed`` and ``tr``.
+* The emulated machine now booted before Cowrie started. ``uptime``,
+  ``/proc/uptime`` and ``last`` count from that boot, so a restarted
+  honeypot no longer reports a few seconds of uptime. The new
+  ``[honeypot] boot_offset`` option sets the gap in seconds. When unset,
+  Cowrie picks a value between one and ninety days once per process.
+
+**BUG FIXES:**
+
+* Shell errors look more like bash: syntax errors and "command not
+  found" go to stderr, carry the right prefix for interactive and
+  script shells, and name the line number in scripts.
+* Scripts that cannot run exit 126, and missing interpreters exit 127.
+* ``printf`` implements its format conversions.
+* ``awk -F`` accepts patterns with spaces and prints real output.
+* ``head`` and ``tail`` accept the GNU option forms and read piped input.
+* ``lscpu`` describes the same CPU as ``/proc/cpuinfo``.
+* ``esac`` is a keyword only in command position.
+* ``"\\"`` inside double quotes reads as one backslash.
+* The ``socketlog`` output sends events on the reactor instead of
+  blocking in ``write()``.
+* Idle LLM sessions time out after 300 seconds by default, the same as
+  the shell.
+
+
+Releases 3.0.1 -- 3.0.15
+************************
+
+**BREAKING CHANGES - ACTION REQUIRED:**
+
+* **Event field rename**: ``cowrie.session.closed`` and
+  ``cowrie.log.closed`` report ``duration_ms`` as an integer number of
+  milliseconds. The ``duration`` field is gone. It was a string for
+  some transports and a float for others. Update dashboards and
+  index mappings that read ``duration``.
+* **Rate-limit options moved**: the ``wget``, ``curl`` and ``nc``
+  rate-limit options are read from ``[shell]``, not ``[honeypot]``.
+  Move them if you set them.
+* **VirusTotal collections**: ``[output_virustotal] collection`` is
+  replaced by ``collection_id``. Copy the ID from the collection's URL
+  in the VirusTotal web interface.
+* The ``crashreporter`` output plugin is removed, along with its
+  ``[output_crashreporter]`` config section. It reported Python
+  exceptions to api.cowrie.org and was disabled by default.
+
+**NEW FEATURES:**
+
+* **Shell scripting**: ``if``, ``while``, ``until``, ``for`` and
+  ``case``, the ``test`` / ``[`` builtin, real exit statuses, ``$?``,
+  ``&&`` and ``||``, ``exit N``, and the ``exec`` builtin. Uploaded
+  scripts run through the same parser. The exit status is reported to
+  the SSH client.
+* **Shell parser**: Lark is the only shell parser. It supports ``&>``
+  and ``&>>`` redirects, real pipelines, and command substitution that
+  waits for slow commands such as ``wget``.
+* **New shell commands**: ``su`` and ``chpasswd``.
+* ``grep`` reads stdin when no files are given and accepts ``-m``.
+* **New output plugins**: Kafka (``aiokafka``, needs the asyncio
+  reactor), Signal messenger, and URLhaus.
+* The ``textlog`` output can write OCSF records (``format = ocsf``).
+* **HAProxy PROXY protocol**: listen endpoints accept a ``haproxy:``
+  prefix, so Cowrie logs the attacker's address behind a load balancer.
+* New ``[honeypot] log_level`` option sets the diagnostic verbosity of
+  ``cowrie.log`` -- and of stdout in foreground/Docker mode -- (default
+  ``info``), with per-subsystem overrides via ``log_level_<namespace>``
+  (e.g. ``log_level_cowrie.ssh = debug``) or the matching
+  ``COWRIE_HONEYPOT_LOG_LEVEL_*`` environment variables. Rendered
+  attacker-event lines (``cowrie.events``) keep an ``info`` floor unless
+  explicitly overridden. Structured event output (cowrie.json,
+  databases) is unaffected.
+* A Nix flake for building and developing Cowrie.
+
+**SECURITY AND HARDENING:**
+
+* Outbound fetches (``wget``, ``curl``, ``nc``, ``ftpget``, ``tftp``)
+  validate every redirect hop, connect to the address they validated,
+  and block addresses that are not globally routable, including
+  IPv4-mapped and IPv4-compatible IPv6 forms.
+* Outbound fetches bind to ``[honeypot] out_addr``, so they do not leak
+  the server's own address.
+* Every fetching command has its own rate limit, and ``download_limit_size``
+  applies to all of them. New ``[shell]`` options set the limits per
+  command.
+* Limits on shell input: ``[shell] max_input_size``,
+  ``parse_timeout_seconds`` and ``gc_collect_threshold`` stop large or
+  ambiguous input from stalling the reactor.
+* ``[shell] scp_max_files_per_session`` caps scp uploads per session.
+* Malformed SSH packets, telnet negotiation, non-UTF-8 attacker bytes,
+  and LLM prompt input no longer crash the session.
+* Untrusted bytes are escaped in logs, CEF output and Telegram
+  messages.
+
+**BUG FIXES:**
+
+* Many shell fixes: exit statuses of subshells and pipelines, variable
+  and ``$@`` expansion, redirects to bad file descriptors, directories
+  run as commands, and binary files passed to ``sh``.
+* Each shell has its own working directory and user identity.
+* Exec channels pass live stdin to the shell and deliver EOF correctly.
+* Telnet logins work with bare-CR line endings, such as PuTTY's.
+* Proxy mode: SFTP messages are reassembled correctly, buffered packets
+  are flushed, and host-key rotation requests are dropped.
+* SFTP and scp report the real upload size and store the file contents.
+* The ``jsonlog`` output appends instead of truncating, and survives log
+  rotation.
+* Database outputs: sqlite stores uploads and input; PostgreSQL
+  sequence permissions are fixed; error handlers no longer crash.
+* VirusTotal, MISP, DShield, Slack, GreyNoise and reversedns fixes:
+  correct event IDs, request-failure handling, and released session
+  state.
+* The emulated filesystem uses ``/``-separated paths on every host, which
+  fixes SFTP directory listings and file operations on Windows.
+
+**INTERNAL:**
+
+* Events go through a session-scoped ``EventLog`` and a central
+  dispatcher. Output plugins emit enrichment events through
+  ``Output.dispatch()``. See docs/EVENT_PIPELINE.rst.
+* Diagnostic logging converted from the legacy ``twisted.python.log``
+  API to per-class ``twisted.logger.Logger`` instances with namespaces
+  and levels; messages are lazy PEP-3101 format strings with runtime
+  values passed as data (see docs/EVENT_PIPELINE.rst). The backend
+  pool's session-less emitters dropped their vestigial ``eventid=``
+  markers and are plain diagnostics: pool bookkeeping is
+  infrastructure, not attacker behavior, and never reached the output
+  plugins.
+* Sessions share one copy-on-write honeyfs tree instead of a deep copy
+  each.
+* ``treq`` upgraded to 26.7.0; ``requests`` and ``urllib3`` dropped.
+* The Docker image pins its uid, has reproducible build metadata, and
+  drops pip, setuptools and wheel from the runtime venv.
+
+
+Release 3.0.0
+*************
+
+**BREAKING CHANGES - ACTION REQUIRED:**
 
 * **State directory layout is now cwd-driven.** ``cowrie start`` no
   longer ``chdir``\s to a script-derived "root" path. The current
@@ -61,17 +201,6 @@ Release 3.0.0
 * Bundled ``cowrie.cfg.dist`` has ``contents_path``, ``filesystem``,
   and ``processes`` commented out (each documents how to override).
 * ``data_path`` removed from cfg.dist.
-* The ``crashreporter`` output plugin is removed, along with its
-  ``[output_crashreporter]`` config section. It reported Python
-  exceptions to api.cowrie.org and was disabled by default.
-* New ``[honeypot] log_level`` option sets the diagnostic verbosity of
-  ``cowrie.log`` -- and of stdout in foreground/Docker mode -- (default
-  ``info``), with per-subsystem overrides via ``log_level_<namespace>``
-  (e.g. ``log_level_cowrie.ssh = debug``) or the matching
-  ``COWRIE_HONEYPOT_LOG_LEVEL_*`` environment variables. Rendered
-  attacker-event lines (``cowrie.events``) keep an ``info`` floor unless
-  explicitly overridden. Structured event output (cowrie.json,
-  databases) is unaffected.
 
 **DEPENDENCIES:**
 
@@ -81,14 +210,6 @@ Release 3.0.0
 
 **INTERNAL:**
 
-* Diagnostic logging converted from the legacy ``twisted.python.log``
-  API to per-class ``twisted.logger.Logger`` instances with namespaces
-  and levels; messages are lazy PEP-3101 format strings with runtime
-  values passed as data (see docs/EVENT_PIPELINE.rst). The backend
-  pool's session-less emitters dropped their vestigial ``eventid=``
-  markers and are plain diagnostics: pool bookkeeping is
-  infrastructure, not attacker behavior, and never reached the output
-  plugins.
 * New ``cowrie/shell/honeyfs.py`` module owns the per-process pickle
   cache. ``HoneyPotFilesystem`` instances now share a single
   ``pickle.load`` via ``honeyfs.get_tree()`` (deepcopied per session)
