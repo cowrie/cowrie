@@ -18,7 +18,7 @@ __version__ = "0.3b3"
 
 import pickle
 from collections import deque
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from json.decoder import JSONDecodeError
 from pathlib import Path
 from time import sleep, time
@@ -366,7 +366,7 @@ class Reporter:
 
     @staticmethod
     def epoch_to_string_utc(t):
-        t_utc = datetime.fromtimestamp(t, timezone.utc)
+        t_utc = datetime.fromtimestamp(t, UTC)
         return t_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
     def log_response_failed(self, ip, response, reason):
