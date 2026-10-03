@@ -6,14 +6,6 @@ SPDX-License-Identifier: BSD-3-Clause
 
 # TODO
 
-- Double `processEnded` on late channel EOF: after a session's process has
-  ended (exec command finished, `exit` in a shell), a channel EOF arriving
-  afterwards delivers a second `processEnded` through the leftover shell on
-  the cmdstack. `HoneyPotExecProtocol.eofReceived` guards only the
-  stdin-line-mode instance. Root-cause fix: a fire-once process-end helper
-  on the protocol, used by `HoneyPotShell._finish` / `_terminate` /
-  `eofReceived`, `HoneyPotCommand.exit`, and `timeoutConnection`.
-
 - Exec-channel stdin line mode treats control bytes (CTRL-C, CTRL-D,
   backspace/delete) as a tty would even when the client requested no pty;
   in a plain pipe real bash sees them as literal bytes. Make the handling

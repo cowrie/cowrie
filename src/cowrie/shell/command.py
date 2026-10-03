@@ -173,12 +173,7 @@ class HoneyPotCommand:
             # No shell left to return to: either an `exit` builtin removed the
             # shell before this command finished, or the session is being torn
             # down. End the process with this command's status.
-            ret = process_status(self.exit_code)
-            # The session could be disconnected already, when this happens .transport is gone
-            try:
-                self.protocol.terminal.transport.processEnded(ret)
-            except AttributeError:
-                pass
+            self.protocol.end_process(self.exit_code)
 
     def exec_command(self, pp: Any, cmdclass: Any, *args: str) -> None:
         """Replace this command with another, as exec(2) does: leave the

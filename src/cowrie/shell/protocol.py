@@ -52,6 +52,10 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     # The session's event emitter, set from the transport in connectionMade.
     events: EventLog
 
+    # True once end_process() has run. Class-level so it holds even for
+    # instances created without __init__ (tests).
+    _process_ended: bool = False
+
     commands: ClassVar[dict] = {}
     for c in cowrie.commands.command_modules:
         try:
@@ -143,12 +147,32 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             except Exception:
                 self.kippoIPv6 = ""
 
+    def end_process(self, code: int) -> None:
+        """
+        End the session's process with exit status ``code``, once.
+
+        Every path that ends the process comes through here: the exec queue
+        draining, ``exit``, ``exec``, EOF, a command finishing with no shell
+        left, and the idle timeout. Only the first call reaches the channel.
+        A later one would report a second, possibly different, exit status:
+        a channel EOF that arrives after an exec command already finished
+        reaches the finished shell still on the cmdstack, and input queued
+        behind ``exit`` is still read before a telnet connection closes.
+        """
+        if self._process_ended:
+            return
+        self._process_ended = True
+        terminal = self.terminal
+        if terminal is None or terminal.transport is None:
+            # The client already disconnected: there is no channel to tell.
+            return
+        terminal.transport.processEnded(command.process_status(code))
+
     def timeoutConnection(self) -> None:
         """
         this logs out when connection times out
         """
-        ret = command.process_status(1)
-        self.terminal.transport.processEnded(ret)
+        self.end_process(1)
 
     def connectionLost(self, reason: failure.Failure = connectionDone) -> None:
         """
@@ -265,8 +289,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             self.cmdstack[-1].lineReceived(string)
         else:
             self._log.info("discarding input {input}", input=string)
-            stat = command.process_status(0)
-            self.terminal.transport.processEnded(stat)
+            self.end_process(0)
 
     def call_command(self, pp, cmd, *args):
         """Run a command with the stdio wiring ``pp``. A command that runs
@@ -339,8 +362,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         if self.cmdstack:
             self.cmdstack[-1].eofReceived()
         else:
-            ret = command.process_status(0)
-            self.terminal.transport.processEnded(ret)
+            self.end_process(0)
 
 
 class HoneyPotExecProtocol(HoneyPotBaseProtocol):
