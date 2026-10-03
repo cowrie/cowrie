@@ -65,15 +65,17 @@ class Command_ls(HoneyPotCommand):
                 self.showDirectories = True
 
         for arg in args:
-            paths.append(self.protocol.fs.resolve_path(arg, self.cwd))
+            resolved = self.protocol.fs.resolve_path(arg, self.cwd)
+            # bash expands ~ before ls runs, so ls names it by the expanded path
+            paths.append((resolved, resolved if arg.startswith("~") else arg))
 
         if not paths:
-            func(path)
+            func(path, path)
         else:
-            for path in paths:
-                func(path)
+            for path, name in paths:
+                func(path, name)
 
-    def get_dir_files(self, path):
+    def get_dir_files(self, path, name):
         try:
             if self.protocol.fs.isdir(path) and not self.showDirectories:
                 files = self.protocol.fs.get_path(path)[:]
@@ -91,15 +93,16 @@ class Command_ls(HoneyPotCommand):
                 files.sort()
             else:
                 file = self.protocol.fs.getfile(path)[:]
-                file[fs.A_NAME] = path
+                file[fs.A_NAME] = name
                 files = [file]
         except Exception:
-            self.errorWrite(f"ls: cannot access {path}: No such file or directory\n")
+            self.errorWrite(f"ls: cannot access '{name}': No such file or directory\n")
+            self.exit_code = 2
             return
         return files
 
-    def do_ls_normal(self, path: str) -> None:
-        files = self.get_dir_files(path)
+    def do_ls_normal(self, path: str, name: str) -> None:
+        files = self.get_dir_files(path, name)
         if not files:
             return
 
@@ -123,15 +126,16 @@ class Command_ls(HoneyPotCommand):
             count += 1
         self.write("\n")
 
-    def do_ls_l(self, path: str) -> None:
+    def do_ls_l(self, path: str, name: str) -> None:
         """
         Display detailed information about files
         Mimics the output of GNU ls -l and supports the following options:
         -a, -h
 
         :param path: The path to list
+        :param name: The path as the command line named it
         """
-        files = self.get_dir_files(path)
+        files = self.get_dir_files(path, name)
         if not files:
             return
         # Create a list to hold formatted sizes for display
@@ -166,9 +170,6 @@ class Command_ls(HoneyPotCommand):
             group_name_str_extent = max(len(self.gid2name(x[fs.A_GID])) for x in files)
 
         for i, file in enumerate(files):
-            if file[fs.A_NAME].startswith(".") and not self.showHidden:
-                continue
-
             perms = ["-"] * 10
             if file[fs.A_MODE] & stat.S_IRUSR:
                 perms[1] = "r"
