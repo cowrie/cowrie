@@ -4,11 +4,16 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+# ABOUTME: Emulates GNU chmod: parses octal and symbolic modes and applies them
+# ABOUTME: to the emulated filesystem through fs.chmod.
+
 from __future__ import annotations
 
 import getopt
 import re
+import stat
 
+from cowrie.shell import fs
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
@@ -45,8 +50,76 @@ There is NO WARRANTY, to the extent permitted by law.
 Written by David MacKenzie and Jim Meyering.
 """
 
-MODE_REGEX = "^[ugoa]*([-+=]([rwxXst]*|[ugo]))+|[-+=]?[0-7]+$"
+MODE_CLAUSE = r"[ugoa]*(?:[-+=](?:[rwxXst]*|[ugo]))+|[-+=][0-7]+"
+MODE_REGEX = rf"[0-7]+|(?:{MODE_CLAUSE})(?:,(?:{MODE_CLAUSE}))*"
 TRY_CHMOD_HELP_MSG = "Try 'chmod --help' for more information.\n"
+
+# The emulated shell's umask. A clause without u/g/o/a leaves these bits alone.
+UMASK = 0o022
+
+# Bits each class letter selects; the special bit sits with the class it modifies.
+WHO_BITS = {
+    "u": stat.S_ISUID | stat.S_IRWXU,
+    "g": stat.S_ISGID | stat.S_IRWXG,
+    "o": stat.S_ISVTX | stat.S_IRWXO,
+    "a": 0o7777,
+}
+
+# Position of each class's rwx triplet, for copying one class to others (u=g).
+CLASS_SHIFT = {"u": 6, "g": 3, "o": 0}
+
+# Bits each permission letter sets, before masking by the affected classes.
+PERM_BITS = {
+    "r": 0o444,
+    "w": 0o222,
+    "x": 0o111,
+    "s": stat.S_ISUID | stat.S_ISGID,
+    "t": stat.S_ISVTX,
+}
+
+
+def apply_mode(spec: str, mode: int, is_dir: bool, umask: int = UMASK) -> int:
+    """Return the permission bits that GNU chmod's ``spec`` gives a file whose
+    permission bits are ``mode``. ``spec`` must already match MODE_REGEX."""
+    if spec.isdigit():
+        return int(spec, 8)
+    for clause in spec.split(","):
+        who = 0
+        i = 0
+        while clause[i] in WHO_BITS:
+            who |= WHO_BITS[clause[i]]
+            i += 1
+        while i < len(clause):
+            op = clause[i]
+            i += 1
+            end = i
+            while end < len(clause) and clause[end] not in "-+=":
+                end += 1
+            perms = clause[i:end]
+            i = end
+            if perms.isdigit():
+                # An octal operand names every bit explicitly; no umask applies.
+                affected = 0o7777
+                value = int(perms, 8)
+            else:
+                affected = who or 0o7777 & ~umask
+                value = 0
+                for letter in perms:
+                    if letter in "ugo":
+                        value |= ((mode >> CLASS_SHIFT[letter]) & 0o7) * 0o111
+                    elif letter == "X":
+                        if is_dir or mode & 0o111:
+                            value |= 0o111
+                    else:
+                        value |= PERM_BITS[letter]
+            change = value & affected
+            if op == "=":
+                mode = (mode & ~affected) | change
+            elif op == "+":
+                mode |= change
+            else:
+                mode &= ~change
+    return mode
 
 
 class Command_chmod(HoneyPotCommand):
@@ -70,21 +143,34 @@ class Command_chmod(HoneyPotCommand):
             self.errorWrite("chmod: missing operand\n" + TRY_CHMOD_HELP_MSG)
             return
         if mode and not files:
-            self.errorWrite(f"chmod: missing operand after ‘{mode}’\n" + TRY_CHMOD_HELP_MSG)
+            self.errorWrite(
+                f"chmod: missing operand after ‘{mode}’\n" + TRY_CHMOD_HELP_MSG
+            )
             return
 
-        # mode has to match the regex
-        if not re.fullmatch(MODE_REGEX, mode):
+        # mode has to match the regex and fit in the permission bits
+        if not re.fullmatch(MODE_REGEX, mode) or (
+            mode.isdigit() and int(mode, 8) > 0o7777
+        ):
             self.errorWrite(f"chmod: invalid mode: ‘{mode}’\n" + TRY_CHMOD_HELP_MSG)
             return
 
         # go through the list of files and check whether they exist
         for file in files:
             if file == "*":
+                # the shell leaves globbing to commands; * names the visible entries
+                names = [
+                    entry[fs.A_NAME]
+                    for entry in self.fs.get_path(self.cwd)
+                    if not entry[fs.A_NAME].startswith(".")
+                ]
                 # if the current directory is empty, return 'No such file or directory'
-                files = self.fs.get_path(self.cwd)[:]
-                if not files:
-                    self.errorWrite("chmod: cannot access '*': No such file or directory\n")
+                if not names:
+                    self.errorWrite(
+                        "chmod: cannot access '*': No such file or directory\n"
+                    )
+                for name in names:
+                    self.change_mode(name, mode)
             else:
                 path = self.fs.resolve_path(file, self.cwd)
                 if not self.fs.exists(path):
@@ -92,11 +178,26 @@ class Command_chmod(HoneyPotCommand):
                         f"chmod: cannot access '{file}': No such file or directory\n"
                     )
                 else:
-                    try:
-                        # this works for `chmod 0600 ./file`, but not for `chmod u+rwx .,/file`
-                        self.fs.chmod(path, int(mode, 8))
-                    except ValueError:
-                        pass
+                    self.change_mode(file, mode)
+
+    def change_mode(self, file: str, mode: str) -> None:
+        """Apply ``mode`` to ``file``, warning like GNU chmod when the umask
+        kept the result from matching what the mode asked for."""
+        path = self.fs.resolve_path(file, self.cwd)
+        node = self.fs.getfile(path)
+        if node is None:
+            return
+        current = stat.S_IMODE(node[fs.A_MODE])
+        is_dir = self.fs.isdir(path)
+        new = apply_mode(mode, current, is_dir)
+        self.fs.chmod(path, new)
+        expected = apply_mode(mode, current, is_dir, umask=0)
+        if new != expected:
+            self.errorWrite(
+                f"chmod: {file}: new permissions are {stat.filemode(new)[1:]}, "
+                f"not {stat.filemode(expected)[1:]}\n"
+            )
+            self.exit_code = 1
 
     def parse_args(self):
         mode = None
