@@ -12,7 +12,7 @@ import os
 from twisted.conch.ssh import filetransfer
 from twisted.logger import Logger
 
-from cowrie.core.config import CowrieConfig
+from cowrie.core.artifact import download_path
 from cowrie.core.utils import escape_nonprintable
 from cowrie.ssh_proxy.protocols import base_protocol
 
@@ -69,7 +69,7 @@ class SFTP(base_protocol.BaseProtocol):
         super().__init__(uuid, chan_name, ssh)
 
         self.events = ssh.server.events
-        self.downloadPath: str = CowrieConfig.get("honeypot", "download_path")
+        self.downloadPath: str = download_path()
 
         self.clientPacket = base_protocol.BaseProtocol()
         self.serverPacket = base_protocol.BaseProtocol()

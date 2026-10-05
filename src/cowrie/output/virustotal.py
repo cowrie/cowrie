@@ -26,6 +26,7 @@ from twisted.web.iweb import IBodyProducer, IResponse
 from zope.interface import implementer
 
 import cowrie.core.output
+from cowrie.core.artifact import download_path
 from cowrie.core.config import CowrieConfig
 
 COWRIE_USER_AGENT = "Cowrie Honeypot"
@@ -130,7 +131,7 @@ class Output(cowrie.core.output.Output):
 
     def _is_new_shasum(self, shasum):
         # Get the downloaded file's modification time
-        shasumfile = os.path.join(CowrieConfig.get("honeypot", "download_path"), shasum)
+        shasumfile = os.path.join(download_path(), shasum)
         file_modification_time = datetime.datetime.fromtimestamp(
             os.stat(shasumfile).st_mtime
         )

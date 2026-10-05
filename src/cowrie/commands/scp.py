@@ -10,7 +10,7 @@ import os
 import posixpath
 import re
 
-from cowrie.core.artifact import temp_download_path
+from cowrie.core.artifact import download_path, temp_download_path
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
 from cowrie.shell.command import HoneyPotCommand
@@ -23,10 +23,7 @@ class Command_scp(HoneyPotCommand):
     scp command
     """
 
-    download_path = CowrieConfig.get("honeypot", "download_path", fallback=".")
-    download_path_uniq = CowrieConfig.get(
-        "honeypot", "download_path_uniq", fallback=download_path
-    )
+    download_path_uniq: str
     # Every uploaded file costs a real temp-file write, a sha256 hash and a
     # rename on the host filesystem, so cap how many files one upload session
     # can save regardless of how small each file is.
@@ -44,6 +41,9 @@ class Command_scp(HoneyPotCommand):
         )
 
     def start(self) -> None:
+        self.download_path_uniq = CowrieConfig.get(
+            "honeypot", "download_path_uniq", fallback=download_path()
+        )
         try:
             optlist, args = getopt.getopt(self.args, "12346BCpqrvfstdv:cFiloPS:")
         except getopt.GetoptError:

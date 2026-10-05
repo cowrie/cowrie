@@ -27,6 +27,7 @@ from twisted.names import error as names_error
 from twisted.python.failure import Failure
 
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
+from cowrie.test.config_override import override_config
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
 
@@ -216,12 +217,12 @@ class NcConnectionTests(unittest.TestCase):
         link.transport.write.assert_called_once_with(b"hello remote")
 
     def test_download_limit_closes_connection(self) -> None:
+        override_config(self, "honeypot", "download_limit_size", "10")
         conn = self._connect(b"nc 8.8.8.8 4444\n")
         link = self._establish(conn.factory)
-        with mock.patch.object(Command_nc, "limit_size", 10):
-            link.protocol.dataReceived(b"12345")
-            self.assertIn(b"12345", self.tr.value())
-            link.protocol.dataReceived(b"67890ABCDEF")  # total 16 > 10
+        link.protocol.dataReceived(b"12345")
+        self.assertIn(b"12345", self.tr.value())
+        link.protocol.dataReceived(b"67890ABCDEF")  # total 16 > 10
         link.transport.loseConnection.assert_called_once()
         self.assertTrue(conn.command.exited)
         self.assertNotIn(b"ABCDEF", self.tr.value())

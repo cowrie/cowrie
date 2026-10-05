@@ -20,8 +20,7 @@ from twisted.protocols.ftp import CommandFailed, FTPClient
 from twisted.python import failure
 from twisted.web.iweb import UNKNOWN_LENGTH
 
-from cowrie.core.artifact import Artifact
-from cowrie.core.config import CowrieConfig
+from cowrie.core.artifact import Artifact, download_limit_size
 from cowrie.core.download import (
     BlockedAddress,
     UnreachableAddress,
@@ -99,7 +98,7 @@ class Command_wget(HoneyPotCommand):
 
     _log = Logger()
 
-    limit_size: int = CowrieConfig.getint("honeypot", "download_limit_size", fallback=0)
+    limit_size: int
     quiet: bool = False
 
     outfile: str | None = None  # outfile is the file saved inside the honeypot
@@ -168,6 +167,7 @@ class Command_wget(HoneyPotCommand):
 
     @inlineCallbacks
     def start(self):
+        self.limit_size = download_limit_size()
         url: str
         try:
             optlist, args = getopt.getopt(

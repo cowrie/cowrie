@@ -21,6 +21,7 @@ from cowrie.commands.wget import Command_wget
 from cowrie.core.artifact import Artifact
 from cowrie.core.network import DownloadLimitExceeded
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
+from cowrie.test.config_override import override_config
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
 
@@ -65,11 +66,9 @@ class DownloadSizeLimitTests(unittest.TestCase):
         self.tr.clear()
 
         self.tmpdir = tempfile.mkdtemp()
-        self._orig_artifact_dir = Artifact.artifactDir
-        Artifact.artifactDir = self.tmpdir
+        override_config(self, "honeypot", "download_path", self.tmpdir)
 
     def tearDown(self) -> None:
-        Artifact.artifactDir = self._orig_artifact_dir
         self.proto.connectionLost()
         for name in os.listdir(self.tmpdir):
             os.remove(os.path.join(self.tmpdir, name))
