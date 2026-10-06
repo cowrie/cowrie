@@ -65,7 +65,7 @@ playlog = "cowrie.scripts.playlog:run"
 csirtg = ["csirtgsdk==1.1.5"]
 elasticsearch = ["pyes"]
 mysql = ["mysqlclient"]
-mongodb = ["pymongo"]
+mongodb = ["txmongo"]
 pool = ["libvirt-python==12.7.0"]
 rethinkdblog = ["rethinkdb"]
 s3 = ["botocore"]
@@ -259,6 +259,7 @@ legacy_tox_ini = """
         coverage
         pika
         rethinkdb
+        txmongo
 
     commands =
         coverage run -m unittest discover src --verbose
