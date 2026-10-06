@@ -255,7 +255,9 @@ legacy_tox_ini = """
     setenv =
         PYTHONPATH = {toxinidir}/src
         PIP_QUIET = 1
-    deps = coverage
+    deps =
+        coverage
+        pika
 
     commands =
         coverage run -m unittest discover src --verbose
