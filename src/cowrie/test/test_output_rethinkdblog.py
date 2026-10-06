@@ -252,6 +252,14 @@ class RethinkDBOutputTests(unittest.TestCase):
             document, {"eventid": "cowrie.session.connect", "timestamp": 1791273600.0}
         )
 
+    def test_timestamp_with_utc_offset_is_stored_as_the_same_instant(self) -> None:
+        """Hosts not running with TZ=UTC log timestamps with a numeric offset."""
+        server = self.server()
+        server.ready()
+        self.out.write({"eventid": "e", "timestamp": "2026-10-06T16:00:00.000000+0800"})
+        ((_, document),) = server.inserts()
+        self.assertEqual(document["timestamp"], 1791273600.0)
+
     def test_events_before_server_is_ready_are_inserted_in_order(self) -> None:
         self.out.write({"eventid": "a"})
         server = self.server()

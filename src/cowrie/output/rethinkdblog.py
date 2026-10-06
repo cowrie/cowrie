@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 from collections import deque
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 from rethinkdb import RethinkDB
@@ -29,11 +29,11 @@ if TYPE_CHECKING:
 def iso8601_to_timestamp(value):
     """Unix timestamp for an event timestamp.
 
-    The trailing Z marks the value as UTC, so it is read as UTC: the instant
-    stored must not shift with the honeypot host's own timezone.
+    Event timestamps end in Z when the honeypot runs in UTC and in a
+    numeric offset otherwise; both name the instant exactly, so the value
+    stored does not shift with the honeypot host's own timezone.
     """
-    parsed = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ")
-    return parsed.replace(tzinfo=UTC).timestamp()
+    return datetime.fromisoformat(value).timestamp()
 
 
 RETHINK_DB_SEGMENT = "output_rethinkdblog"
