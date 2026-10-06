@@ -258,6 +258,7 @@ legacy_tox_ini = """
     deps =
         coverage
         pika
+        rethinkdb
 
     commands =
         coverage run -m unittest discover src --verbose
