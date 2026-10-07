@@ -80,6 +80,7 @@ from lark.exceptions import LarkError, UnexpectedCharacters
 from twisted.logger import Logger
 
 from cowrie.core.config import CowrieConfig
+from cowrie.shell.parser import Field
 
 # Grammar for the supported bash subset. Whitespace is significant as a word
 # separator, so it is matched explicitly rather than ignored: adjacent atoms
@@ -1065,7 +1066,7 @@ class BashParser:
             if leading and not assignment and fields:
                 leading = False
                 declaration = fields[0] in _DECLARATION_BUILTINS
-            tokens.extend(fields)
+            tokens.extend(Field(value) for value in fields)
         return tokens
 
     @staticmethod
