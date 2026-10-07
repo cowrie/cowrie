@@ -75,7 +75,7 @@ Written by Jim Meyering and Paul Eggert.
                 message = "invalid option --"
 
             self.print_usage_error(f"{message} '{err.opt}'")
-            self.exit()
+            self.exit(1)
             return
 
         # Handle help option first - print help and exit immediately
@@ -93,7 +93,7 @@ Written by Jim Meyering and Paul Eggert.
         # Handle no arguments
         if not arglist:
             self.print_usage_error("missing operand")
-            self.exit()
+            self.exit(1)
             return
 
         # Handle multiple arguments
@@ -104,7 +104,7 @@ Written by Jim Meyering and Paul Eggert.
             m = re.match(self.pattern, arg)
             if not m:
                 self.print_usage_error(f"invalid time interval ‘{arg}’")
-                self.exit()
+                self.exit(1)
                 return
 
             # Ignore time suffix (s/m/h) and accumulate value as seconds

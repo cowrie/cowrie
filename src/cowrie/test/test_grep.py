@@ -112,6 +112,22 @@ class ShellGrepCommandTests(unittest.TestCase):
         self.proto.lineReceived(b"echo hello > gtxt; echo hello >> gtxt; grep -m1 hello gtxt\n")
         self.assertEqual(self.tr.value(), b"hello\n" + PROMPT)
 
+    def test_grep_quiet_prints_nothing(self) -> None:
+        # -q is common in scripts: `grep -q root /etc/passwd && ...`. It
+        # prints nothing; any match exits 0, even if another file failed.
+        for line, expected in (
+            (b"grep -q root /etc/passwd; echo $?", b"0\n"),
+            (b"echo hello | grep -q hell; echo $?", b"0\n"),
+            (b"grep -q zzzzqqq /etc/passwd; echo $?", b"1\n"),
+            (b"grep --quiet root /etc/passwd; echo $?", b"0\n"),
+            (b"grep -q root /nonexistent /etc/passwd 2>/dev/null; echo $?", b"0\n"),
+            (b"grep -q zzz /nonexistent /etc/passwd 2>/dev/null; echo $?", b"2\n"),
+        ):
+            with self.subTest(line=line):
+                self.tr.clear()
+                self.proto.lineReceived(line)
+                self.assertEqual(self.tr.value(), expected + PROMPT)
+
 
 if __name__ == "__main__":
     unittest.main()

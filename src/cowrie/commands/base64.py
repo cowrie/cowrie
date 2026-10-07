@@ -6,12 +6,12 @@
 from __future__ import annotations
 
 import base64
+import binascii
 import getopt
 import sys
 
-from twisted.logger import Logger
-
 from cowrie.shell.command import HoneyPotCommand
+from cowrie.shell.fs import FileNotFound
 
 commands = {}
 
@@ -22,8 +22,6 @@ class Command_base64(HoneyPotCommand):
     """
 
     consumes_stdin = True
-
-    _log = Logger()
 
     mode: str
     ignore: bool
@@ -40,7 +38,7 @@ class Command_base64(HoneyPotCommand):
             )
         except getopt.GetoptError:
             self.errorWrite("Unrecognized option\n")
-            self.exit()
+            self.exit(1)
             return
 
         for opt in optlist:
@@ -107,18 +105,19 @@ Written by Simon Josefsson.
 Try 'base64 --help' for more information.
 """
                 )
-                self.exit()
+                self.exit(1)
                 return
 
             pname = self.fs.resolve_path(args[0], self.cwd)
             if not self.fs.isdir(pname):
                 try:
                     self.dojob(self.fs.file_contents(pname))
-                except Exception:
-                    self._log.failure("base64: failed to read file")
+                except FileNotFound:
                     self.errorWrite(f"base64: {args[0]}: No such file or directory\n")
+                    self.exit_code = 1
             else:
                 self.errorWrite("base64: read error: Is a directory\n")
+                self.exit_code = 1
 
         self.exit()
 
@@ -137,10 +136,13 @@ Try 'base64 --help' for more information.
             self.writeBytes(base64.b64encode(s))
             self.writeBytes(b"\n")
         else:
+            # Like GNU base64 without -i, a byte outside the alphabet (other
+            # than a line break) is an error, not something to skip.
             try:
-                self.writeBytes(base64.b64decode(s))
-            except Exception:
+                self.writeBytes(base64.b64decode(s.replace(b"\n", b""), validate=True))
+            except binascii.Error:
                 self.errorWrite("base64: invalid input\n")
+                self.exit_code = 1
 
     def lineReceived(self, line: str) -> None:
         self.protocol.events.dispatch(

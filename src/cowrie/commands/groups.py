@@ -42,6 +42,7 @@ class Command_groups(HoneyPotCommand):
                 self.errorWrite(
                     f"groups: invalid option -- '{err.opt}'\nTry 'groups --help' for more information.\n"
                 )
+                self.exit_code = 1
                 return
 
             for opt in opts:
@@ -66,7 +67,8 @@ class Command_groups(HoneyPotCommand):
             username = str(self.user["username"])
         else:
             if not self.check_valid_user(username):
-                self.write(f"groups: '{username}': no such user\n")
+                self.errorWrite(f"groups: '{username}': no such user\n")
+                self.exit_code = 1
                 return
             else:
                 ss = username + " : "

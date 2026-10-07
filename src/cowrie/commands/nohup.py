@@ -14,8 +14,10 @@ commands = {}
 class Command_nohup(HoneyPotCommand):
     def call(self) -> None:
         if not len(self.args):
-            self.write("nohup: missing operand\n")
-            self.write("Try `nohup --help' for more information.\n")
+            self.errorWrite("nohup: missing operand\n")
+            self.errorWrite("Try `nohup --help' for more information.\n")
+            # nohup's own failures exit 125, apart from its command's status.
+            self.exit_code = 125
             return
         path = self.fs.resolve_path("nohup.out", self.cwd)
         if self.fs.exists(path):

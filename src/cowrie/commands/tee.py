@@ -43,7 +43,7 @@ class Command_tee(HoneyPotCommand):
             self.errorWrite(
                 f"tee: invalid option -- '{err.opt}'\nTry 'tee --help' for more information.\n"
             )
-            self.exit()
+            self.exit(1)
             return
 
         self.teeFiles = []
@@ -62,12 +62,14 @@ class Command_tee(HoneyPotCommand):
             pname = self.fs.resolve_path(arg, self.cwd)
             if self.fs.isdir(pname):
                 self.errorWrite(f"tee: {arg}: Is a directory\n")
+                self.exit_code = 1
                 continue
 
             folder_path = posixpath.dirname(pname)
             fname = self.fs.resolve_path(folder_path, self.cwd)
             if not self.fs.isdir(fname):
                 self.errorWrite(f"tee: {arg}: No such file or directory\n")
+                self.exit_code = 1
                 continue
 
             try:
@@ -76,6 +78,7 @@ class Command_tee(HoneyPotCommand):
                 )
             except FileNotFound:
                 self.errorWrite(f"tee: {arg}: No such file or directory\n")
+                self.exit_code = 1
             else:
                 self.teeFiles.append(pname)
 
