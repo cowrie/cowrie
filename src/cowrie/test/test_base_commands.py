@@ -59,6 +59,14 @@ class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
         self.proto.lineReceived(b"/bin\n")
         self.assertEqual(self.tr.value(), b"-bash: /bin: Is a directory\n" + PROMPT)
 
+    def test_sync_command_succeeds_silently(self) -> None:
+        # PATH finds /usr/bin/sync before /bin/sync; both must be txtcmds.
+        for cmd in (b"sync", b"/usr/bin/sync", b"/bin/sync"):
+            with self.subTest(cmd=cmd):
+                self.tr.clear()
+                self.proto.lineReceived(cmd + b"; echo $?\n")
+                self.assertEqual(self.tr.value(), b"0\n" + PROMPT)
+
     def test_clear_command(self) -> None:
         self.proto.lineReceived(b"clear\n")
         self.assertEqual(self.tr.value(), PROMPT)
