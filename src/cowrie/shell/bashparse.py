@@ -44,9 +44,8 @@ Known deviations from standard bash (none are emulated yet):
   (``{a,b}`` / ``{1..3}``), arithmetic (``$((...))``), the parameter
   expansion operators (``${x:-y}``, ``${#x}``, ``${x/a/b}`` ...), and ANSI-C
   quoting (``$'...'``) are all passed through literally.
-* Word splitting is not applied to the result of an expansion, so a ``for``
-  list built from ``$(cmd)`` or an unquoted ``$var`` holding spaces iterates
-  once over the whole string rather than once per field.
+* Word splitting always uses the default ``IFS`` (space, tab, newline); an
+  assigned ``IFS`` is ignored.
 * Pathname expansion (globbing of ``*`` / ``?`` / ``[...]``) is left to the
   individual command implementations, not done by the parser; ``case`` patterns
   are matched with fnmatch.
@@ -502,6 +501,13 @@ _STATEMENT_END = frozenset({"SEP", "NEWLINE"})
 _STAGE_END = _STATEMENT_END | {"PIPE"}
 
 _NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+# A word whose leading literal is NAME= is an assignment.
+_ASSIGNMENT_PREFIX = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
+# Builtins whose NAME=value arguments are assignments, so not split.
+_DECLARATION_BUILTINS = frozenset({"declare", "export", "local", "readonly", "typeset"})
+# The characters an unquoted expansion splits on: bash's default IFS.
+_IFS_WHITESPACE = " \t\n"
+_UNQUOTED_EXPANSIONS = frozenset({"dollar_var", "dollar_brace", "cmdsub", "backtick"})
 
 
 class _Cursor:
@@ -1026,59 +1032,99 @@ class BashParser:
 
     # -- word evaluation ----------------------------------------------------
 
-    async def evaluate(self, command: Command) -> list[str]:
+    async def evaluate(self, command: Command, *, split: bool = True) -> list[str]:
         """Expand a command's words against the live context, now.
 
         Operator strings pass through; each word tree is evaluated against the
-        current shell (variables, command substitution), and a word that
-        resolves to nothing (an unquoted unset reference) is dropped. A
-        command substitution suspends the expansion until its subshell
-        finishes, as bash blocks on the substitution pipe; substitutions
-        therefore run left to right, each to completion before the next.
+        current shell (variables, command substitution) into its fields. An
+        unquoted expansion splits on whitespace and vanishes when empty, as in
+        bash. Leading assignments, ``NAME=value`` arguments of declaration
+        builtins (``export`` ...) and redirection targets stay one field, as
+        does every word when ``split`` is false (a ``case`` word). A command
+        substitution suspends the expansion until its subshell finishes, as
+        bash blocks on the substitution pipe; substitutions therefore run left
+        to right, each to completion before the next.
         """
         tokens: list[str] = []
+        leading = True  # still in the NAME=value words before the command
+        declaration = False
+        redirect_target = False
         for item in command.items:
             if isinstance(item, str):
                 tokens.append(item)
+                redirect_target = "<" in item or ">" in item
                 continue
-            value = await self._eval_word(command.line, item)
-            if value is not None:
-                tokens.append(value)
+            assignment = self._is_assignment(item)
+            whole = (
+                not split
+                or redirect_target
+                or (assignment and (leading or declaration))
+            )
+            redirect_target = False
+            fields = await self._eval_word(command.line, item, split=not whole)
+            if leading and not assignment and fields:
+                leading = False
+                declaration = fields[0] in _DECLARATION_BUILTINS
+            tokens.extend(fields)
         return tokens
 
-    async def _eval_word(self, line: str, word: Tree) -> str | None:
-        """Evaluate a word to its final string, or None if it should be dropped.
+    @staticmethod
+    def _is_assignment(word: Tree) -> bool:
+        """Whether a word is NAME=value: its first atom is a literal NAME=."""
+        first = word.children[0] if word.children else None
+        return (
+            isinstance(first, Token)
+            and first.type == "LITERAL"
+            and _ASSIGNMENT_PREFIX.match(first) is not None
+        )
 
-        A word is dropped when it is exactly an unquoted reference to an unset
-        or empty variable, like ``echo $unset`` which yields no argument at all
-        in a real shell.
+    async def _eval_word(self, line: str, word: Tree, *, split: bool) -> list[str]:
+        """Evaluate a word to its fields.
+
+        Literal and quoted text joins the field it is in; an unquoted
+        expansion's result is split on whitespace when ``split`` is set. A
+        word made only of empty unquoted expansions yields no field at all,
+        like ``echo $unset`` or ``$(true)``, while a quoted empty string
+        (``""``) is a field.
         """
-        atoms = word.children
+        pieces: list[tuple[str, bool]] = []
+        for atom in word.children:
+            unquoted = isinstance(atom, Tree) and atom.data in _UNQUOTED_EXPANSIONS
+            pieces.append((await self._eval_atom(line, atom), unquoted))
+        if not split:
+            if all(unquoted and not text for text, unquoted in pieces):
+                return []
+            return ["".join(text for text, _ in pieces)]
+        return self._split_fields(pieces)
 
-        # Whole-word bare reference: ``$x`` / ``${x}`` as the entire,
-        # unquoted word. An unset or empty value drops the word; a special
-        # parameter like ``$?`` expands via _special_param.
-        if len(atoms) == 1 and isinstance(atoms[0], Tree):
-            only = atoms[0]
-            if only.data in ("dollar_var", "dollar_brace"):
-                special = self._special_param(only)
-                if special is not None:
-                    # A function called with no arguments leaves $@ / $* set
-                    # but empty. Unquoted and alone in a word, they expand to
-                    # no words at all -- not to one empty argument -- the same
-                    # as the empty ordinary variable handled just below.
-                    if special == "" and self._var_name(only)[1] in ("@", "*"):
-                        return None
-                    return special
-                value = self.context.get_variable(self._var_name(only)[0])
-                if not value:
-                    return None
-                return value
+    @staticmethod
+    def _split_fields(pieces: list[tuple[str, bool]]) -> list[str]:
+        """Join a word's pieces into fields, splitting unquoted expansions.
 
-        parts: list[str] = []
-        for atom in atoms:
-            parts.append(await self._eval_atom(line, atom))
-        return "".join(parts)
+        ``pieces`` pairs each atom's text with whether it came from an unquoted
+        expansion. Whitespace inside such text ends the current field; other
+        text, and any quoted text even when empty, extends it.
+        """
+        fields: list[str] = []
+        current = ""
+        started = False
+        for text, unquoted in pieces:
+            if not unquoted:
+                current += text
+                started = True
+                continue
+            for char in text:
+                if char in _IFS_WHITESPACE:
+                    if started:
+                        fields.append(current)
+                        current = ""
+                        started = False
+                else:
+                    current += char
+                    started = True
+        if started:
+            fields.append(current)
+        return fields
 
     async def _eval_atom(self, line: str, atom: Tree | Token) -> str:
         if isinstance(atom, Token):
