@@ -38,6 +38,7 @@ class Command_cat(HoneyPotCommand):
             self.errorWrite(
                 f"cat: invalid option -- '{err.opt}'\nTry 'cat --help' for more information.\n"
             )
+            self.exit_code = 1
             self.exit()
             return
 
@@ -59,6 +60,7 @@ class Command_cat(HoneyPotCommand):
 
                 if self.fs.isdir(pname):
                     self.errorWrite(f"cat: {arg}: Is a directory\n")
+                    self.exit_code = 1
                     continue
 
                 try:
@@ -66,6 +68,8 @@ class Command_cat(HoneyPotCommand):
                     self.output(contents)
                 except FileNotFound:
                     self.errorWrite(f"cat: {arg}: No such file or directory\n")
+                    # Like GNU cat, carry on with the rest but exit 1.
+                    self.exit_code = 1
             self.exit()
         elif self.input_data is not None:
             self.output(self.input_data)
