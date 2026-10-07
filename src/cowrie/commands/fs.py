@@ -35,8 +35,9 @@ class Command_grep(HoneyPotCommand):
 
     interactive: bool = False
     matched: bool = False
-    # A file could not be read: grep then exits 2, even if another matched.
+    # A file could not be read: grep then exits 2, unless -q and a match.
     errored: bool = False
+    quiet: bool = False
     max_count: int | None = None
     match_count: int = 0
 
@@ -60,7 +61,8 @@ class Command_grep(HoneyPotCommand):
             if matcher.search(line):
                 self.matched = True
                 self.match_count += 1
-                self.writeBytes(line + b"\n")
+                if not self.quiet:
+                    self.writeBytes(line + b"\n")
 
     def help(self) -> None:
         self.writeBytes(
@@ -92,6 +94,8 @@ class Command_grep(HoneyPotCommand):
                     "directories=",
                     "label",
                     "line-buffered",
+                    "quiet",
+                    "silent",
                 ],
             )
         except getopt.GetoptError as err:
@@ -103,6 +107,8 @@ class Command_grep(HoneyPotCommand):
         for opt, arg in optlist:
             if opt == "-h":
                 self.help()
+            elif opt in ("-q", "--quiet", "--silent"):
+                self.quiet = True
             elif opt == "-m":
                 try:
                     n = int(arg)
@@ -142,10 +148,16 @@ class Command_grep(HoneyPotCommand):
             self.interactive = True
             return
 
+        self.exit(self._status())
+
+    def _status(self) -> int:
+        """grep's exit status: 0 on a match, 1 on none, 2 if a file could not
+        be read -- except that with -q any match is success."""
+        if self.matched and self.quiet:
+            return 0
         if self.errored:
-            self.exit(2)
-        else:
-            self.exit(0 if self.matched else 1)
+            return 2
+        return 0 if self.matched else 1
 
     def lineReceived(self, line: str) -> None:
         self.protocol.events.dispatch(
@@ -170,7 +182,7 @@ class Command_grep(HoneyPotCommand):
                 # arriving via lineReceived, so match against them now.
                 with open(terminal.stdinlogFile, "rb") as f:
                     self.grep_application(f.read(), self.match)
-        self.exit(0 if self.matched else 1)
+        self.exit(self._status())
 
 
 commands["/bin/grep"] = Command_grep
