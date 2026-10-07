@@ -363,16 +363,19 @@ class Command_cd(HoneyPotCommand):
             inode = None
         if pname == "-":
             self.errorWrite(f"{self.shell.error_prefix()}cd: OLDPWD not set\n")
+            self.exit_code = 1
             return
         if inode is None or inode is False:
             self.errorWrite(
                 f"{self.shell.error_prefix()}cd: {pname}: No such file or directory\n"
             )
+            self.exit_code = 1
             return
         if inode[fs.A_TYPE] != fs.T_DIR:
             self.errorWrite(
                 f"{self.shell.error_prefix()}cd: {pname}: Not a directory\n"
             )
+            self.exit_code = 1
             return
         # cd is a builtin: it changes the running shell's directory, not this
         # command process's own.
@@ -430,6 +433,7 @@ or available locally via: info '(coreutils) rm invocation'\n"""
 
     def paramError(self) -> None:
         self.errorWrite("Try 'rm --help' for more information\n")
+        self.exit_code = 1
 
     def call(self) -> None:
         recursive = False
@@ -469,11 +473,13 @@ or available locally via: info '(coreutils) rm invocation'\n"""
                     self.errorWrite(
                         f"rm: cannot remove `{f}': No such file or directory\n"
                     )
+                    self.exit_code = 1
                 continue
             if node[fs.A_TYPE] == fs.T_DIR and not recursive:
                 self.errorWrite(
                     f"rm: cannot remove `{node[fs.A_NAME]}': Is a directory\n"
                 )
+                self.exit_code = 1
                 continue
             self.fs.remove(pname)
             if verbose:
@@ -496,11 +502,13 @@ class Command_cp(HoneyPotCommand):
         if not len(self.args):
             self.errorWrite("cp: missing file operand\n")
             self.errorWrite("Try `cp --help' for more information.\n")
+            self.exit_code = 1
             return
         try:
             optlist, args = getopt.gnu_getopt(self.args, "-abdfiHlLPpRrsStTuvx")
         except getopt.GetoptError:
             self.errorWrite("Unrecognized option\n")
+            self.exit_code = 1
             return
         recursive = False
         for opt in optlist:
@@ -516,6 +524,7 @@ class Command_cp(HoneyPotCommand):
                 f"cp: missing destination file operand after `{self.args[0]}'\n"
             )
             self.errorWrite("Try `cp --help' for more information.\n")
+            self.exit_code = 1
             return
         sources, dest = args[:-1], args[-1]
         # Quoting reaches the command as an empty argument; there is no such
@@ -524,15 +533,18 @@ class Command_cp(HoneyPotCommand):
             self.errorWrite(
                 f"cp: cannot create regular file `{dest}': No such file or directory\n"
             )
+            self.exit_code = 1
             return
         if len(sources) > 1 and not self.fs.isdir(resolv(dest)):
             self.errorWrite(f"cp: target `{dest}' is not a directory\n")
+            self.exit_code = 1
             return
 
         if dest[-1] == "/" and not self.fs.exists(resolv(dest)) and not recursive:
             self.errorWrite(
                 f"cp: cannot create regular file `{dest}': Is a directory\n"
             )
+            self.exit_code = 1
             return
 
         if self.fs.isdir(resolv(dest)):
@@ -545,14 +557,17 @@ class Command_cp(HoneyPotCommand):
                     "cp: cannot create regular file "
                     + f"`{dest}': No such file or directory\n"
                 )
+                self.exit_code = 1
                 return
 
         for src in sources:
             if not self.fs.exists(resolv(src)):
                 self.errorWrite(f"cp: cannot stat `{src}': No such file or directory\n")
+                self.exit_code = 1
                 continue
             if not recursive and self.fs.isdir(resolv(src)):
                 self.errorWrite(f"cp: omitting directory `{src}'\n")
+                self.exit_code = 1
                 continue
             s = copy.deepcopy(self.fs.getfile(resolv(src)))
             if isdir:
@@ -578,12 +593,14 @@ class Command_mv(HoneyPotCommand):
         if not len(self.args):
             self.errorWrite("mv: missing file operand\n")
             self.errorWrite("Try `mv --help' for more information.\n")
+            self.exit_code = 1
             return
 
         try:
             _optlist, args = getopt.gnu_getopt(self.args, "-bfiStTuv")
         except getopt.GetoptError:
             self.errorWrite("Unrecognized option\n")
+            self.exit_code = 1
             return
 
         def resolv(pname: str) -> str:
@@ -595,6 +612,7 @@ class Command_mv(HoneyPotCommand):
                 f"mv: missing destination file operand after `{self.args[0]}'\n"
             )
             self.errorWrite("Try `mv --help' for more information.\n")
+            self.exit_code = 1
             return
         sources, dest = args[:-1], args[-1]
         # Quoting reaches the command as an empty argument; there is no such
@@ -604,15 +622,18 @@ class Command_mv(HoneyPotCommand):
                 f"mv: cannot move `{sources[0]}' to `{dest}': "
                 "No such file or directory\n"
             )
+            self.exit_code = 1
             return
         if len(sources) > 1 and not self.fs.isdir(resolv(dest)):
             self.errorWrite(f"mv: target `{dest}' is not a directory\n")
+            self.exit_code = 1
             return
 
         if dest[-1] == "/" and not self.fs.exists(resolv(dest)) and len(sources) != 1:
             self.errorWrite(
                 f"mv: cannot create regular file `{dest}': Is a directory\n"
             )
+            self.exit_code = 1
             return
 
         if self.fs.isdir(resolv(dest)):
@@ -625,12 +646,14 @@ class Command_mv(HoneyPotCommand):
                     "mv: cannot create regular file "
                     + f"`{dest}': No such file or directory\n"
                 )
+                self.exit_code = 1
                 return
 
         for src in sources:
             srcpath = resolv(src)
             if not self.fs.exists(srcpath):
                 self.errorWrite(f"mv: cannot stat `{src}': No such file or directory\n")
+                self.exit_code = 1
                 continue
             if isdir:
                 destpath = posixpath.join(resolv(dest), posixpath.basename(src))
@@ -649,10 +672,16 @@ class Command_mkdir(HoneyPotCommand):
     """
 
     def call(self) -> None:
+        if not self.args:
+            self.errorWrite("mkdir: missing operand\n")
+            self.errorWrite("Try 'mkdir --help' for more information.\n")
+            self.exit_code = 1
+            return
         for f in self.args:
             pname = self.fs.resolve_path(f, self.cwd)
             if self.fs.exists(pname):
                 self.errorWrite(f"mkdir: cannot create directory `{f}': File exists\n")
+                self.exit_code = 1
                 continue
             try:
                 self.fs.mkdir(pname, self.user["uid"], self.user["gid"], 4096, 16877)
@@ -660,10 +689,12 @@ class Command_mkdir(HoneyPotCommand):
                 self.errorWrite(
                     f"mkdir: cannot create directory `{f}': No such file or directory\n"
                 )
+                self.exit_code = 1
             except OSError as e:
                 self.errorWrite(
                     f"mkdir: cannot create directory `{f}': {e.strerror}\n"
                 )
+                self.exit_code = 1
 
 
 commands["/bin/mkdir"] = Command_mkdir
@@ -676,6 +707,11 @@ class Command_rmdir(HoneyPotCommand):
     """
 
     def call(self) -> None:
+        if not self.args:
+            self.errorWrite("rmdir: missing operand\n")
+            self.errorWrite("Try 'rmdir --help' for more information.\n")
+            self.exit_code = 1
+            return
         for f in self.args:
             pname = self.fs.resolve_path(f, self.cwd)
             try:
@@ -683,6 +719,7 @@ class Command_rmdir(HoneyPotCommand):
                     self.errorWrite(
                         f"rmdir: failed to remove `{f}': Directory not empty\n"
                     )
+                    self.exit_code = 1
                     continue
                 directory = self.fs.get_path("/".join(pname.split("/")[:-1]))
             except (IndexError, fs.FileNotFound):
@@ -692,6 +729,7 @@ class Command_rmdir(HoneyPotCommand):
                 self.errorWrite(
                     f"rmdir: failed to remove `{f}': No such file or directory\n"
                 )
+                self.exit_code = 1
                 continue
             for i in directory[:]:
                 if i[fs.A_NAME] == fname:
@@ -699,6 +737,7 @@ class Command_rmdir(HoneyPotCommand):
                         self.errorWrite(
                             f"rmdir: failed to remove '{f}': Not a directory\n"
                         )
+                        self.exit_code = 1
                         continue
                     directory.remove(i)
                     break
@@ -730,6 +769,7 @@ class Command_touch(HoneyPotCommand):
         if not len(self.args):
             self.errorWrite("touch: missing file operand\n")
             self.errorWrite("Try `touch --help' for more information.\n")
+            self.exit_code = 1
             return
         for f in self.args:
             pname = self.fs.resolve_path(f, self.cwd)
@@ -737,6 +777,7 @@ class Command_touch(HoneyPotCommand):
                 self.errorWrite(
                     f"touch: cannot touch `{pname}`: No such file or directory\n"
                 )
+                self.exit_code = 1
                 continue
             if self.fs.exists(pname):
                 # FIXME: modify the timestamp here
@@ -744,6 +785,7 @@ class Command_touch(HoneyPotCommand):
             # can't touch in special directories
             if any([pname.startswith(_p) for _p in fs.SPECIAL_PATHS]):
                 self.errorWrite(f"touch: cannot touch `{pname}`: Permission denied\n")
+                self.exit_code = 1
                 continue
 
             self.fs.mkfile(pname, self.user["uid"], self.user["gid"], 0, 33188)
