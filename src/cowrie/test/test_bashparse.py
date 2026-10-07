@@ -224,7 +224,8 @@ class BashParseStatementTests(unittest.TestCase):
 
     def test_command_substitution_captures_source(self) -> None:
         statements = self.parser.parse("echo $(echo inner)")
-        self.assertEqual(self._eval(statements[0]), ["echo", "<echo inner>"])
+        # The stub output contains a space, so the unquoted substitution splits.
+        self.assertEqual(self._eval(statements[0]), ["echo", "<echo", "inner>"])
         self.assertEqual(self.ctx.substitutions, ["echo inner"])
 
     def test_backtick_substitution(self) -> None:
@@ -246,7 +247,9 @@ class BashParseStatementTests(unittest.TestCase):
         # The inner $(...) source is handed to the context verbatim; the nested
         # shell parses it recursively rather than the grammar flattening it.
         statements = self.parser.parse("echo $(echo $(echo deep))")
-        self.assertEqual(self._eval(statements[0]), ["echo", "<echo $(echo deep)>"])
+        self.assertEqual(
+            self._eval(statements[0]), ["echo", "<echo", "$(echo", "deep)>"]
+        )
         self.assertEqual(self.ctx.substitutions, ["echo $(echo deep)"])
 
     def test_pipeline_stages(self) -> None:
@@ -256,7 +259,8 @@ class BashParseStatementTests(unittest.TestCase):
         assert isinstance(node, Pipeline)
         self.assertEqual([type(s) for s in node.stages], [Command] * 3)
         self.assertEqual(
-            [self._eval(s) for s in node.stages], [["echo", "a"], ["tr", "a", "b"], ["cat"]]
+            [self._eval(s) for s in node.stages],
+            [["echo", "a"], ["tr", "a", "b"], ["cat"]],
         )
         self.assertEqual([s.op for s in node.stages], [None] * 3)  # type: ignore[union-attr]
 
@@ -413,7 +417,9 @@ class BashParseCompoundTests(unittest.TestCase):
         self.assertEqual(self._eval(node.items), ["a", "b"])
 
     def test_if_clause(self) -> None:
-        node = self._one("if true; then echo a; elif false; then echo b; else echo c; fi")
+        node = self._one(
+            "if true; then echo a; elif false; then echo b; else echo c; fi"
+        )
         assert isinstance(node, IfClause)
         self.assertEqual(len(node.branches), 2)
         self.assertIsNotNone(node.else_body)

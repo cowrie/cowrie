@@ -14,6 +14,14 @@ from typing import Any
 _REDIR_OP_RE = re.compile(r"^(\d*)(>>|>&|>|<)(.*)$")
 
 
+class Field(str):
+    """
+    A field produced by expanding a shell word. It is always an argument,
+    never a redirection operator, whatever its text: in bash only an
+    unquoted operator redirects, so ``echo '>x'`` prints ``>x``.
+    """
+
+
 class CommandParser:
     """
     Handles parsing of shell commands, including tokenization, redirection,
@@ -33,6 +41,11 @@ class CommandParser:
         while i < len(arguments):
             tok = arguments[i]
             next_token = arguments[i + 1] if (i + 1) < len(arguments) else None
+
+            if isinstance(tok, Field):
+                cleaned.append(tok)
+                i += 1
+                continue
 
             amp = self._amp_redirect(tok)
             if amp is not None:

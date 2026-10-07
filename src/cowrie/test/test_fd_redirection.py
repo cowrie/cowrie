@@ -41,6 +41,24 @@ class ShellFdRedirectionTests(unittest.TestCase):
         self.proto.lineReceived(b"cat /nonexistent 2>/dev/null")
         self.assertEqual(self.tr.value(), PROMPT)
 
+    def test_quoted_or_expanded_operator_text_is_an_argument(self) -> None:
+        # Only an unquoted operator redirects; quoted, escaped or expanded
+        # text that looks like one is an ordinary argument, as in bash.
+        for line, expected in (
+            (b'echo "<html>"', b"<html>\n"),
+            (b"echo '>quotedfile'", b">quotedfile\n"),
+            (b'echo a ">" b', b"a > b\n"),
+            (b"echo \\>escapedfile", b">escapedfile\n"),
+            (b'x=">"; echo $x y', b"> y\n"),
+            (b'echo "2>&1"', b"2>&1\n"),
+        ):
+            with self.subTest(line=line):
+                self.tr.clear()
+                self.proto.lineReceived(line)
+                self.assertEqual(self.tr.value(), expected + PROMPT)
+        for name in ("quotedfile", "escapedfile", "b", "y"):
+            self.assertFalse(self.proto.fs.exists(f"/root/{name}"), name)
+
     def test_spaced_fd_is_argument(self) -> None:
         # A space before ">" makes the digit a plain argument, not a file
         # descriptor: echo writes "hi 2" to the file via stdout (issue #2917).

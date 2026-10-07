@@ -665,7 +665,8 @@ class HoneyPotShell:
     def _run_case(self, node: CaseClause) -> None:
         """``case WORD in PATTERN) BODY ;; ... esac`` -- first match wins."""
         if node.word:
-            d = Deferred.fromCoroutine(self.bashparser.evaluate(node.word))
+            # bash does not split the case word.
+            d = Deferred.fromCoroutine(self.bashparser.evaluate(node.word, split=False))
         else:
             d = succeed([])
         d.addCallback(self._run_case_expanded, node)

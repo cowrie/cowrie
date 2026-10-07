@@ -94,7 +94,8 @@ class AsyncSubstitutionTests(unittest.TestCase):
     def test_conditional_after_async_inside_substitution(self) -> None:
         self.proto.lineReceived(b"echo $(fakeasync && echo ok)\n")
         self.finish_one()
-        self.assertEqual(self.tr.value(), b"async-output\nok\n" + PROMPT)
+        # The unquoted substitution splits on the newline, so echo joins them.
+        self.assertEqual(self.tr.value(), b"async-output ok\n" + PROMPT)
 
     def test_failed_async_skips_and_arm(self) -> None:
         self.proto.lineReceived(b"echo $(fakeasync && echo ok)\n")
@@ -103,7 +104,7 @@ class AsyncSubstitutionTests(unittest.TestCase):
 
     def test_loop_inside_substitution(self) -> None:
         self.proto.lineReceived(b"echo $(for i in a b; do echo $i; done)\n")
-        self.assertEqual(self.tr.value(), b"a\nb\n" + PROMPT)
+        self.assertEqual(self.tr.value(), b"a b\n" + PROMPT)
 
     def test_line_typed_during_substitution_runs_after(self) -> None:
         # The typed line is stdin data buffered for the next reader, never a

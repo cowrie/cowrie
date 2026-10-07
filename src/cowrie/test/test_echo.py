@@ -193,12 +193,12 @@ class ShellEchoCommandTests(unittest.TestCase):
     def test_command_substitution_multiple_commands(self) -> None:
         """Test command substitution with multiple commands"""
         self.proto.lineReceived(b"echo $(echo first; echo second)")
-        self.assertEqual(self.tr.value(), b"first\nsecond\n" + PROMPT)
+        self.assertEqual(self.tr.value(), b"first second\n" + PROMPT)
 
     def test_command_substitution_in_middle_multiple(self) -> None:
         """Test command substitution in middle with multiple commands"""
         self.proto.lineReceived(b"echo before $(echo first; echo second) after")
-        self.assertEqual(self.tr.value(), b"before first\nsecond after\n" + PROMPT)
+        self.assertEqual(self.tr.value(), b"before first second after\n" + PROMPT)
 
     def test_command_substitution_space_after_paren(self) -> None:
         """Test command substitution with a space after $( - regression for #40164"""
