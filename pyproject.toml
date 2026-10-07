@@ -96,7 +96,6 @@ dev = [
 "sphinx_rtd_theme==3.1.0",
 "sphinxcontrib-googleanalytics==0.5",
 "tox==4.61.4",
-"types-redis==4.6.0.20241004",
 "yamllint==1.38.0",
 ]
 
@@ -260,6 +259,7 @@ legacy_tox_ini = """
         pika
         rethinkdb
         txmongo
+        txredisapi
 
     commands =
         coverage run -m unittest discover src --verbose
@@ -271,7 +271,7 @@ legacy_tox_ini = """
     # against this build. Remove once the next bcrypt release ships.
     [testenv:py315t]
     deps =
-        coverage
+        {[testenv]deps}
         bcrypt @ git+https://github.com/pyca/bcrypt.git@f9b7febe5c3f31a8559653d23bd3d1a8771bef40
 
     [testenv:pypi]
