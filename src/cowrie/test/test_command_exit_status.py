@@ -177,5 +177,38 @@ class TextToolExitStatusTests(CommandExitStatusTestCase):
         )
 
 
+class MiscCommandExitStatusTests(CommandExitStatusTestCase):
+    def test_sleep(self) -> None:
+        self.check([("sleep", 1), ("sleep abc", 1), ("sleep --bogus", 1)])
+
+    def test_uname(self) -> None:
+        self.check(
+            [
+                ("uname -a", 0),
+                ("uname -Z", 1),
+                ("uname extra", 1),
+                ("uname --bogus", 1),
+            ]
+        )
+
+    def test_which(self) -> None:
+        self.check(
+            [
+                ("which ls", 0),
+                ("which nosuchcmd", 1),
+                ("which ls nosuchcmd", 1),
+            ]
+        )
+
+    def test_groups(self) -> None:
+        self.check([("groups root", 0), ("groups nosuchuser", 1), ("groups -Z", 1)])
+
+    def test_nohup(self) -> None:
+        self.check([("nohup", 125)])
+
+    def test_tar(self) -> None:
+        self.check([("tar xf /nonexistent", 2), ("tar", 2), ("tar xf /etc/passwd", 2)])
+
+
 if __name__ == "__main__":
     unittest.main()

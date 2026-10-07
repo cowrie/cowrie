@@ -38,6 +38,7 @@ class Command_tar(HoneyPotCommand):
         if len(self.args) < 2:
             self.errorWrite("tar: You must specify one of the `-Acdtrux' options\n")
             self.errorWrite("Try `tar --help' or `tar --usage' for more information.\n")
+            self.exit_code = 2
             return
 
         filename = self.args[1]
@@ -57,6 +58,7 @@ class Command_tar(HoneyPotCommand):
             self.errorWrite("tar: Error is not recoverable: exiting now\n")
             self.errorWrite("tar: Child returned status 2\n")
             self.errorWrite("tar: Error exit delayed from previous errors\n")
+            self.exit_code = 2
             return
 
         hpf = self.fs.getfile(path)
@@ -64,6 +66,7 @@ class Command_tar(HoneyPotCommand):
             self.errorWrite("tar: this does not look like a tar archive\n")
             self.errorWrite("tar: skipping to next header\n")
             self.errorWrite("tar: error exit delayed from previous errors\n")
+            self.exit_code = 2
             return
 
         try:
@@ -72,6 +75,7 @@ class Command_tar(HoneyPotCommand):
             self.errorWrite("tar: this does not look like a tar archive\n")
             self.errorWrite("tar: skipping to next header\n")
             self.errorWrite("tar: error exit delayed from previous errors\n")
+            self.exit_code = 2
             return
 
         for f in t:
