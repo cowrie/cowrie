@@ -35,6 +35,8 @@ class Command_grep(HoneyPotCommand):
 
     interactive: bool = False
     matched: bool = False
+    # A file could not be read: grep then exits 2, even if another matched.
+    errored: bool = False
     max_count: int | None = None
     match_count: int = 0
 
@@ -44,6 +46,7 @@ class Command_grep(HoneyPotCommand):
             self.grep_application(contents, match)
         except Exception:
             self.errorWrite(f"grep: {filename}: No such file or directory\n")
+            self.errored = True
 
     def compile_match(self, match: str) -> re.Pattern[bytes]:
         bmatch = os.path.basename(match).replace('"', "").encode("utf8")
@@ -74,7 +77,7 @@ class Command_grep(HoneyPotCommand):
     def start(self) -> None:
         if not self.args:
             self.help()
-            self.exit()
+            self.exit(2)
             return
 
         try:
@@ -94,7 +97,7 @@ class Command_grep(HoneyPotCommand):
         except getopt.GetoptError as err:
             self.errorWrite(f"grep: invalid option -- {err.opt}\n")
             self.help()
-            self.exit()
+            self.exit(2)
             return
 
         for opt, arg in optlist:
@@ -139,7 +142,10 @@ class Command_grep(HoneyPotCommand):
             self.interactive = True
             return
 
-        self.exit(0 if self.matched else 1)
+        if self.errored:
+            self.exit(2)
+        else:
+            self.exit(0 if self.matched else 1)
 
     def lineReceived(self, line: str) -> None:
         self.protocol.events.dispatch(

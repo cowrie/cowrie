@@ -29,7 +29,7 @@ class Command_cut(HoneyPotCommand):
         except getopt.GetoptError as err:
             self.errorWrite(f"cut: invalid option -- '{err.opt}'\n")
             self.errorWrite("Try 'cut --help' for more information.\n")
-            self.exit()
+            self.exit(1)
             return
 
         delimiter = "\t"
@@ -60,7 +60,7 @@ class Command_cut(HoneyPotCommand):
                 "cut: you must specify a list of bytes, characters, or fields\n"
             )
             self.errorWrite("Try 'cut --help' for more information.\n")
-            self.exit()
+            self.exit(1)
             return
 
         self.delimiter = delimiter
@@ -71,7 +71,7 @@ class Command_cut(HoneyPotCommand):
         except ValueError:
             self.errorWrite(f"cut: invalid field value '{field_spec}'\n")
             self.errorWrite("Try 'cut --help' for more information.\n")
-            self.exit()
+            self.exit(1)
             return
 
         if self.input_data:
@@ -85,6 +85,7 @@ class Command_cut(HoneyPotCommand):
                     self._process(contents)
                 except Exception:
                     self.errorWrite(f"cut: {arg}: No such file or directory\n")
+                    self.exit_code = 1
             self.exit()
         # else: wait for stdin via lineReceived / CTRL-D
 

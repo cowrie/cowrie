@@ -130,5 +130,52 @@ class ChmodExitStatusTests(CommandExitStatusTestCase):
         )
 
 
+class TextToolExitStatusTests(CommandExitStatusTestCase):
+    def test_cut(self) -> None:
+        self.check(
+            [
+                ("cut -d: -f1 /etc/passwd", 0),
+                ("cut -f1 /nonexistent", 1),
+                ("cut /etc/passwd", 1),
+                ("cut -Z", 1),
+                ("cut -f abc /etc/passwd", 1),
+            ]
+        )
+
+    def test_base64(self) -> None:
+        self.check(
+            [
+                ("base64 /etc/passwd", 0),
+                ("echo aGk= | base64 -d", 0),
+                ("base64 /nonexistent", 1),
+                ("base64 /tmp", 1),
+                ("base64 -Z", 1),
+                ("base64 /etc/passwd /etc/group", 1),
+                ("echo '!!!' | base64 -d", 1),
+            ]
+        )
+
+    def test_tee(self) -> None:
+        self.check(
+            [
+                ("echo a | tee /dev/null", 0),
+                ("echo a | tee /nonexistent/x", 1),
+                ("echo a | tee /tmp", 1),
+                ("echo a | tee -Z", 1),
+            ]
+        )
+
+    def test_grep(self) -> None:
+        self.check(
+            [
+                ("grep root /etc/passwd", 0),
+                ("grep zzzzqqq /etc/passwd", 1),
+                ("grep x /nonexistent", 2),
+                ("grep root /nonexistent /etc/passwd", 2),
+                ("grep", 2),
+            ]
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
