@@ -127,6 +127,7 @@ class Command_chmod(HoneyPotCommand):
         # parse the command line arguments
         opts, mode, files, getopt_err = self.parse_args()
         if getopt_err:
+            self.exit_code = 1
             return
 
         # if --help or --version is present, we don't care about the rest
@@ -141,11 +142,13 @@ class Command_chmod(HoneyPotCommand):
         # check for presence of mode and files in arguments
         if (not mode or mode.startswith("-")) and not files:
             self.errorWrite("chmod: missing operand\n" + TRY_CHMOD_HELP_MSG)
+            self.exit_code = 1
             return
         if mode and not files:
             self.errorWrite(
                 f"chmod: missing operand after ‘{mode}’\n" + TRY_CHMOD_HELP_MSG
             )
+            self.exit_code = 1
             return
 
         # mode has to match the regex and fit in the permission bits
@@ -153,6 +156,7 @@ class Command_chmod(HoneyPotCommand):
             mode.isdigit() and int(mode, 8) > 0o7777
         ):
             self.errorWrite(f"chmod: invalid mode: ‘{mode}’\n" + TRY_CHMOD_HELP_MSG)
+            self.exit_code = 1
             return
 
         # go through the list of files and check whether they exist
@@ -169,6 +173,7 @@ class Command_chmod(HoneyPotCommand):
                     self.errorWrite(
                         "chmod: cannot access '*': No such file or directory\n"
                     )
+                    self.exit_code = 1
                 for name in names:
                     self.change_mode(name, mode)
             else:
@@ -177,6 +182,7 @@ class Command_chmod(HoneyPotCommand):
                     self.errorWrite(
                         f"chmod: cannot access '{file}': No such file or directory\n"
                     )
+                    self.exit_code = 1
                 else:
                     self.change_mode(file, mode)
 

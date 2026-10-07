@@ -115,5 +115,20 @@ class FileCommandExitStatusTests(CommandExitStatusTestCase):
         )
 
 
+class ChmodExitStatusTests(CommandExitStatusTestCase):
+    def test_chmod(self) -> None:
+        self.check(
+            [
+                ("chmod 644 /etc/passwd", 0),
+                ("chmod --help", 0),
+                ("chmod 755 /nonexistent", 1),
+                ("chmod", 1),
+                ("chmod 644", 1),
+                ("chmod abc /etc/passwd", 1),
+                ("chmod -Z /etc/passwd", 1),
+            ]
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
