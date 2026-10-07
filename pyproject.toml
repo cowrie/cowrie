@@ -271,7 +271,7 @@ legacy_tox_ini = """
     # against this build. Remove once the next bcrypt release ships.
     [testenv:py315t]
     deps =
-        coverage
+        {[testenv]deps}
         bcrypt @ git+https://github.com/pyca/bcrypt.git@f9b7febe5c3f31a8559653d23bd3d1a8771bef40
 
     [testenv:pypi]
