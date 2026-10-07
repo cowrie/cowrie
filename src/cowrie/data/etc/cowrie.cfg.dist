@@ -1061,7 +1061,7 @@ db_file = cowrie.db
 
 # MongoDB logging module
 #
-# MongoDB logging requires an extra Python module: pip install pymongo
+# MongoDB logging requires an extra Python module: pip install txmongo
 #
 [output_mongodb]
 enabled = false
