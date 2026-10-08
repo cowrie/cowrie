@@ -18,7 +18,9 @@ from cowrie.shell import bashparse
 from cowrie.shell.bashparse import (
     BashParser,
     SyntaxError_,
+    _max_nesting_depth,
     gc_collect_threshold,
+    max_nesting_depth,
     parse_timeout_seconds,
 )
 from cowrie.test.test_bashparse import FakeContext
@@ -32,6 +34,7 @@ class ShellParseSafetyConfigTests(unittest.TestCase):
     def tearDown(self) -> None:
         CowrieConfig.remove_option("shell", "gc_collect_threshold")
         CowrieConfig.remove_option("shell", "parse_timeout_seconds")
+        CowrieConfig.remove_option("shell", "max_nesting_depth")
 
     def test_gc_threshold_default_and_override(self) -> None:
         self.assertEqual(gc_collect_threshold(), 512)
@@ -42,6 +45,11 @@ class ShellParseSafetyConfigTests(unittest.TestCase):
         self.assertEqual(parse_timeout_seconds(), 10.0)
         CowrieConfig.set("shell", "parse_timeout_seconds", "2.5")
         self.assertEqual(parse_timeout_seconds(), 2.5)
+
+    def test_nesting_default_and_override(self) -> None:
+        self.assertEqual(max_nesting_depth(), 16)
+        CowrieConfig.set("shell", "max_nesting_depth", "8")
+        self.assertEqual(max_nesting_depth(), 8)
 
 
 class GarbageCollectionTests(unittest.TestCase):
@@ -61,6 +69,44 @@ class GarbageCollectionTests(unittest.TestCase):
         with patch("cowrie.shell.bashparse.gc.collect") as collect:
             self.parser.parse("echo hi")
         collect.assert_not_called()
+
+
+class NestingDepthTests(unittest.TestCase):
+    """Deeply nested ``(...)`` / ``$(...)`` is rejected before the Earley
+    parse, whose cost grows far faster than linearly with nesting depth and
+    can otherwise hang the reactor for every session (issue #40389)."""
+
+    def setUp(self) -> None:
+        self.parser = BashParser(FakeContext())
+
+    def test_rejects_deeply_nested_command_substitution(self) -> None:
+        line = "$(" * 100 + "echo hi" + ")" * 100
+        with patch("cowrie.shell.bashparse._parser.parse") as parse_mock:
+            result = self.parser.parse(line)
+        parse_mock.assert_not_called()
+        self.assertIsInstance(result[0], SyntaxError_)
+
+    def test_rejects_deeply_nested_subshell(self) -> None:
+        line = "(" * 100 + "echo hi" + ")" * 100
+        with patch("cowrie.shell.bashparse._parser.parse") as parse_mock:
+            result = self.parser.parse(line)
+        parse_mock.assert_not_called()
+        self.assertIsInstance(result[0], SyntaxError_)
+
+    def test_moderate_nesting_still_parses(self) -> None:
+        result = self.parser.parse("echo $(echo $(echo deep))")
+        self.assertNotIsInstance(result[0], SyntaxError_)
+
+    def test_quoted_parentheses_do_not_count(self) -> None:
+        line = 'echo "' + "(" * 100 + ")" * 100 + '"'
+        result = self.parser.parse(line)
+        self.assertNotIsInstance(result[0], SyntaxError_)
+
+    def test_depth_measurement(self) -> None:
+        self.assertEqual(_max_nesting_depth("echo hi"), 0)
+        self.assertEqual(_max_nesting_depth("$(a)"), 1)
+        self.assertEqual(_max_nesting_depth("$( $( x ) )"), 2)
+        self.assertEqual(_max_nesting_depth('echo "( )"'), 0)
 
 
 @unittest.skipUnless(bashparse._HAS_PARSE_ALARM, "requires POSIX interval timers")

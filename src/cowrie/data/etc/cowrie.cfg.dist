@@ -647,6 +647,15 @@ ssh_version = OpenSSH_7.9p1, OpenSSL 1.1.1a  20 Nov 2018
 # (default: 16384)
 #max_input_size = 16384
 
+# Maximum parenthesis / $(...) / backtick nesting depth accepted in one shell
+# input. The Earley parse cost grows far faster than linearly with nesting
+# depth, so a single line of deeply nested subshells ("(((...)))") or command
+# substitutions ("$($($(...)))") can otherwise stall every session on the
+# reactor. No legitimate interactive command approaches this depth; deeper
+# input is refused with a syntax error before it reaches the parser.
+# (default: 16)
+#max_nesting_depth = 16
+
 # Length in characters of shell input that triggers a garbage-collection sweep after
 # parsing. Lark's Earley parser creates cyclic intermediate structures, which
 # normal reference counting cannot promptly reclaim. Set to 0 to collect after
