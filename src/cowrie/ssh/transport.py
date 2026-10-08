@@ -19,7 +19,7 @@ import zlib
 from typing import Any
 
 from twisted.conch.ssh import transport
-from twisted.conch.ssh.common import getNS
+from twisted.conch.ssh.common import NS, getNS
 from twisted.internet.protocol import connectionDone
 from twisted.logger import Logger
 from twisted.protocols.policies import ProtocolWrapper, TimeoutMixin
@@ -150,6 +150,13 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         self.buf = self.buf + data
         if not self.gotVersion:
+            if len(self.buf) > 4096:
+                self.sendDisconnect(
+                    transport.DISCONNECT_CONNECTION_LOST,
+                    b"Peer version string longer than 4KB. "
+                    b"Preventing a denial of service attack.",
+                )
+                return
             if b"\n" not in self.buf:
                 return
             self.otherVersionString: bytes = self.buf.split(b"\n")[0].strip()
@@ -311,7 +318,10 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     def sendDisconnect(self, reason, desc):
         """
         http://kbyte.snowpenguin.org/portal/2013/04/30/kippo-protocol-mismatch-workaround/
-        Workaround for the "bad packet length" error message.
+        Workaround for the "bad packet length" error message, and single-line
+        logging for all disconnect reasons.  Twisted's own sendDisconnect()
+        logs with an embedded newline that splits the event across two
+        physical log lines; this override keeps every disconnect as one event.
 
         @param reason: the reason for the disconnect.  Should be one of the
                        DISCONNECT_* values.
@@ -320,16 +330,20 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         @type desc: C{str}
         """
         if b"bad packet length" not in desc:
-            transport.SSHServerTransport.sendDisconnect(self, reason, desc)
-        else:
-            # this message is used to detect Cowrie behaviour
-            # self.transport.write(b"Packet corrupt\n")
-            self._log.info(
-                "[SERVER] - Disconnecting with error, code {code} reason: {desc}",
-                code=reason,
-                desc=desc,
+            # Send the SSH_MSG_DISCONNECT packet for all non-fingerprinting
+            # reasons (matching Twisted's wire behavior).
+            self.sendPacket(
+                transport.MSG_DISCONNECT,
+                struct.pack(">L", reason) + NS(desc) + NS(b""),
             )
-            self.transport.loseConnection()
+        # Log as a single line — Twisted's own sendDisconnect() embeds a \n
+        # that splits the event across two physical log lines.
+        self._log.info(
+            "Disconnecting with error, code {code} reason: {desc}",
+            code=reason,
+            desc=desc,
+        )
+        self.transport.loseConnection()
 
     def receiveError(self, reasonCode, description):
         """
