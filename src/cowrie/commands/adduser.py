@@ -7,8 +7,6 @@ from __future__ import annotations
 
 import random
 
-from twisted.internet import reactor
-
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
@@ -83,7 +81,7 @@ class Command_adduser(HoneyPotCommand):
             self.schedule_next()
 
     def schedule_next(self) -> None:
-        self.scheduled = reactor.callLater(0.5 + random.random() * 1, self.do_output)
+        self.scheduled = self.callLater(0.5 + random.random() * 1, self.do_output)
 
     def lineReceived(self, line: str) -> None:
         if self.item + 1 == len(self.output) and line.strip() in ("n", "no"):

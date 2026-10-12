@@ -3,12 +3,15 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 # ABOUTME: Tests for cowrie/shell/command.py, the command base class.
-# ABOUTME: Verifies exit() semantics, in particular that a late second exit is safe.
+# ABOUTME: Verifies exit() semantics and that disconnecting stops a command's timers.
 
 from __future__ import annotations
 
 import os
 import unittest
+from typing import Any
+
+from twisted.internet import reactor
 
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
@@ -58,3 +61,64 @@ class ExitTests(unittest.TestCase):
             output_after_first_exit,
             "a late second exit() must not resume the shell again",
         )
+
+
+class ConnectionLostTests(unittest.TestCase):
+    """Disconnecting stops every timer a running command holds.
+
+    A command that paces itself with the reactor is never sent Ctrl-C when the
+    client goes away. Without teardown its scheduled call keeps firing into the
+    dead session: ping without -c once a second and yes a hundred times a
+    second, each tick logging a failed terminal write, for as long as the
+    process runs.
+    """
+
+    def setUp(self) -> None:
+        self.baseline = self.active_calls()
+        self.sessions: list[HoneyPotInteractiveProtocol] = []
+
+    def tearDown(self) -> None:
+        for proto in self.sessions:
+            proto.connectionLost()
+        for call in self.new_calls():
+            call.cancel()
+
+    def active_calls(self) -> set[Any]:
+        return {call for call in reactor.getDelayedCalls() if call.active()}
+
+    def new_calls(self) -> set[Any]:
+        return self.active_calls() - self.baseline
+
+    def session(self, *lines: str) -> HoneyPotInteractiveProtocol:
+        proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        proto.makeConnection(FakeTransport("", "31337"))
+        self.sessions.append(proto)
+        # The idle timeout is the session's own timer, not a command's.
+        self.baseline |= self.active_calls()
+        for line in lines:
+            proto.lineReceived(line.encode())
+        return proto
+
+    def test_disconnect_cancels_command_timers(self) -> None:
+        for lines in (
+            ("ping 1.1.1.1",),
+            ("yes",),
+            ("sleep 100",),
+            ("adduser bob",),
+            ("shutdown -h now",),
+            ("reboot",),
+            ("apt-get install nano",),
+            ("yum install nano",),
+            ("ssh root@1.2.3.4", "yes", "secret"),
+        ):
+            with self.subTest(command=lines[0]):
+                proto = self.session(*lines)
+                self.assertTrue(self.new_calls(), "command scheduled nothing")
+                proto.connectionLost()
+                self.assertEqual(self.new_calls(), set())
+
+    def test_disconnect_after_timer_fired_is_safe(self) -> None:
+        proto = self.session("sleep 0")
+        reactor.runUntilCurrent()  # type: ignore[attr-defined]
+        self.assertEqual(self.new_calls(), set())
+        proto.connectionLost()
