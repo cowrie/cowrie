@@ -233,6 +233,81 @@ def max_input_size() -> int:
     return CowrieConfig.getint("shell", "max_input_size", fallback=16384)
 
 
+def max_nesting_depth() -> int:
+    """Maximum parenthesis / ``$(...)`` / backtick nesting depth accepted in
+    one shell parse ([shell] max_nesting_depth). The Earley parse cost grows
+    far faster than linearly with how deeply parenthesised groups and command
+    substitutions are nested, so a single line of ``(((...)))`` or
+    ``$($($(...)))`` can otherwise hang the reactor for every session. No
+    legitimate interactive command approaches this depth, so such input is
+    rejected before it reaches the grammar (issue #40389)."""
+    return CowrieConfig.getint("shell", "max_nesting_depth", fallback=16)
+
+
+def _skip_single_quoted(line: str, start: int) -> int:
+    """Return the index just past the single-quoted region opened at ``start``."""
+    end = start + 1
+    while end < len(line) and line[end] != "'":
+        end += 1
+    return end + 1
+
+
+def _skip_double_quoted(line: str, start: int) -> int:
+    """Return the index just past the double-quoted region opened at ``start``,
+    treating ``\\x`` as an escaped character so a quote after a backslash does
+    not close the region."""
+    end = start + 1
+    while end < len(line) and line[end] != '"':
+        if line[end] == "\\":
+            end += 1
+        end += 1
+    return end + 1
+
+
+def _nesting_step(
+    ch: str, depth: int, maximum: int, in_backtick: bool
+) -> tuple[int, int, bool]:
+    """Apply one significant character (``(``, ``)`` or a backtick) to the
+    nesting state, returning the new ``(depth, maximum, in_backtick)``."""
+    if ch == "(":
+        depth += 1
+        return depth, max(maximum, depth), in_backtick
+    if ch == ")":
+        return max(depth - 1, 0), maximum, in_backtick
+    if ch == "`":
+        if in_backtick:
+            return max(depth - 1, 0), maximum, False
+        return depth + 1, max(maximum, depth + 1), True
+    return depth, maximum, in_backtick
+
+
+def _max_nesting_depth(line: str) -> int:
+    """Cheap linear scan of the maximum ``(...)`` / ``$(...)`` / backtick
+    nesting depth in ``line``, ignoring quoted and backslash-escaped text so a
+    parenthesis inside a word does not count. Runs before the Earley parse;
+    see :func:`max_nesting_depth`.
+    """
+    depth = 0
+    maximum = 0
+    in_backtick = False
+    i = 0
+    n = len(line)
+    while i < n:
+        ch = line[i]
+        if ch == "\\":
+            i += 2  # skip the escaped character
+        elif ch == "'":
+            i = _skip_single_quoted(line, i)
+        elif ch == '"':
+            i = _skip_double_quoted(line, i)
+        else:
+            depth, maximum, in_backtick = _nesting_step(
+                ch, depth, maximum, in_backtick
+            )
+            i += 1
+    return maximum
+
+
 def gc_collect_threshold() -> int:
     """Input length in characters that triggers post-parse garbage collection.
 
@@ -548,6 +623,20 @@ class BashParser:
         timed_out = False
         try:
             with _parse_alarm(parse_timeout_seconds()):
+                # Reject implausibly deep nesting before the Earley parse: its
+                # cost grows far faster than linearly with nesting depth, so a
+                # single line can otherwise stall every session (issue #40389).
+                depth = _max_nesting_depth(line)
+                if depth > max_nesting_depth():
+                    self._log.warn(
+                        "Rejecting shell input with excessive nesting depth {depth} > {limit} (input: {length} characters)",
+                        depth=depth,
+                        limit=max_nesting_depth(),
+                        length=len(line),
+                    )
+                    return [
+                        SyntaxError_(token="", lineno=self._end_line(line))
+                    ]
                 tree = _parser.parse(line)
         except UnexpectedCharacters as error:
             return [
