@@ -231,6 +231,13 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         # get version from start of communication; check if valid and supported by Twisted
         if not self.gotVersion:
+            if len(self.buf) > 4096:
+                self.sendDisconnect(
+                    transport.DISCONNECT_CONNECTION_LOST,
+                    b"Peer version string longer than 4KB. "
+                    b"Preventing a denial of service attack.",
+                )
+                return
             if b"\n" not in self.buf:
                 return
             self.otherVersionString = self.buf.split(b"\n")[0].strip()

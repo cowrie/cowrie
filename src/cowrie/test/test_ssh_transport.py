@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 # ABOUTME: Tests for the SSH transport's handling of untrusted client bytes.
-# ABOUTME: Covers KEXINIT name-lists with non-printable bytes and disconnect logging.
+# ABOUTME: Covers KEXINIT name-lists with non-printable bytes, disconnect logging
+# ABOUTME: and the cap on an unterminated client identification line.
 
 from __future__ import annotations
 
@@ -137,6 +138,26 @@ class TestSendDisconnect(unittest.TestCase):
 
         self.assertNotIn("\n", log.info.call_args.args[0])
         send_packet.assert_not_called()
+        t.transport.loseConnection.assert_called_once()
+
+
+class TestVersionStringCap(unittest.TestCase):
+    """A client that never ends its identification line is cut off at 4 KiB."""
+
+    def _transport(self) -> ssh_transport.HoneyPotSSHTransport:
+        t = ssh_transport.HoneyPotSSHTransport()
+        t.transport = MagicMock()
+        t._log = MagicMock()
+        t.buf = b""
+        return t
+
+    def test_over_cap_without_newline_disconnects(self) -> None:
+        t = self._transport()
+
+        with patch.object(t, "sendPacket") as send_packet:
+            t.dataReceived(b"A" * 4097)
+
+        self.assertEqual(send_packet.call_args.args[0], MSG_DISCONNECT)
         t.transport.loseConnection.assert_called_once()
 
 

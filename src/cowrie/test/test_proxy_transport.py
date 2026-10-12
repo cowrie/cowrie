@@ -106,5 +106,19 @@ class TestVersionParsing(unittest.TestCase):
         self.assertFalse(t.gotVersion)
 
 
+class TestVersionStringCap(unittest.TestCase):
+    """A client that never ends its identification line is cut off at 4 KiB."""
+
+    def test_over_cap_without_newline_disconnects(self) -> None:
+        t, connection = _transport()
+        t.buf = b""
+
+        with patch.object(t, "sendPacket") as send_packet:
+            t.dataReceived(b"A" * 4097)
+
+        self.assertEqual(send_packet.call_args.args[0], transport.MSG_DISCONNECT)
+        connection.loseConnection.assert_called_once()
+
+
 if __name__ == "__main__":
     unittest.main()
