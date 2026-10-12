@@ -18,8 +18,10 @@ from unittest.mock import Mock, patch
 import txredisapi
 from twisted.internet import error
 from twisted.internet.address import IPv4Address
+from twisted.internet.interfaces import IHostnameResolver
 from twisted.internet.testing import MemoryReactorClock, StringTransport
 from twisted.python.failure import Failure
+from zope.interface import implementer
 
 from cowrie.output import redis
 
@@ -62,13 +64,32 @@ def _parse_commands(data: bytes) -> list[list[str]]:
     return commands
 
 
-class Server:
-    """The server side of one Redis connection, scripted command by command."""
+@implementer(IHostnameResolver)
+class RecordingResolver:
+    """Records the names looked up, then resolves them like the reactor would."""
 
-    def __init__(self, reactor: MemoryReactorClock) -> None:
-        factory: Any = reactor.tcpClients[0][2]
-        factory.clock = reactor
-        proto = factory.buildProtocol(IPv4Address("TCP", "10.0.0.1", 6380))
+    def __init__(self, resolver: IHostnameResolver) -> None:
+        self.resolver = resolver
+        self.names: list[tuple[str, int]] = []
+
+    def resolveHostName(
+        self, receiver: Any, hostName: str, portNumber: int = 0, *args: Any
+    ) -> Any:
+        self.names.append((hostName, portNumber))
+        return self.resolver.resolveHostName(receiver, hostName, portNumber, *args)
+
+
+class Server:
+    """
+    The server side of one Redis connection, scripted command by command.
+
+    The connection is handed straight to txredisapi's factory, so the test
+    is not tied to how it dials and redials the server.
+    """
+
+    def __init__(self, reactor: MemoryReactorClock, out: redis.Output) -> None:
+        self.reactor = reactor
+        proto = out.redis._factory.buildProtocol(IPv4Address("TCP", "10.0.0.1", 6380))
         assert proto is not None
         self.proto = proto
         self.transport = StringTransport()
@@ -76,6 +97,8 @@ class Server:
 
     def commands(self, reply: bytes = b":1\r\n") -> list[list[str]]:
         """Answer every command sent since last call; return them in order."""
+        # txredisapi hands a fresh connection to the pool on the next reactor turn.
+        self.reactor.advance(0)
         commands = _parse_commands(self.transport.value())
         self.transport.clear()
         for _ in commands:
@@ -89,6 +112,8 @@ class Server:
 class RedisOutputTests(unittest.TestCase):
     def setUp(self) -> None:
         self.reactor = MemoryReactorClock()
+        self.resolver = RecordingResolver(self.reactor.nameResolver)
+        self.reactor.installNameResolver(self.resolver)
         target = patch.object(txredisapi, "reactor", self.reactor)
         target.start()
         self.addCleanup(target.stop)
@@ -101,25 +126,26 @@ class RedisOutputTests(unittest.TestCase):
         self.addCleanup(out.stop)
         return out
 
-    def connected(self) -> Server:
-        server = Server(self.reactor)
+    def connected(self, out: redis.Output) -> Server:
+        server = Server(self.reactor, out)
         self.assertEqual(server.commands(reply=b"+OK\r\n"), [["SELECT", "0"]])
         return server
 
     def test_connects_to_configured_host_and_port(self) -> None:
         self.start()
-        host, port, _, _, _ = self.reactor.tcpClients[0]
-        self.assertEqual((host, port), ("redis.example", 6380))
+        self.assertEqual(self.resolver.names, [("redis.example", 6380)])
+        _, port, _, _, _ = self.reactor.tcpClients[0]
+        self.assertEqual(port, 6380)
 
     def test_authenticates_and_selects_configured_db(self) -> None:
-        self.start(password="secret", db=3)
-        server = Server(self.reactor)
+        out = self.start(password="secret", db=3)
+        server = Server(self.reactor, out)
         self.assertEqual(server.commands(reply=b"+OK\r\n"), [["AUTH", "secret"]])
         self.assertEqual(server.commands(reply=b"+OK\r\n"), [["SELECT", "3"]])
 
     def test_lpush_is_the_default_send_method(self) -> None:
         out = self.start()
-        server = self.connected()
+        server = self.connected(out)
         out.write({"eventid": "cowrie.session.connect", "log_level": "info"})
         ((command, key, message),) = server.commands()
         self.assertEqual((command, key), ("LPUSH", "events"))
@@ -128,16 +154,15 @@ class RedisOutputTests(unittest.TestCase):
     def test_configured_send_methods(self) -> None:
         for method in ("rpush", "publish"):
             with self.subTest(method=method):
-                self.reactor.tcpClients.clear()
                 out = self.start(send_method=method)
-                server = self.connected()
+                server = self.connected(out)
                 out.write({"eventid": "e"})
                 ((command, key, _),) = server.commands()
                 self.assertEqual((command, key), (method.upper(), "events"))
 
     def test_unknown_send_method_falls_back_to_lpush(self) -> None:
         out = self.start(send_method="sadd")
-        server = self.connected()
+        server = self.connected(out)
         out.write({"eventid": "e"})
         self.assertEqual(server.commands()[0][0], "LPUSH")
 
@@ -145,18 +170,18 @@ class RedisOutputTests(unittest.TestCase):
         out = self.start()
         for eventid in ("a", "b", "c"):
             out.write({"eventid": eventid})
-        server = self.connected()
+        server = self.connected(out)
         self.assertEqual(
             [json.loads(c[2])["eventid"] for c in server.commands()], ["a", "b", "c"]
         )
 
     def test_events_after_connection_loss_are_sent_after_reconnect(self) -> None:
         out = self.start()
-        first = self.connected()
+        first = self.connected(out)
         first.lose()
         out.write({"eventid": "during-outage"})
         self.assertEqual(first.transport.value(), b"")
-        second = self.connected()
+        second = self.connected(out)
         self.assertEqual(
             [json.loads(c[2])["eventid"] for c in second.commands()], ["during-outage"]
         )
@@ -167,7 +192,7 @@ class RedisOutputTests(unittest.TestCase):
         for eventid in ("a", "b", "c"):
             out.write({"eventid": eventid})
         self.assertEqual(out.dropped, 1)
-        server = self.connected()
+        server = self.connected(out)
         self.assertEqual(
             [json.loads(c[2])["eventid"] for c in server.commands()], ["a", "b"]
         )
@@ -176,7 +201,7 @@ class RedisOutputTests(unittest.TestCase):
 
     def test_error_reply_is_logged_and_released(self) -> None:
         out = self.start()
-        server = self.connected()
+        server = self.connected(out)
         out.write({"eventid": "a"})
         with patch.object(out, "_log") as log:
             server.commands(reply=b"-WRONGTYPE Operation against a key\r\n")
@@ -186,8 +211,9 @@ class RedisOutputTests(unittest.TestCase):
 
     def test_stop_disconnects(self) -> None:
         out = self.start()
-        server = self.connected()
+        server = self.connected(out)
         out.stop()
+        self.reactor.advance(0)
         self.assertTrue(server.transport.disconnecting)
 
 
