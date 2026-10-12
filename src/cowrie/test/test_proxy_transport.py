@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from twisted.conch.ssh import transport
 
@@ -26,7 +26,8 @@ def _transport() -> tuple[FrontendSSHTransport, MagicMock]:
 
 
 class TestSendDisconnect(unittest.TestCase):
-    """A bad packet length must not draw a fingerprintable reply."""
+    """A bad packet length must not draw a fingerprintable reply, and every
+    reason is logged on one line."""
 
     def test_bad_packet_length_writes_nothing(self) -> None:
         # "Packet corrupt" is a documented Cowrie tell: no real SSH server
@@ -36,6 +37,19 @@ class TestSendDisconnect(unittest.TestCase):
         t.sendDisconnect(transport.DISCONNECT_PROTOCOL_ERROR, b"bad packet length")
 
         connection.write.assert_not_called()
+        connection.loseConnection.assert_called_once()
+
+    def test_other_reasons_log_one_line_and_send_disconnect(self) -> None:
+        # Twisted's own sendDisconnect() logs "code N\nreason: ..." so the
+        # event lands in the log file as two physical lines.
+        t, connection = _transport()
+        t._log = log = MagicMock()
+
+        with patch.object(t, "sendPacket") as send_packet:
+            t.sendDisconnect(transport.DISCONNECT_PROTOCOL_ERROR, b"bad decryption")
+
+        self.assertNotIn("\n", log.info.call_args.args[0])
+        self.assertEqual(send_packet.call_args.args[0], transport.MSG_DISCONNECT)
         connection.loseConnection.assert_called_once()
 
 
