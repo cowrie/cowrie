@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import os
+import stat
 import tempfile
 import unittest
 from typing import ClassVar
@@ -60,6 +61,7 @@ class ScriptExecutionTests(unittest.TestCase):
     def test_dotslash_with_shebang_executes(self) -> None:
         """./script.sh with #!/bin/sh shebang executes."""
         self.proto.lineReceived(b'printf "#!/bin/sh\\necho from_script\\n" > run.sh')
+        self.proto.lineReceived(b"chmod +x run.sh")
         self.tr.clear()
         self.proto.lineReceived(b"./run.sh")
         self.assertEqual(self.tr.value(), b"from_script\n" + PROMPT)
@@ -67,6 +69,7 @@ class ScriptExecutionTests(unittest.TestCase):
     def test_dotslash_without_shebang_executes(self) -> None:
         """./file without shebang executes as shell script (kernel ENOEXEC fallback)."""
         self.proto.lineReceived(b'echo "echo no_shebang" > noshebang.sh')
+        self.proto.lineReceived(b"chmod +x noshebang.sh")
         self.tr.clear()
         self.proto.lineReceived(b"./noshebang.sh")
         self.assertEqual(self.tr.value(), b"no_shebang\n" + PROMPT)
@@ -75,6 +78,7 @@ class ScriptExecutionTests(unittest.TestCase):
         """./file with null bytes emits 'cannot execute binary file'."""
         # Use printf to write a null byte into the file
         self.proto.lineReceived(b'printf "\\x00ELF" > binfile')
+        self.proto.lineReceived(b"chmod +x binfile")
         self.tr.clear()
         self.proto.lineReceived(b"./binfile")
         output = self.tr.value()
@@ -106,6 +110,7 @@ class ScriptExecutionTests(unittest.TestCase):
         """Scripts test `cmd || fallback`; a binary that cannot run must
         fail with bash's status for ENOEXEC."""
         self.proto.lineReceived(b'printf "\\x00ELF" > binfile')
+        self.proto.lineReceived(b"chmod +x binfile")
         self.tr.clear()
         self.proto.lineReceived(b"./binfile; echo rc=$?")
         self.assertIn(b"rc=126\n", self.tr.value())
@@ -113,6 +118,7 @@ class ScriptExecutionTests(unittest.TestCase):
     def test_binary_file_error_names_the_path_as_typed(self) -> None:
         """bash reports a relative path the way it was typed, not resolved."""
         self.proto.lineReceived(b'printf "\\x00ELF" > binfile')
+        self.proto.lineReceived(b"chmod +x binfile")
         self.tr.clear()
         self.proto.lineReceived(b"./binfile")
         self.assertEqual(
@@ -161,6 +167,7 @@ class ScriptExecutionTests(unittest.TestCase):
     def test_absolute_path_with_shebang(self) -> None:
         """Absolute path /tmp/script.sh with shebang executes."""
         self.proto.lineReceived(b'printf "#!/bin/sh\\necho absolute\\n" > /tmp/abs.sh')
+        self.proto.lineReceived(b"chmod +x /tmp/abs.sh")
         self.tr.clear()
         self.proto.lineReceived(b"/tmp/abs.sh")
         self.assertEqual(self.tr.value(), b"absolute\n" + PROMPT)
@@ -308,3 +315,42 @@ class AsyncScriptExecutionTests(unittest.TestCase):
         _AsyncCommand.pending[0].finish()  # must not raise
         self.assertEqual(len(self.proto.cmdstack), 1)
         self.assertTrue(self.tr.value().endswith(PROMPT))
+
+
+class ExecuteBitTests(unittest.TestCase):
+    """Running a file by path needs an applicable execute bit, as exec() does."""
+
+    def _protocol(
+        self, uid: int = 0
+    ) -> tuple[HoneyPotInteractiveProtocol, FakeTransport]:
+        avatar = FakeAvatar(FakeServer())
+        avatar.uid = avatar.gid = uid
+        proto = HoneyPotInteractiveProtocol(avatar)
+        tr = FakeTransport("", "31337")
+        proto.makeConnection(tr)
+        tr.clear()
+        self.addCleanup(proto.connectionLost)
+        return proto, tr
+
+    def test_file_without_execute_bit_is_refused_even_for_root(self) -> None:
+        # A redirect creates a 644 file; bash's exec fails with EACCES and
+        # status 126, and root is not exempt when no execute bit is set at all.
+        proto, tr = self._protocol()
+        proto.lineReceived(b'echo "echo hi" > /tmp/f')
+        tr.clear()
+        proto.lineReceived(b"/tmp/f; echo rc=$?")
+        self.assertEqual(
+            tr.value(), b"-bash: /tmp/f: Permission denied\nrc=126\n" + PROMPT
+        )
+
+    def test_other_user_needs_the_other_execute_bit(self) -> None:
+        proto, tr = self._protocol(uid=1000)
+        proto.fs.mkfile("/tmp/f", 0, 0, 0, stat.S_IFREG | 0o750)
+        proto.lineReceived(b"/tmp/f; echo rc=$?")
+        self.assertIn(b"-bash: /tmp/f: Permission denied\nrc=126\n", tr.value())
+
+        proto.fs.chmod("/tmp/f", 0o751)
+        tr.clear()
+        proto.lineReceived(b"/tmp/f; echo rc=$?")
+        self.assertIn(b"rc=0\n", tr.value())
+        self.assertNotIn(b"Permission denied", tr.value())
