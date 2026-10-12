@@ -60,7 +60,7 @@ class OversizedScriptFileTests(InputSizeTestCase):
         with tempfile.NamedTemporaryFile(delete=False) as f:
             f.write(contents)
             self._tempfiles.append(f.name)
-        self.proto.fs.mkfile(path, 0, 0, len(contents), 0o644)
+        self.proto.fs.mkfile(path, 0, 0, len(contents), 0o755)
         self.proto.fs.update_realfile(self.proto.fs.getfile(path), f.name)
 
     def test_sh_refuses_oversized_script(self) -> None:

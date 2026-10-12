@@ -419,6 +419,24 @@ class HoneyPotFilesystem:
         )
         self.newcount += 1
 
+    def is_executable(self, path: str, uid: int, gid: int) -> bool:
+        """
+        Return True if the user uid/gid may execute the file at path, picking
+        the owner, group or other execute bit the way the kernel does. Root may
+        execute any file that has at least one execute bit set.
+        """
+        f: Node | None = self.getfile(path)
+        if f is None:
+            return False
+        mode = f[A_MODE]
+        if uid == 0:
+            return bool(mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH))
+        if f[A_UID] == uid:
+            return bool(mode & stat.S_IXUSR)
+        if f[A_GID] == gid:
+            return bool(mode & stat.S_IXGRP)
+        return bool(mode & stat.S_IXOTH)
+
     def isfile(self, path: str) -> bool:
         """
         Return True if path is an existing regular file. This follows symbolic
