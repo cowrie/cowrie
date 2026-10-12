@@ -54,7 +54,9 @@ class Command_scp(HoneyPotCommand):
         self.out_dir = ""
 
         for opt in optlist:
-            if opt[0] == "-d":
+            # -d takes no getopt argument of its own; the target directory is
+            # the first positional argument, which need not be there.
+            if opt[0] == "-d" and args:
                 self.out_dir = args[0]
                 break
 
