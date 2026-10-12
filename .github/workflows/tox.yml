@@ -94,19 +94,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12", "3.13", "3.14", "3.14t"]
+        python-version: ["3.11", "3.12", "3.13", "3.14", "3.14t", "3.15", "3.15t"]
         experimental: [false]
-        prerelease: [false]
         include:
-          - python-version: "3.15"
-            experimental: true
-            prerelease: true
-          - python-version: "3.15t"
-            experimental: true
-            prerelease: true
           - python-version: "pypy-3.11"
             experimental: true
-            prerelease: false
     continue-on-error: ${{ matrix.experimental }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -117,7 +109,6 @@ jobs:
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: ${{ matrix.python-version }}
-          allow-prereleases: ${{ matrix.prerelease }}
           cache: pip
 
       # bcrypt 5.0.0 has no free-threaded 3.15 wheel and its vendored pyo3
