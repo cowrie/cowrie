@@ -9,8 +9,6 @@ import getopt
 import random
 from typing import TYPE_CHECKING
 
-from twisted.internet import reactor
-
 from cowrie.core.artifact import temp_download_path
 from cowrie.shell.command import HoneyPotCommand
 
@@ -135,7 +133,7 @@ class Command_gcc(HoneyPotCommand):
             timeout = 0.1 + random.random()
 
             # Schedule call to make it more time consuming and real
-            self.scheduled = reactor.callLater(
+            self.scheduled = self.callLater(
                 timeout, self.generate_file, (output_file if output_file else "a.out")
             )
         else:

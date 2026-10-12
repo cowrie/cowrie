@@ -12,8 +12,6 @@ import re
 import socket
 from typing import Any
 
-from twisted.internet import reactor
-
 from cowrie.shell.command import HoneyPotCommand
 
 commands = {}
@@ -89,7 +87,7 @@ class Command_ping(HoneyPotCommand):
 
         self.running = True
         self.write(f"PING {self.host} ({self.ip}) 56(84) bytes of data.\n")
-        self.scheduled = reactor.callLater(0.2, self.showreply)
+        self.scheduled = self.callLater(0.2, self.showreply)
         self.count = 0
 
     def showreply(self) -> None:
@@ -105,7 +103,7 @@ class Command_ping(HoneyPotCommand):
             self.exit()
             return
         else:
-            self.scheduled = reactor.callLater(1, self.showreply)
+            self.scheduled = self.callLater(1, self.showreply)
 
     def printstatistics(self) -> None:
         self.write(f"--- {self.host} ping statistics ---\n")

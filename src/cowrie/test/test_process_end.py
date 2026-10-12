@@ -16,10 +16,8 @@ from unittest.mock import patch
 from twisted.internet import task
 from twisted.internet.protocol import connectionDone
 
-from cowrie.commands import base as base_command
-from cowrie.commands import sleep as sleep_command
 from cowrie.insults import insults
-from cowrie.shell import protocol
+from cowrie.shell import command, protocol
 from cowrie.test.eventcapture import CaptureSink, make_exec_transport
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
@@ -92,7 +90,7 @@ class ExecProcessEndTests(unittest.TestCase):
 
     def test_timeout_ends_a_running_command(self) -> None:
         clock = task.Clock()
-        with patch.object(sleep_command, "reactor", clock):
+        with patch.object(command, "reactor", clock):
             lsp, ended = self.start(b"sleep 5")
         self.assertEqual(ended, [])
         lsp.terminalProtocol.timeoutConnection()
@@ -102,7 +100,7 @@ class ExecProcessEndTests(unittest.TestCase):
         # A command that outlives the client (here a sleep, as a download
         # would) finishes with no channel left to report its status to.
         clock = task.Clock()
-        with patch.object(sleep_command, "reactor", clock):
+        with patch.object(command, "reactor", clock):
             lsp, ended = self.start(b"sleep 1")
         lsp.connectionLost(connectionDone)
         clock.advance(1)
@@ -159,7 +157,7 @@ class DelayedShutdownTests(unittest.TestCase):
 
     def setUp(self) -> None:
         self.clock = task.Clock()
-        reactor_patch = patch.object(base_command, "reactor", self.clock)
+        reactor_patch = patch.object(command, "reactor", self.clock)
         reactor_patch.start()
         self.addCleanup(reactor_patch.stop)
 
