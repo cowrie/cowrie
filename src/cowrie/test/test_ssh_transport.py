@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 # ABOUTME: Tests for the SSH transport's handling of untrusted client bytes.
-# ABOUTME: Covers KEXINIT algorithm name-lists carrying non-printable bytes.
+# ABOUTME: Covers KEXINIT name-lists with non-printable bytes, disconnect logging
+# ABOUTME: and the cap on an unterminated client identification line.
 
 from __future__ import annotations
 
@@ -12,7 +13,11 @@ from hashlib import md5
 from unittest.mock import MagicMock, patch
 
 from twisted.conch.ssh.common import NS
-from twisted.conch.ssh.transport import MSG_SERVICE_REQUEST
+from twisted.conch.ssh.transport import (
+    DISCONNECT_PROTOCOL_ERROR,
+    MSG_DISCONNECT,
+    MSG_SERVICE_REQUEST,
+)
 
 from cowrie.ssh import transport as ssh_transport
 from cowrie.test.eventcapture import capture_events
@@ -102,6 +107,58 @@ class TestMalformedPacket(unittest.TestCase):
         assert event is not None
         self.assertEqual(event["messagenum"], MSG_SERVICE_REQUEST)
         self.assertEqual(event["datalen"], 3)
+
+
+class TestSendDisconnect(unittest.TestCase):
+    """Every disconnect reason is logged on one line and drops the connection."""
+
+    def _disconnect(
+        self, desc: bytes
+    ) -> tuple[ssh_transport.HoneyPotSSHTransport, MagicMock, MagicMock]:
+        t = ssh_transport.HoneyPotSSHTransport()
+        t.transport = MagicMock()
+        t._log = log = MagicMock()
+        with patch.object(t, "sendPacket") as send_packet:
+            t.sendDisconnect(DISCONNECT_PROTOCOL_ERROR, desc)
+        return t, send_packet, log
+
+    def test_bad_packet_mod_logs_one_line_and_sends_disconnect(self) -> None:
+        # Twisted's own sendDisconnect() logs "code N\nreason: ..." so the
+        # event lands in the log file as two physical lines.
+        t, send_packet, log = self._disconnect(b"bad packet mod (444%8 == 4)")
+
+        self.assertNotIn("\n", log.info.call_args.args[0])
+        self.assertEqual(send_packet.call_args.args[0], MSG_DISCONNECT)
+        t.transport.loseConnection.assert_called_once()
+
+    def test_bad_packet_length_logs_one_line_and_sends_nothing(self) -> None:
+        # Answering a bad packet length with SSH_MSG_DISCONNECT is a known
+        # Cowrie tell, so that reason only drops the connection.
+        t, send_packet, log = self._disconnect(b"bad packet length 1048577")
+
+        self.assertNotIn("\n", log.info.call_args.args[0])
+        send_packet.assert_not_called()
+        t.transport.loseConnection.assert_called_once()
+
+
+class TestVersionStringCap(unittest.TestCase):
+    """A client that never ends its identification line is cut off at 4 KiB."""
+
+    def _transport(self) -> ssh_transport.HoneyPotSSHTransport:
+        t = ssh_transport.HoneyPotSSHTransport()
+        t.transport = MagicMock()
+        t._log = MagicMock()
+        t.buf = b""
+        return t
+
+    def test_over_cap_without_newline_disconnects(self) -> None:
+        t = self._transport()
+
+        with patch.object(t, "sendPacket") as send_packet:
+            t.dataReceived(b"A" * 4097)
+
+        self.assertEqual(send_packet.call_args.args[0], MSG_DISCONNECT)
+        t.transport.loseConnection.assert_called_once()
 
 
 if __name__ == "__main__":

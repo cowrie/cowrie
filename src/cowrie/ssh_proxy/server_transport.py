@@ -12,7 +12,7 @@ import uuid
 import zlib
 
 from twisted.conch.ssh import transport
-from twisted.conch.ssh.common import getNS
+from twisted.conch.ssh.common import NS, getNS
 from twisted.internet import reactor
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.logger import Logger
@@ -231,6 +231,13 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         # get version from start of communication; check if valid and supported by Twisted
         if not self.gotVersion:
+            if len(self.buf) > 4096:
+                self.sendDisconnect(
+                    transport.DISCONNECT_CONNECTION_LOST,
+                    b"Peer version string longer than 4KB. "
+                    b"Preventing a denial of service attack.",
+                )
+                return
             if b"\n" not in self.buf:
                 return
             self.otherVersionString = self.buf.split(b"\n")[0].strip()
@@ -417,7 +424,10 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
     def sendDisconnect(self, reason, desc):
         """
         http://kbyte.snowpenguin.org/portal/2013/04/30/kippo-protocol-mismatch-workaround/
-        Workaround for the "bad packet length" error message.
+        Workaround for the "bad packet length" error message: answering it
+        with SSH_MSG_DISCONNECT (or "Packet corrupt") is used to detect Cowrie
+        behaviour, so that reason only drops the connection. Every reason is
+        logged as a single line.
 
         @param reason: the reason for the disconnect.  Should be one of the
                        DISCONNECT_* values.
@@ -426,17 +436,16 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         @type desc: C{str}
         """
         if b"bad packet length" not in desc:
-            # With python >= 3 we can use super?
-            transport.SSHServerTransport.sendDisconnect(self, reason, desc)
-        else:
-            # this message is used to detect Cowrie behaviour
-            # self.transport.write(b"Packet corrupt\n")
-            self._log.info(
-                "Disconnecting with error, code {code}\nreason: {desc}",
-                code=reason,
-                desc=desc,
+            self.sendPacket(
+                transport.MSG_DISCONNECT,
+                struct.pack(">L", reason) + NS(desc) + NS(b""),
             )
-            self.transport.loseConnection()
+        self._log.info(
+            "Disconnecting with error, code {code} reason: {desc}",
+            code=reason,
+            desc=desc,
+        )
+        self.transport.loseConnection()
 
     def receiveError(self, reasonCode: str, description: str) -> None:
         """
