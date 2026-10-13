@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import sys
 from binascii import crc32
-from random import randint, seed
+from random import Random
 from typing import Any
 
 from twisted.logger import Logger
@@ -114,9 +114,10 @@ class Passwd:
         If the user is not in /etc/passwd, creates a new user entry for the session
         """
 
-        # ensure consistent uid and gid
-        seed_id = crc32(name.encode("utf-8"))
-        seed(seed_id)
+        # A private generator seeded by the name gives each user a consistent
+        # uid/gid without reseeding the process-wide random module, which every
+        # session shares, from an attacker-chosen username.
+        rng = Random(crc32(name.encode("utf-8")))
 
         e: dict[str, Any] = {}
         e["pw_name"] = name
@@ -124,7 +125,7 @@ class Passwd:
         e["pw_gecos"] = 0
         e["pw_dir"] = "/home/" + name
         e["pw_shell"] = "/bin/bash"
-        e["pw_uid"] = randint(1500, 10000)
+        e["pw_uid"] = rng.randint(1500, 10000)  # NOSONAR - fixed fake uid, not a secret
         e["pw_gid"] = e["pw_uid"]
         self.passwd.append(e)
         return e
