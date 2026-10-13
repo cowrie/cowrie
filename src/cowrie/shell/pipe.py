@@ -118,13 +118,16 @@ class PipeProtocol:
 
         for op in self.redirections:
             bad_fd = self._out_of_range_fd(op)
+            if bad_fd is None and op["type"] == "dup":
+                if op["target"] not in self.targets:
+                    bad_fd = op["target"]
             if bad_fd is not None:
-                # bash reports the offending fd and drops the redirection, but
-                # still runs the command -- its other fds are unaffected.
-                self._write_to_terminal(
-                    f"{self.error_prefix}{bad_fd}: Bad file descriptor\n".encode()
+                # bash stops at the first failed redirection and does not run
+                # the command (POSIX XCU 2.8.1).
+                self._emit_redirection_error(
+                    f"{self.error_prefix}{bad_fd}: Bad file descriptor\n"
                 )
-                continue
+                break
 
             if op["type"] == "file":
                 fd = op["fd"]
@@ -147,15 +150,7 @@ class PipeProtocol:
 
             elif op["type"] == "dup":
                 fd = op["fd"]
-                target_fd = op["target"]
-                if target_fd in self.targets:
-                    self.targets[fd] = self.targets[target_fd]
-                else:
-                    # If target FD is not open/defined, what to do?
-                    # Bash says "Bad file descriptor".
-                    # For now, maybe default to terminal or ignore?
-                    # Let's ignore to match previous behavior of being lenient, or set to closed?
-                    pass
+                self.targets[fd] = self.targets[op["target"]]
 
         if pending_stdin_target:
             self._prepare_stdin(pending_stdin_target)
