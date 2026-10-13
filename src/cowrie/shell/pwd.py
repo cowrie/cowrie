@@ -125,7 +125,7 @@ class Passwd:
         e["pw_gecos"] = 0
         e["pw_dir"] = "/home/" + name
         e["pw_shell"] = "/bin/bash"
-        e["pw_uid"] = rng.randint(1500, 10000)
+        e["pw_uid"] = rng.randint(1500, 10000)  # NOSONAR - fixed fake uid, not a secret
         e["pw_gid"] = e["pw_uid"]
         self.passwd.append(e)
         return e
