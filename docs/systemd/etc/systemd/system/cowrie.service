@@ -1,24 +1,21 @@
 [Unit]
-Description=A SSH and Telnet honeypot service
+Description=Cowrie SSH/Telnet Honeypot
 After=network.target
-After=rsyslog.service
-Requires=cowrie.socket
 
 [Service]
+Type=simple
 User=cowrie
 Group=cowrie
-
-Restart=always
+WorkingDirectory=/home/cowrie/cowrie
+Environment="PATH=/home/cowrie/cowrie/cowrie-env/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ExecStart=/home/cowrie/cowrie/cowrie-env/bin/python3 /home/cowrie/cowrie/cowrie-env/bin/twistd \
+    -n \
+    --umask=0022 \
+    --pidfile=/home/cowrie/cowrie/var/run/cowrie.pid \
+    --logger cowrie.python.logfile.logger \
+    cowrie
+Restart=on-failure
 RestartSec=5
-
-Environment=PYTHONPATH=/opt/cowrie/src
-WorkingDirectory=/opt/cowrie
-
-ExecStart=/opt/cowrie-env/bin/python /opt/cowrie-env/bin/twistd --umask 0022 --nodaemon --pidfile= -l - cowrie
-
-StandardOutput=syslog
-StandardError=syslog
-SyslogIdentifier=cowrie
 
 [Install]
 WantedBy=multi-user.target
