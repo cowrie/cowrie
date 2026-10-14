@@ -634,7 +634,7 @@ class HoneyPotFilesystem:
         the rename(2) semantics real mv(1) and the SFTP client rely on.
         """
         self._ensure_private_fs()
-        old: Node | None = self.getfile(oldpath)
+        old: Node | None = self.getfile(oldpath, follow_symlinks=False)
         if not old:
             raise OSError(errno.ENOENT, os.strerror(errno.ENOENT))
         self.unlink_entry(old, posixpath.dirname(oldpath))

@@ -121,6 +121,44 @@ class RenameRemoveTests(unittest.TestCase):
         with self.assertRaises(OSError):
             self.fs.rename("/tmp/nope_src_xyz", "/tmp/whatever")
 
+    def test_rename_symlink_preserves_target(self) -> None:
+        self.fs.link_entry(_file_entry("r_target", b"unchanged"), "/tmp")
+        self.fs.link_entry(_link_entry("r_link", "/tmp/r_target"), "/tmp")
+
+        self.fs.rename("/tmp/r_link", "/tmp/r_renamed")
+
+        self.assertNotIn("r_link", self.fs.listdir("/tmp"))
+        self.assertEqual(
+            self.fs.getfile("/tmp/r_renamed", follow_symlinks=False),
+            _link_entry("r_renamed", "/tmp/r_target"),
+        )
+        self.assertEqual(self.fs.file_contents("/tmp/r_target"), b"unchanged")
+
+    def test_rename_symlink_across_directories_preserves_target(self) -> None:
+        self.fs.link_entry(_file_entry("r_target", b"unchanged"), "/tmp")
+        self.fs.link_entry(_link_entry("r_link", "/tmp/r_target"), "/tmp")
+
+        self.fs.rename("/tmp/r_link", "/root/r_renamed")
+
+        self.assertNotIn("r_link", self.fs.listdir("/tmp"))
+        self.assertEqual(
+            self.fs.getfile("/root/r_renamed", follow_symlinks=False),
+            _link_entry("r_renamed", "/tmp/r_target"),
+        )
+        self.assertEqual(self.fs.file_contents("/tmp/r_target"), b"unchanged")
+
+    def test_rename_dangling_symlink(self) -> None:
+        self.fs.link_entry(_link_entry("r_link", "/tmp/r_missing"), "/tmp")
+
+        self.fs.rename("/tmp/r_link", "/tmp/r_renamed")
+
+        self.assertNotIn("r_link", self.fs.listdir("/tmp"))
+        self.assertEqual(
+            self.fs.getfile("/tmp/r_renamed", follow_symlinks=False),
+            _link_entry("r_renamed", "/tmp/r_missing"),
+        )
+        self.assertIsNone(self.fs.getfile("/tmp/r_missing"))
+
     def test_remove_deletes_file(self) -> None:
         self.fs.link_entry(_file_entry("rm_me"), "/tmp")
         self.fs.remove("/tmp/rm_me")
