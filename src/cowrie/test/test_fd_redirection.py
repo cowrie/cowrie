@@ -391,3 +391,24 @@ class ShellFdRedirectionTests(unittest.TestCase):
         # An fd opened earlier in the same command is a valid dup source.
         self.proto.lineReceived(b"echo hi 3>dupfile 1>&3; cat dupfile")
         self.assertEqual(self.tr.value(), b"hi\n" + PROMPT)
+
+    def test_only_the_first_failed_redirection_is_reported(self) -> None:
+        # bash applies redirections left to right and stops at the first
+        # failure, whatever its kind: a bad path, a missing input file or a
+        # bad fd. Later redirections are neither applied nor reported.
+        for line, error in (
+            (
+                b"echo hi >/nonexistent/f 2>&5",
+                b"-bash: /nonexistent/f: No such file or directory\n",
+            ),
+            (b"echo hi 2>&5 >/nonexistent/f", b"-bash: 5: Bad file descriptor\n"),
+            (
+                b"cat </nonexistent 2>&5",
+                b"-bash: /nonexistent: No such file or directory\n",
+            ),
+            (b"cat 2>&5 </nonexistent", b"-bash: 5: Bad file descriptor\n"),
+        ):
+            with self.subTest(line=line):
+                self.tr.clear()
+                self.proto.lineReceived(line + b"; echo st=$?")
+                self.assertEqual(self.tr.value(), error + b"st=1\n" + PROMPT)
