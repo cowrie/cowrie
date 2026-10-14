@@ -46,8 +46,10 @@ class ProxyTestCommand:
 
     def execute_both(self, command):
         def callback_backend(data):
+            if self.deferred.called:
+                return
             # if we haven't received data from the proxy just store the output
-            if not self.proxy_data:
+            if self.proxy_data is None:
                 self.backend_data = data
             else:
                 # compare data from proxy and backend
@@ -57,8 +59,10 @@ class ProxyTestCommand:
                     self.deferred.errback(ValueError())
 
         def callback_proxy(data):
+            if self.deferred.called:
+                return
             # if we haven't received data from the backend just store the output
-            if not self.backend_data:
+            if self.backend_data is None:
                 self.proxy_data = data
             else:
                 # compare data from proxy and backend
@@ -77,7 +81,7 @@ class ProxyTestCommand:
             self.password_backend,
             command,
             callback_backend,
-        )
+        ).addErrback(self._execution_failed)
         self.execute(
             self.hostname,
             self.port_proxy,
@@ -85,11 +89,20 @@ class ProxyTestCommand:
             self.password_proxy,
             command,
             callback_proxy,
-        )
+        ).addErrback(self._execution_failed)
+
+    def _execution_failed(self, reason):
+        if not self.deferred.called:
+            self.deferred.errback(reason)
 
     def execute_one(self, is_proxy, command, deferred):
         def callback(data):
-            deferred.callback(data)
+            if not deferred.called:
+                deferred.callback(data)
+
+        def errback(reason):
+            if not deferred.called:
+                deferred.errback(reason)
 
         if is_proxy:
             # execute via proxy
@@ -103,4 +116,4 @@ class ProxyTestCommand:
         # execute exec command
         self.execute(
             self.hostname, self.port_backend, username, password, command, callback
-        )
+        ).addErrback(errback)
