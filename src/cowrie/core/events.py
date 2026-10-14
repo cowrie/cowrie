@@ -257,4 +257,4 @@ class ConsoleRenderer:
             event.get("session", "-"),
             event.get("src_ip", "-"),
         )
-        self.logmsg(message, system=system)
+        self.logmsg(message.replace("\r", r"\r").replace("\n", r"\n"), system=system)
