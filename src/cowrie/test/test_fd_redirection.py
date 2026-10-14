@@ -223,11 +223,10 @@ class ShellFdRedirectionTests(unittest.TestCase):
         self.assertTrue(self.tr.value().endswith(PROMPT))
 
     def test_bad_fd_reference(self) -> None:
-        # Referencing a non-existent FD (99) - should be handled gracefully
+        # Duplicating from an fd that is not open is a redirection error: bash
+        # reports it and does not run the command. Issue #40350.
         self.proto.lineReceived(b"echo test 2>&99")
-        # Should still output to stdout since 2>&99 fails silently
-        self.assertIn(b"test", self.tr.value())
-        self.assertTrue(self.tr.value().endswith(PROMPT))
+        self.assertEqual(self.tr.value(), b"-bash: 99: Bad file descriptor\n" + PROMPT)
 
     def test_command_substitution_with_redirect(self) -> None:
         # Command substitution with internal redirection
@@ -317,11 +316,11 @@ class ShellFdRedirectionTests(unittest.TestCase):
                 os.remove(real)
 
     def test_out_of_range_fd_reports_bad_file_descriptor(self) -> None:
-        # An fd above the open-file limit is rejected with bash's error, but the
-        # command still runs (its stdout is unaffected). Issue #2921.
+        # An fd above the open-file limit is rejected with bash's error and the
+        # command does not run. Issues #2921, #40350.
         self.proto.lineReceived(b"echo test 9999>/dev/null")
         self.assertEqual(
-            self.tr.value(), b"-bash: 9999: Bad file descriptor\ntest\n" + PROMPT
+            self.tr.value(), b"-bash: 9999: Bad file descriptor\n" + PROMPT
         )
 
     def test_in_range_fd_has_no_error(self) -> None:
@@ -336,12 +335,80 @@ class ShellFdRedirectionTests(unittest.TestCase):
         self.tr.clear()
         self.proto.lineReceived(b"echo b 1024>/dev/null")
         self.assertEqual(
-            self.tr.value(), b"-bash: 1024: Bad file descriptor\nb\n" + PROMPT
+            self.tr.value(), b"-bash: 1024: Bad file descriptor\n" + PROMPT
         )
 
     def test_dup_from_out_of_range_fd_reports_error(self) -> None:
         # Duplicating from an out-of-range fd reports that fd. Issue #2921.
         self.proto.lineReceived(b"echo hi 2>&9999")
         self.assertEqual(
-            self.tr.value(), b"-bash: 9999: Bad file descriptor\nhi\n" + PROMPT
+            self.tr.value(), b"-bash: 9999: Bad file descriptor\n" + PROMPT
         )
+
+    def test_redirection_error_sets_status_1(self) -> None:
+        # A failed redirection skips the command and sets $? to 1, whatever
+        # the previous status was.
+        for line in (
+            b"echo hi 2>&5",
+            b"echo hi 9999>/dev/null",
+            b"echo hi > /nonexistent/dir/file",
+            b"> /nonexistent/dir/file",
+        ):
+            with self.subTest(line=line):
+                self.tr.clear()
+                self.proto.lineReceived(b"true; " + line + b" ; echo st=$?")
+                self.assertNotIn(b"hi\n", self.tr.value())
+                self.assertTrue(self.tr.value().endswith(b"st=1\n" + PROMPT))
+
+    def test_redirection_error_on_unknown_command_is_the_only_error(self) -> None:
+        # bash applies redirections before looking the command up, so a failed
+        # one is reported instead of "command not found", with status 1; even
+        # exec carries on.
+        for line, error in (
+            (b"nosuchcmd 2>&5", b"-bash: 5: Bad file descriptor\n"),
+            (
+                b"nosuchcmd > /nonexistent/dir/f",
+                b"-bash: /nonexistent/dir/f: No such file or directory\n",
+            ),
+            (b"exec nosuchcmd 2>&5", b"-bash: 5: Bad file descriptor\n"),
+        ):
+            with self.subTest(line=line):
+                self.tr.clear()
+                self.proto.lineReceived(line + b"; echo st=$?")
+                self.assertEqual(self.tr.value(), error + b"st=1\n" + PROMPT)
+
+    def test_redirection_error_short_circuits_and_list(self) -> None:
+        self.proto.lineReceived(b"echo hi 2>&5 && echo no || echo yes")
+        self.assertEqual(
+            self.tr.value(), b"-bash: 5: Bad file descriptor\nyes\n" + PROMPT
+        )
+
+    def test_bare_redirection_success_sets_status_0(self) -> None:
+        self.proto.lineReceived(b"false; > okfile; echo st=$?")
+        self.assertEqual(self.tr.value(), b"st=0\n" + PROMPT)
+
+    def test_dup_of_fd_opened_in_same_command(self) -> None:
+        # An fd opened earlier in the same command is a valid dup source.
+        self.proto.lineReceived(b"echo hi 3>dupfile 1>&3; cat dupfile")
+        self.assertEqual(self.tr.value(), b"hi\n" + PROMPT)
+
+    def test_only_the_first_failed_redirection_is_reported(self) -> None:
+        # bash applies redirections left to right and stops at the first
+        # failure, whatever its kind: a bad path, a missing input file or a
+        # bad fd. Later redirections are neither applied nor reported.
+        for line, error in (
+            (
+                b"echo hi >/nonexistent/f 2>&5",
+                b"-bash: /nonexistent/f: No such file or directory\n",
+            ),
+            (b"echo hi 2>&5 >/nonexistent/f", b"-bash: 5: Bad file descriptor\n"),
+            (
+                b"cat </nonexistent 2>&5",
+                b"-bash: /nonexistent: No such file or directory\n",
+            ),
+            (b"cat 2>&5 </nonexistent", b"-bash: 5: Bad file descriptor\n"),
+        ):
+            with self.subTest(line=line):
+                self.tr.clear()
+                self.proto.lineReceived(line + b"; echo st=$?")
+                self.assertEqual(self.tr.value(), error + b"st=1\n" + PROMPT)

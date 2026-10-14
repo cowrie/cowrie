@@ -436,14 +436,19 @@ class HoneyPotShell:
 
     def _write_shell_error(
         self, message: bytes, ops: list[dict[str, Any]] | None = None
-    ) -> None:
+    ) -> bool:
         """Write an error the shell itself reports to its stderr (fd 2), with
         ``ops`` -- the failing command's own redirections -- applied, so
-        `x 2>&1 | cat` and `( x ) 2>/dev/null` reroute it."""
+        `x 2>&1 | cat` and `( x ) 2>/dev/null` reroute it. Returns False,
+        without writing it, when one of those redirections failed: bash
+        applies them first, so their error is the only one reported."""
         pp = self._make_pipe(None, [], None, ops)
-        pp.errReceived(message)
         for real_path, virtual_path in pp.redirect_real_files:
             self.protocol.terminal.redirFiles.add((real_path, virtual_path))
+        if pp.has_redirection_error:
+            return False
+        pp.errReceived(message)
+        return True
 
     def _finish(self) -> None:
         """The command queue is drained: do the shell's idle action.
@@ -1003,6 +1008,7 @@ class HoneyPotShell:
                 pp = self._make_pipe(None, [], None, ops)
                 for real_path, virtual_path in pp.redirect_real_files:
                     self.protocol.terminal.redirFiles.add((real_path, virtual_path))
+                self.last_exit_code = 1 if pp.has_redirection_error else 0
             self._advance()
             return
 
@@ -1021,7 +1027,11 @@ class HoneyPotShell:
                 message = f"{self.error_prefix()}exec: {cmd}: not found\n".encode()
             else:
                 message = self.command_not_found_message(cmd).encode("utf8")
-            self._write_shell_error(message, ops)
+            if not self._write_shell_error(message, ops):
+                # Even exec carries on after a failed redirection, with status 1.
+                self.last_exit_code = 1
+                self._advance()
+                return
 
             self.last_exit_code = 127  # command not found
             if exec_replace and not self.interactive:
@@ -1044,6 +1054,8 @@ class HoneyPotShell:
         # The name the command was invoked by, its argv[0].
         pp.argv0 = cmd
         if pp.has_redirection_error:
+            # bash reports the failure (already written) and skips the command.
+            self.last_exit_code = 1
             self._advance()
             return
 

@@ -111,72 +111,65 @@ class PipeProtocol:
             self.targets[1] = (FD_TERMINAL, None)
             self.targets[2] = (FD_TERMINAL, None)
 
-        # Defer stdin reading until after all redirections are processed
-        # This ensures that if an output redirection truncates a file also used for input,
-        # the input reading sees the truncated (empty) file, matching standard shell behavior.
-        pending_stdin_target: str | None = None
+        # Defer reading stdin until all redirections are processed, so that
+        # when an output redirection truncates the file also used for input
+        # (`cat < f > f`) the read sees the truncated file, as in a real shell.
+        # The file is still looked up in order, so a missing one is reported
+        # in its place among the other redirection errors.
+        pending_stdin_path: str | None = None
 
+        # bash applies redirections left to right and stops at the first one
+        # that fails; the command does not run (POSIX XCU 2.8.1).
         for op in self.redirections:
             bad_fd = self._out_of_range_fd(op)
+            if bad_fd is None and op["type"] == "dup":
+                if op["target"] not in self.targets:
+                    bad_fd = op["target"]
             if bad_fd is not None:
-                # bash reports the offending fd and drops the redirection, but
-                # still runs the command -- its other fds are unaffected.
-                self._write_to_terminal(
-                    f"{self.error_prefix}{bad_fd}: Bad file descriptor\n".encode()
+                self._emit_redirection_error(
+                    f"{self.error_prefix}{bad_fd}: Bad file descriptor\n"
                 )
-                continue
+                break
 
             if op["type"] == "file":
                 fd = op["fd"]
                 target = op["target"]
                 append = op["append"]
                 file_info = self._prepare_output_file(target, append)
-                if file_info:
-                    if file_info.get("devnull"):
-                        self.targets[fd] = (FD_DEVNULL, None)
-                    else:
-                        self.targets[fd] = (FD_FILE, file_info)
+                if file_info is None:
+                    break
+                if file_info.get("devnull"):
+                    self.targets[fd] = (FD_DEVNULL, None)
+                else:
+                    self.targets[fd] = (FD_FILE, file_info)
 
             elif op["type"] == "stdin":
                 fd = op["fd"]
                 target = op["target"]
-                pending_stdin_target = target
+                pending_stdin_path = self._open_stdin(target)
+                if pending_stdin_path is None:
+                    break
                 # Stdin is handled by loading input_data, so we don't strictly need it in targets for writing,
                 # but we track it for completeness if needed.
                 self.targets[fd] = (FD_FILE_INPUT, target)
 
             elif op["type"] == "dup":
                 fd = op["fd"]
-                target_fd = op["target"]
-                if target_fd in self.targets:
-                    self.targets[fd] = self.targets[target_fd]
-                else:
-                    # If target FD is not open/defined, what to do?
-                    # Bash says "Bad file descriptor".
-                    # For now, maybe default to terminal or ignore?
-                    # Let's ignore to match previous behavior of being lenient, or set to closed?
-                    pass
+                self.targets[fd] = self.targets[op["target"]]
 
-        if pending_stdin_target:
-            self._prepare_stdin(pending_stdin_target)
+        if pending_stdin_path is not None:
+            self.input_data = self.protocol.fs.file_contents(pending_stdin_path)
 
-    def _prepare_stdin(self, target: str) -> None:
-        """Load stdin from a redirected file path into input_data."""
-        try:
-            path = self.protocol.fs.resolve_path(target, self.cwd)
-            data = self.protocol.fs.file_contents(path)
-        except fs.FileNotFound:
+    def _open_stdin(self, target: str) -> str | None:
+        """Resolve a stdin redirection's file, or report it missing and return
+        None."""
+        path: str = self.protocol.fs.resolve_path(target, self.cwd)
+        if not self.protocol.fs.exists(path):
             self._emit_redirection_error(
                 f"{self.error_prefix}{target}: No such file or directory\n"
             )
-            return
-        except fs.PermissionDenied:
-            self._emit_redirection_error(
-                f"{self.error_prefix}{target}: Permission denied\n"
-            )
-            return
-        else:
-            self.input_data = data
+            return None
+        return path
 
     def _prepare_output_file(self, target: str, append: bool) -> dict[str, Any] | None:
         """Resolve and ready an output file, returning metadata for writing."""
