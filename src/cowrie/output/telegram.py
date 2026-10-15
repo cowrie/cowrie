@@ -44,14 +44,6 @@ class Output(cowrie.core.output.Output):
             if i.startswith("log_"):
                 del event[i]
 
-        # Prepare logon type
-        # if "HoneyPotSSHTransport" in (event["system"].split(","))[0]:
-        #     logon_type = "SSH"
-        # elif "CowrieTelnetTransport" in (event["system"].split(","))[0]:
-        #     logon_type = "Telnet"
-        # else:
-        #     logon_type = ""
-
         # The message is sent with parse_mode=HTML, so every value put into it
         # is escaped: the command, credentials and URL are attacker-controlled,
         # and a literal "<", ">" or "&" would otherwise be read as markup --
