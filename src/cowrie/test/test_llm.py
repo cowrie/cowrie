@@ -22,16 +22,7 @@ os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 from cowrie.llm import llm as llm_module
 from cowrie.llm import protocol as llm_protocol
 from cowrie.ssh.transport import HoneyPotSSHTransport
-
-
-def _set_llm_option(test: unittest.TestCase, option: str, value: str) -> None:
-    """Set an [llm] option for the duration of one test."""
-    old = CowrieConfig.get("llm", option, fallback=None)
-    CowrieConfig.set("llm", option, value)
-    if old is None:
-        test.addCleanup(CowrieConfig.remove_option, "llm", option)
-    else:
-        test.addCleanup(CowrieConfig.set, "llm", option, old)
+from cowrie.test.configoverride import override_option
 
 
 def _avatar() -> MagicMock:
@@ -194,7 +185,7 @@ class ResponseSizeCapTests(unittest.TestCase):
     def test_client_applies_configured_cap(self) -> None:
         """The client reads max_response_size with its other settings and
         hands it to every response it receives."""
-        _set_llm_option(self, "max_response_size", "16")
+        override_option(self, "llm", "max_response_size", "16")
         response = MagicMock(code=200)
         llm_module.LLMClient()._handle_response_body(response)
         receiver = response.deliverBody.call_args[0][0]
@@ -282,7 +273,7 @@ class RateLimitTests(unittest.TestCase):
         """An overlong line must not be sent to the API or grow the history
         without bound."""
         proto = self._proto()
-        _set_llm_option(self, "max_command_length", "10")
+        override_option(self, "llm", "max_command_length", "10")
         with (
             patch.object(
                 llm_protocol,
@@ -298,7 +289,7 @@ class RateLimitTests(unittest.TestCase):
     def test_rate_limit_follows_config_set_after_import(self) -> None:
         """The shared limiter is built from the config on first use, not
         when the module is imported."""
-        _set_llm_option(self, "rate_limit_requests", "2")
+        override_option(self, "llm", "rate_limit_requests", "2")
         llm_protocol.llm_rate_limiter.cache_clear()
         self.addCleanup(llm_protocol.llm_rate_limiter.cache_clear)
         proto = self._proto()

@@ -12,7 +12,7 @@ import sys
 import unittest
 from unittest.mock import MagicMock, patch
 
-from cowrie.core.config import CowrieConfig
+from cowrie.test.configoverride import override_option
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
@@ -28,12 +28,7 @@ from cowrie.output import prometheus
 
 class PrometheusHostLabelTests(unittest.TestCase):
     def test_host_label_set_after_import(self) -> None:
-        old = CowrieConfig.get("honeypot", "hostname", fallback=None)
-        CowrieConfig.set("honeypot", "hostname", "sensor-after-import")
-        if old is None:
-            self.addCleanup(CowrieConfig.remove_option, "honeypot", "hostname")
-        else:
-            self.addCleanup(CowrieConfig.set, "honeypot", "hostname", old)
+        override_option(self, "honeypot", "hostname", "sensor-after-import")
 
         with patch.object(prometheus, "start_http_server"):
             out = prometheus.Output()

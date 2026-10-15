@@ -13,7 +13,7 @@ import sys
 import types
 import unittest
 
-from cowrie.core.config import CowrieConfig
+from cowrie.test.configoverride import override_option
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
@@ -29,29 +29,18 @@ SECTION = "output_csirtg"
 
 class CsirtgConfigTests(unittest.TestCase):
     def setUp(self) -> None:
-        if not CowrieConfig.has_section(SECTION):
-            CowrieConfig.add_section(SECTION)
-            self.addCleanup(CowrieConfig.remove_section, SECTION)
         for option, value in {
             "token": "a1b2c3d4",
             "username": "user",
             "feed": "feed",
             "description": "cowrie",
         }.items():
-            self._set(option, value)
+            override_option(self, SECTION, option, value)
         old_token = os.environ.get("CSIRTG_TOKEN")
         if old_token is None:
             self.addCleanup(os.environ.pop, "CSIRTG_TOKEN", None)
         else:
             self.addCleanup(os.environ.__setitem__, "CSIRTG_TOKEN", old_token)
-
-    def _set(self, option: str, value: str) -> None:
-        old = CowrieConfig.get(SECTION, option, fallback=None)
-        CowrieConfig.set(SECTION, option, value)
-        if old is None:
-            self.addCleanup(CowrieConfig.remove_option, SECTION, option)
-        else:
-            self.addCleanup(CowrieConfig.set, SECTION, option, old)
 
     def _import(self) -> types.ModuleType:
         sys.modules.pop("cowrie.output.csirtg", None)
@@ -66,14 +55,14 @@ class CsirtgConfigTests(unittest.TestCase):
         """load_plugins skips a plugin whose start() raises, but a SystemExit
         would end the honeypot; a missing token must be an ordinary error."""
         csirtg = self._import()
-        self._set("token", "a1b2c3d4")
+        override_option(self, SECTION, "token", "a1b2c3d4")
 
         with self.assertRaises(ValueError):
             csirtg.Output()
 
     def test_start_uses_token_set_after_import(self) -> None:
         csirtg = self._import()
-        self._set("token", "token-after-import")
+        override_option(self, SECTION, "token", "token-after-import")
 
         csirtg.Output()
 
