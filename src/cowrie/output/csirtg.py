@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import os
-import sys
 from datetime import datetime
 
 from twisted.logger import Logger
@@ -31,7 +30,8 @@ class Output(cowrie.core.output.Output):
         token = CowrieConfig.get("output_csirtg", "token", fallback="a1b2c3d4")
         if token == "a1b2c3d4":
             self._log.info("output_csirtg: token not found in configuration file")
-            sys.exit(1)
+            # An ordinary error lets load_plugins log and skip this plugin.
+            raise ValueError
         os.environ["CSIRTG_TOKEN"] = token
         import csirtgsdk
 

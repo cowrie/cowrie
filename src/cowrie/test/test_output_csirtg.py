@@ -62,6 +62,15 @@ class CsirtgConfigTests(unittest.TestCase):
         not end the process."""
         self._import()
 
+    def test_placeholder_token_raises_instead_of_exiting(self) -> None:
+        """load_plugins skips a plugin whose start() raises, but a SystemExit
+        would end the honeypot; a missing token must be an ordinary error."""
+        csirtg = self._import()
+        self._set("token", "a1b2c3d4")
+
+        with self.assertRaises(ValueError):
+            csirtg.Output()
+
     def test_start_uses_token_set_after_import(self) -> None:
         csirtg = self._import()
         self._set("token", "token-after-import")
