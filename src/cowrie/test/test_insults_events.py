@@ -75,7 +75,7 @@ class TelnetInsultsEventLogTests(unittest.TestCase):
     transport (session.transport), wiring the real telnet session chain."""
 
     def test_telnet_session_chain_binds_eventlog(self) -> None:
-        from cowrie.telnet.session import (
+        from cowrie.shell.telnet import (
             HoneyPotTelnetSession,
             TelnetSessionProcessProtocol,
         )

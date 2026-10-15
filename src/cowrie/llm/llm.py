@@ -35,13 +35,6 @@ if TYPE_CHECKING:
     from twisted.python import failure as tw_failure
 
 
-# Ceiling on a single LLM API response body. Real completions are a few
-# kilobytes; the cap only stops an endpoint that keeps streaming.
-MAX_RESPONSE_SIZE = CowrieConfig.getint(
-    "llm", "max_response_size", fallback=1024 * 1024
-)
-
-
 @implementer(IBodyProducer)
 class StringProducer:
     """
@@ -76,9 +69,7 @@ class SimpleResponseReceiver(protocol.Protocol):
 
     _log = Logger()
 
-    def __init__(
-        self, status_code: int, d: defer.Deferred, max_size: int = MAX_RESPONSE_SIZE
-    ) -> None:
+    def __init__(self, status_code: int, d: defer.Deferred, max_size: int) -> None:
         self.status_code = status_code
         self.buf = b""
         self.d = d
@@ -145,6 +136,11 @@ class LLMClient:
         self.max_tokens = CowrieConfig.getint("llm", "max_tokens", fallback=500)
         self.temperature = CowrieConfig.getfloat("llm", "temperature", fallback=0.7)
         self.debug = CowrieConfig.getboolean("llm", "debug", fallback=False)
+        # Ceiling on a single API response body. Real completions are a few
+        # kilobytes; the cap only stops an endpoint that keeps streaming.
+        self.max_response_size = CowrieConfig.getint(
+            "llm", "max_response_size", fallback=1024 * 1024
+        )
 
         proxy_url = (
             os.environ.get("https_proxy")
@@ -228,7 +224,9 @@ class LLMClient:
     def _handle_response_body(self, response: IResponse) -> Deferred[tuple[int, bytes]]:
         """Extract the response body from the HTTP response."""
         d: Deferred[tuple[int, bytes]] = defer.Deferred()
-        response.deliverBody(SimpleResponseReceiver(response.code, d))
+        response.deliverBody(
+            SimpleResponseReceiver(response.code, d, self.max_response_size)
+        )
         return d
 
     def _handle_connection_error(self, err: tw_failure.Failure) -> tuple[int, bytes]:

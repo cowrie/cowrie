@@ -1,0 +1,73 @@
+# SPDX-FileCopyrightText: 2026 Michel Oosterhof <michel@oosterhof.net>
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
+# ABOUTME: The csirtg output plugin reads its token when it starts, so
+# ABOUTME: importing it neither exits nor depends on the config at import time.
+
+from __future__ import annotations
+
+import importlib
+import os
+import sys
+import types
+import unittest
+
+from cowrie.test.configoverride import override_option
+
+os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
+os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
+
+try:
+    import csirtgsdk  # noqa: F401
+except ImportError:
+    # The SDK is an optional dependency; stub it so the plugin imports.
+    sys.modules["csirtgsdk"] = types.ModuleType("csirtgsdk")
+
+SECTION = "output_csirtg"
+
+
+class CsirtgConfigTests(unittest.TestCase):
+    def setUp(self) -> None:
+        for option, value in {
+            "token": "a1b2c3d4",
+            "username": "user",
+            "feed": "feed",
+            "description": "cowrie",
+        }.items():
+            override_option(self, SECTION, option, value)
+        old_token = os.environ.get("CSIRTG_TOKEN")
+        if old_token is None:
+            self.addCleanup(os.environ.pop, "CSIRTG_TOKEN", None)
+        else:
+            self.addCleanup(os.environ.__setitem__, "CSIRTG_TOKEN", old_token)
+
+    def _import(self) -> types.ModuleType:
+        sys.modules.pop("cowrie.output.csirtg", None)
+        return importlib.import_module("cowrie.output.csirtg")
+
+    def test_import_without_token_does_not_exit(self) -> None:
+        """Only an enabled plugin needs a token; importing the module must
+        not end the process."""
+        self._import()
+
+    def test_placeholder_token_raises_instead_of_exiting(self) -> None:
+        """load_plugins skips a plugin whose start() raises, but a SystemExit
+        would end the honeypot; a missing token must be an ordinary error."""
+        csirtg = self._import()
+        override_option(self, SECTION, "token", "a1b2c3d4")
+
+        with self.assertRaises(ValueError):
+            csirtg.Output()
+
+    def test_start_uses_token_set_after_import(self) -> None:
+        csirtg = self._import()
+        override_option(self, SECTION, "token", "token-after-import")
+
+        csirtg.Output()
+
+        self.assertEqual(os.environ["CSIRTG_TOKEN"], "token-after-import")
+
+
+if __name__ == "__main__":
+    unittest.main()

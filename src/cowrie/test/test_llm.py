@@ -22,6 +22,7 @@ os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 from cowrie.llm import llm as llm_module
 from cowrie.llm import protocol as llm_protocol
 from cowrie.ssh.transport import HoneyPotSSHTransport
+from cowrie.test.configoverride import override_option
 
 
 def _avatar() -> MagicMock:
@@ -181,6 +182,19 @@ class ResponseSizeCapTests(unittest.TestCase):
 
         d.callback.assert_called_once_with((200, b'{"ok": true}'))
 
+    def test_client_applies_configured_cap(self) -> None:
+        """The client reads max_response_size with its other settings and
+        hands it to every response it receives."""
+        override_option(self, "llm", "max_response_size", "16")
+        response = MagicMock(code=200)
+        llm_module.LLMClient()._handle_response_body(response)
+        receiver = response.deliverBody.call_args[0][0]
+        receiver.makeConnection(MagicMock())
+
+        receiver.dataReceived(b"x" * 32)
+
+        self.assertEqual(len(receiver.buf), 16)
+
 
 class AnthropicDetectionTests(unittest.TestCase):
     def _client(self, host: str) -> llm_module.LLMClient:
@@ -233,7 +247,7 @@ class RateLimitTests(unittest.TestCase):
     def test_commands_are_rate_limited(self) -> None:
         limiter = RateLimiter(max_requests=2, window_seconds=60)
         proto = self._proto()
-        with patch.object(llm_protocol, "llm_rate_limiter", limiter):
+        with patch.object(llm_protocol, "llm_rate_limiter", return_value=limiter):
             for _ in range(5):
                 proto._process_command_with_llm("id")
 
@@ -244,7 +258,7 @@ class RateLimitTests(unittest.TestCase):
         client = MagicMock()
         client.get_response.return_value = defer.succeed("")
         with (
-            patch.object(llm_protocol, "llm_rate_limiter", limiter),
+            patch.object(llm_protocol, "llm_rate_limiter", return_value=limiter),
             patch.object(llm_protocol, "get_shared_client", return_value=client),
         ):
             for _ in range(3):
@@ -259,14 +273,31 @@ class RateLimitTests(unittest.TestCase):
         """An overlong line must not be sent to the API or grow the history
         without bound."""
         proto = self._proto()
+        override_option(self, "llm", "max_command_length", "10")
         with (
-            patch.object(llm_protocol, "MAX_COMMAND_LENGTH", 10),
-            patch.object(llm_protocol, "llm_rate_limiter", RateLimiter(max_requests=5)),
+            patch.object(
+                llm_protocol,
+                "llm_rate_limiter",
+                return_value=RateLimiter(max_requests=5),
+            ),
         ):
             proto._process_command_with_llm("x" * 50)
 
         prompt = self.client.get_response.call_args[0][0]
         self.assertEqual(prompt[-1], "User: " + "x" * 10)
+
+    def test_rate_limit_follows_config_set_after_import(self) -> None:
+        """The shared limiter is built from the config on first use, not
+        when the module is imported."""
+        override_option(self, "llm", "rate_limit_requests", "2")
+        llm_protocol.llm_rate_limiter.cache_clear()
+        self.addCleanup(llm_protocol.llm_rate_limiter.cache_clear)
+        proto = self._proto()
+
+        for _ in range(5):
+            proto._process_command_with_llm("id")
+
+        self.assertEqual(self.client.get_response.call_count, 2)
 
 
 if __name__ == "__main__":
