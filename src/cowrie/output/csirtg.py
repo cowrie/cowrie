@@ -13,6 +13,9 @@ from twisted.logger import Logger
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
 
+# The port and tags reported for each transport a session event names.
+TRANSPORTS = {"ssh": (22, "scanner,ssh"), "telnet": (23, "scanner,telnet")}
+
 
 class Output(cowrie.core.output.Output):
     """
@@ -57,12 +60,9 @@ class Output(cowrie.core.output.Output):
     def submitIp(self, e):
         peerIP = e["src_ip"]
         ts = e["timestamp"]
-        system = e.get("system", None)
+        protocol = e.get("protocol")
 
-        if system not in [
-            "cowrie.ssh.factory.CowrieSSHFactory",
-            "cowrie.telnet.transport.HoneyPotTelnetFactory",
-        ]:
+        if protocol not in TRANSPORTS:
             return
 
         today = str(datetime.now().date())
@@ -71,18 +71,14 @@ class Output(cowrie.core.output.Output):
             self.context = {}
             self.context[today] = set()
 
-        key = ",".join([peerIP, system])
+        key = ",".join([peerIP, protocol])
 
         if key in self.context[today]:
             return
 
         self.context[today].add(key)
 
-        tags = "scanner,ssh"
-        port = 22
-        if e["system"] == "cowrie.telnet.transport.HoneyPotTelnetFactory":
-            tags = "scanner,telnet"
-            port = 23
+        port, tags = TRANSPORTS[protocol]
 
         i = {
             "user": self.user,

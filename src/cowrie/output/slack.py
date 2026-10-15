@@ -53,21 +53,9 @@ class Output(cowrie.core.output.Output):
         else:
             timestamp = time.strftime("%Y-%m-%d %H:%M:%S") + " "
 
-        logon_types = {
-            "HoneyPotSSHTransport": "SSH",
-            "cowrie.ssh": "SSH",
-            "HTTP": "HTTP",
-            "CowrieTelnetTransport": "Telnet",
-            "cowrie.telnet": "Telnet",
-        }
-        logon_type = next(
-            (
-                logon_types[ltype]
-                for ltype in logon_types
-                if ltype in event.get("system", "")
-            ),
-            "XXX",
-        )
+        # Session events name their transport in ``protocol``.
+        logon_types = {"ssh": "SSH", "telnet": "Telnet"}
+        logon_type = logon_types.get(event.get("protocol", ""), "XXX")
 
         session = event.get("session", "unknown")
         src_ip = event.get("src_ip", "unknown")

@@ -121,7 +121,6 @@ class SlackEventIdTests(unittest.TestCase):
                 "src_ip": "1.2.3.4",
                 "url": "http://example.invalid/payload",
                 "message": "Attempt to download file(s) failed",
-                "system": "cowrie.ssh",
             },
         )
         self.assertEqual(len(texts), 1)
@@ -136,10 +135,27 @@ class SlackEventIdTests(unittest.TestCase):
                 "src_ip": "1.2.3.4",
                 "ttylog": "var/lib/cowrie/tty/abc",
                 "message": "Opening TTY Log",
-                "system": "cowrie.ssh",
             },
         )
         self.assertEqual(texts, [])
+
+    def test_message_prefix_names_the_protocol(self) -> None:
+        """Events carry the transport in ``protocol``; nothing sets a ``system``
+        key, so the prefix must come from protocol."""
+        for protocol, label in (("ssh", "SSH"), ("telnet", "Telnet")):
+            with self.subTest(protocol=protocol):
+                texts = _post(
+                    _make(),
+                    {
+                        "eventid": "cowrie.login.success",
+                        "session": "abc123",
+                        "src_ip": "1.2.3.4",
+                        "protocol": protocol,
+                        "username": "root",
+                        "password": "x",
+                    },
+                )
+                self.assertTrue(texts[0].startswith(f"[{label}_abc123] "), texts[0])
 
     def test_session_connect_posts(self) -> None:
         texts = _post(
@@ -151,7 +167,6 @@ class SlackEventIdTests(unittest.TestCase):
                 "src_port": 55555,
                 "protocol": "ssh",
                 "message": "New connection",
-                "system": "cowrie.ssh",
             },
         )
         self.assertEqual(len(texts), 1)
