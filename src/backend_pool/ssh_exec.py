@@ -45,12 +45,16 @@ class CommandChannel(channel.SSHChannel):
         self.data += data
 
     def closeReceived(self) -> None:
-        self.conn.transport.loseConnection()
+        if self.done_deferred.called:
+            return
+        # Resolve success before closing: disconnect can synchronously fail
+        # the pending operation through the factory's connection-lost hook.
         self.done_deferred.callback(self.data)
-
-        # call the request client callback, if any
-        if self.callback:
-            self.callback(self.data)
+        try:
+            if self.callback:
+                self.callback(self.data)
+        finally:
+            self.conn.transport.loseConnection()
 
 
 class ClientConnection(connection.SSHConnection):
@@ -103,6 +107,14 @@ class ClientCommandFactory(protocol.ClientFactory):
             self.done_deferred,
             self.callback,
         )
+
+    def clientConnectionFailed(self, connector, reason):
+        if not self.done_deferred.called:
+            self.done_deferred.errback(reason)
+
+    def clientConnectionLost(self, connector, reason):
+        if not self.done_deferred.called:
+            self.done_deferred.errback(reason)
 
 
 def execute_ssh(host, port, username, password, command, callback=None):
