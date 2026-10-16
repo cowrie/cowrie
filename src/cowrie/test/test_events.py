@@ -365,6 +365,28 @@ class OutputDispatchTests(unittest.TestCase):
 
 
 class ConsoleRendererTests(unittest.TestCase):
+    def test_escapes_multiline_message_without_modifying_event(self) -> None:
+        lines: list[tuple[str, str]] = []
+        renderer = ConsoleRenderer(
+            logmsg=lambda msg, system: lines.append((msg, system))
+        )
+        for message, expected in (
+            ("CMD: id\nuname -a\necho done", r"CMD: id\nuname -a\necho done"),
+            ("CMD: id\r\necho done", r"CMD: id\r\necho done"),
+            ("CMD: id\recho done", r"CMD: id\recho done"),
+        ):
+            with self.subTest(message=message):
+                event = {
+                    "eventid": "cowrie.command.input",
+                    "message": message,
+                    "session": "abcd0123",
+                    "protocol": "ssh",
+                    "src_ip": "192.0.2.1",
+                }
+                renderer.write(event)
+                self.assertEqual(lines[-1], (expected, "ssh,abcd0123,192.0.2.1"))
+                self.assertEqual(event["message"], message)
+
     def test_renders_with_session_prefix(self) -> None:
         lines: list[tuple[str, str]] = []
         renderer = ConsoleRenderer(
