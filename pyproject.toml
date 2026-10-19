@@ -80,7 +80,7 @@ dev = [
 "mypy==2.4.0; platform_python_implementation=='CPython'",
 "pathspec==1.1.1",
 "pip-audit==2.10.1",
-"pipdeptree==4.2.5",
+"pipdeptree==4.2.7",
 "pre-commit==4.6.2",
 "pylint==4.1.2",
 "pyre-check==0.10.0",
