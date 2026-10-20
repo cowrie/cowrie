@@ -126,14 +126,10 @@ class _Scanner:
         text, n = self.text, self.n
         while self.i < n:
             frame = self.stack[-1][0] if self.stack else None
-            if frame == _SQ:
-                self._in_single_quotes()
-            elif frame == _DQ:
+            if frame == _DQ:
                 self._in_double_quotes()
-            elif frame == _BQ:
-                self._in_backticks()
-            elif frame == _BRACE:
-                self._in_brace()
+            elif frame in (_SQ, _BQ, _BRACE):
+                self._in_literal()
             else:
                 self._in_command()
         self.pieces.append(text[self.kept_from :])
@@ -161,11 +157,11 @@ class _Scanner:
                 incomplete_line = self.line
             else:
                 incomplete_line = opened
-        elif self.trailing_backslash:
-            incomplete = "\\"
-            incomplete_line = self.line
         elif any(not h.terminated for h in self.heredocs.values()):
             incomplete = "heredoc"
+            incomplete_line = self.line
+        elif self.trailing_backslash:
+            incomplete = "\\"
             incomplete_line = self.line
         return ScanResult(
             stripped="".join(self.pieces),
@@ -187,12 +183,16 @@ class _Scanner:
         if self.pending:
             self._collect_bodies()
 
-    def _in_single_quotes(self) -> None:
-        # Grammar: SQ: /'[^']*'/ -- only the closing quote ends it.
+    def _in_literal(self) -> None:
+        """Inside single quotes, backticks or ``${...}``: only the closer
+        ends the frame. Grammar: SQ: /'[^']*'/, BQ_LITERAL: /[^`]+/ and
+        dollar_brace: "${" BRACE_NAME "}" -- nothing in them is escaped."""
         c = self.text[self.i]
-        if c == _SQ:
+        if c == self.stack[-1][0]:
             self.stack.pop()
         elif c == "\n":
+            # Inside a word: the command line has not ended, so no
+            # here-document body starts here.
             self.line += 1
         self.i += 1
 
@@ -211,29 +211,7 @@ class _Scanner:
         elif c == _DQ:
             self.stack.pop()
         elif c == "\n":
-            self._newline()
-            return
-        self.i += 1
-
-    def _in_backticks(self) -> None:
-        # Grammar: BQ_LITERAL: /[^`]+/ -- nothing is escaped, the next
-        # backtick closes.
-        c = self.text[self.i]
-        if c == _BQ:
-            self.stack.pop()
-        elif c == "\n":
-            self._newline()
-            return
-        self.i += 1
-
-    def _in_brace(self) -> None:
-        # Grammar: dollar_brace: "${" BRACE_NAME "}".
-        c = self.text[self.i]
-        if c == _BRACE:
-            self.stack.pop()
-        elif c == "\n":
-            self._newline()
-            return
+            self.line += 1
         self.i += 1
 
     def _in_command(self) -> None:
@@ -241,12 +219,10 @@ class _Scanner:
         text, i, n = self.text, self.i, self.n
         c = text[i]
         if c == "\\":
-            # Grammar: ESC: /\\./ and the \<newline> continuation in _WS. A
-            # backslash with nothing after it escapes the newline still to
-            # come, and one escaping the input's last newline continues onto
-            # a line not yet read: either way the input is incomplete.
+            # Grammar: ESC: /\\./ and the \<newline> continuation in _WS. One
+            # escaping the input's last newline continues onto a line not yet
+            # read; a bare backslash at the very end the grammar rejects.
             if i + 1 >= n:
-                self.trailing_backslash = True
                 self.i = n
                 return
             if text[i + 1] == "\n":

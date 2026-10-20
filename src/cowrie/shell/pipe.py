@@ -118,7 +118,7 @@ class PipeProtocol:
         # in its place among the other redirection errors. The last input
         # redirection wins (`cat < f <<EOF` reads the here-document): a path
         # to read, or the bytes of a here-document.
-        pending_stdin: tuple[str, Any] | None = None
+        pending_stdin: str | bytes | None = None
 
         # bash applies redirections left to right and stops at the first one
         # that fails; the command does not run (POSIX XCU 2.8.1).
@@ -151,25 +151,23 @@ class PipeProtocol:
                 path = self._open_stdin(target)
                 if path is None:
                     break
-                pending_stdin = ("path", path)
+                pending_stdin = path
                 # Stdin is handled by loading input_data, so we don't strictly need it in targets for writing,
                 # but we track it for completeness if needed.
                 self.targets[fd] = (FD_FILE_INPUT, target)
 
             elif op["type"] == "heredoc":
-                pending_stdin = ("data", op["data"])
+                pending_stdin = op["data"]
                 self.targets[op["fd"]] = (FD_FILE_INPUT, "<<")
 
             elif op["type"] == "dup":
                 fd = op["fd"]
                 self.targets[fd] = self.targets[op["target"]]
 
-        if pending_stdin is not None:
-            kind, value = pending_stdin
-            if kind == "path":
-                self.input_data = self.protocol.fs.file_contents(value)
-            else:
-                self.input_data = value
+        if isinstance(pending_stdin, str):
+            self.input_data = self.protocol.fs.file_contents(pending_stdin)
+        elif pending_stdin is not None:
+            self.input_data = pending_stdin
 
     def _open_stdin(self, target: str) -> str | None:
         """Resolve a stdin redirection's file, or report it missing and return

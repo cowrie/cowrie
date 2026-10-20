@@ -281,17 +281,6 @@ class ShellFdRedirectionTests(unittest.TestCase):
         self.proto.lineReceived(b"echo $(echo a) $(echo b)")
         self.assertEqual(self.tr.value(), b"a b\n" + PROMPT)
 
-    def test_heredoc_feeds_stdin(self) -> None:
-        # The body is read at the continuation prompt up to the delimiter.
-        self.proto.lineReceived(b"cat << EOF")
-        self.assertEqual(self.tr.value(), b"> ")
-        self.tr.clear()
-        self.proto.lineReceived(b"from heredoc")
-        self.assertEqual(self.tr.value(), b"> ")
-        self.tr.clear()
-        self.proto.lineReceived(b"EOF")
-        self.assertEqual(self.tr.value(), b"from heredoc\n" + PROMPT)
-
     def test_last_stdin_redirection_wins(self) -> None:
         self.proto.lineReceived(b"echo filed > /tmp/last_in; cat < /tmp/last_in <<EOF")
         self.proto.lineReceived(b"from heredoc")

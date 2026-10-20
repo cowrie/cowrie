@@ -178,13 +178,11 @@ class HoneyPotShell:
         # A shell fed one line at a time (interactive, or reading live stdin)
         # keeps the lines of a construct still being written -- an open `if`,
         # quote or here-document -- until the input completes, as bash does
-        # at its `> ` prompt. ``_pending_statements`` is the last parse of
-        # them, used as they stand when stdin ends; ``_lines_fed`` counts the
+        # at its `> ` prompt. ``_lines_fed`` counts the
         # lines consumed so far, so errors name their line in the whole
         # input; ``stdin_eof`` is set once the live stdin feeding a
         # ``reads_stdin`` shell has closed.
         self._pending: list[str] = []
-        self._pending_statements: list[Statement] = []
         self._lines_fed: int = 0
         self.stdin_eof: bool = False
         # Child-shell state (see run_child): a pipeline stage, a "(...)" group
@@ -391,7 +389,6 @@ class HoneyPotShell:
                 return
             statements = self.bashparser.parse(text, first_line=first_line)
             if self._incomplete(statements):
-                self._pending_statements = statements
                 if run:
                     self.showPrompt()
                 return
@@ -426,14 +423,13 @@ class HoneyPotShell:
         """Forget the buffered lines, counting them as consumed."""
         self._lines_fed += len(self._pending)
         self._pending.clear()
-        self._pending_statements = []
 
     def _flush_pending(self) -> None:
         """Stdin ended inside a construct: run the buffered lines as they
         stand, reporting the unexpected end of file as bash does."""
         text = self._pending_text()
         first_line = self._lines_fed + 1
-        statements = self._pending_statements
+        statements = self.bashparser.parse(text, first_line=first_line)
         self._discard_pending()
         self._queue_statements(
             self._resolve_eof(statements, text, first_line), text, first_line
@@ -466,11 +462,8 @@ class HoneyPotShell:
             rest.insert(max(len(rest) - 1, 0), _Continuation(warn))
             return rest
         if error.opener == "\\":
-            if text.endswith(("\\\n", "\\\r\n")):
-                return rest
-            # A bare trailing backslash: bash keeps it and runs the line.
-            # Cowrie has always reported this as a syntax error; keep that.
-            error.opener = ""
+            # A backslash-newline at the very end: nothing follows it.
+            return rest
         error.incomplete = False
         return [*rest, error]
 
@@ -1291,14 +1284,11 @@ class HoneyPotShell:
         else:
             self.protocol.end_process(code)
 
-    def showPrompt(self, continuation: bool | None = None) -> None:
+    def showPrompt(self) -> None:
         """Write the prompt: PS1, or the `> ` continuation prompt (PS2) while
-        lines of an unfinished construct are buffered. ``continuation``
-        forces one or the other; by default it follows the buffer."""
+        lines of an unfinished construct are buffered."""
         if not self.interactive:
             return
-        if continuation is None:
-            continuation = bool(self._pending)
 
         prompt = ""
         if CowrieConfig.has_option("honeypot", "prompt"):
@@ -1329,7 +1319,7 @@ class HoneyPotShell:
         # goes to the terminal as UTF-8, the way a real shell writes it.
         # ``ps`` / ``pn`` are what the line editor redraws (CTRL-L).
         self.protocol.ps = (prompt.encode("utf-8"), b"> ")
-        self.protocol.pn = 1 if continuation else 0
+        self.protocol.pn = 1 if self._pending else 0
         self.protocol.terminal.write(self.protocol.ps[self.protocol.pn])
 
     def eofReceived(self) -> None:

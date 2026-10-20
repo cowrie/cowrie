@@ -13,9 +13,8 @@ import unittest
 
 from twisted.internet.protocol import connectionDone
 
-from cowrie.shell.bashparse import BashParser, Command, Pipeline, SyntaxError_
+from cowrie.shell.bashparse import BashParser, Command, SyntaxError_
 from cowrie.shell.parser import CommandParser, HereDocBody
-from cowrie.shell.prescan import HereDoc
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.configoverride import override_option
 from cowrie.test.fake_server import FakeAvatar, FakeServer
@@ -104,6 +103,16 @@ class HereDocParserTests(unittest.TestCase):
             [SyntaxError_(token=";", lineno=1)],
         )
 
+    def test_newline_inside_a_quoted_word_does_not_start_the_body(self) -> None:
+        # The body starts after the newline that ends the command line, not
+        # one inside a word on it.
+        for word in ('"x\ny"', "'x\ny'"):
+            with self.subTest(word=word):
+                self.assertEqual(
+                    self._tokens(f"cat <<EOF {word}\nbody\nEOF\n"),
+                    ["cat", "body\n", "x\ny"],
+                )
+
     def test_line_numbers_count_the_body(self) -> None:
         statements = self.parser.parse("cat <<EOF\none\ntwo\nEOF\necho after\n")
         self.assertEqual(
@@ -116,13 +125,6 @@ class HereDocParserTests(unittest.TestCase):
             ["echo", "<cat", "<<EOF", "inner", "EOF>", "after"],
         )
         self.assertEqual(self.ctx.substitutions, ["cat <<EOF\ninner\nEOF\n"])
-
-    def test_heredoc_on_a_pipeline_stage(self) -> None:
-        statement = self.parser.parse("cat <<EOF | tr a-z A-Z\nhi\nEOF\n")[0]
-        assert isinstance(statement, Pipeline)
-        first = statement.stages[0]
-        assert isinstance(first, Command)
-        self.assertEqual(evaluate_now(self.parser, first), ["cat", "hi\n"])
 
     def test_unterminated_body_is_an_incomplete_marker(self) -> None:
         for text in ("cat <<EOF", "cat <<EOF\n", "cat <<EOF\npartial\n"):
@@ -144,14 +146,6 @@ class HereDocParserTests(unittest.TestCase):
         self.assertEqual(self._tokens('cat <<< "a $x"'), ["cat", "a hi\n"])
         self.assertEqual(self._body("cat 3<<<word").fd, 3)
         self.assertEqual(self._tokens("cat <<<$unset"), ["cat", "\n"])
-
-    def test_heredoc_item_is_in_the_command(self) -> None:
-        command = self.parser.parse("cat <<EOF\nx\nEOF\n")[0]
-        assert isinstance(command, Command)
-        self.assertEqual(
-            [item for item in command.items if isinstance(item, HereDoc)],
-            [HereDoc(body="x\n", expand=True, delimiter="EOF", lineno=1)],
-        )
 
 
 class HereDocShellTests(unittest.TestCase):

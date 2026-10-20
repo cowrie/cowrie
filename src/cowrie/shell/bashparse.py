@@ -629,17 +629,10 @@ class BashParser:
                     opener=scanned.incomplete,
                 )
             ]
-        continued = scanned.incomplete == "\\" and text.endswith(("\\\n", "\\\r\n"))
-        if (scanned.incomplete == "\\" and not continued) or scanned.incomplete == "(":
-            # A bare trailing backslash (which the grammar rejects), or a "("
-            # group bash reports like any other unfinished compound command.
+        if scanned.incomplete == "(":
+            # bash reports an open "(" group like any unfinished compound.
             return [
-                SyntaxError_(
-                    token="",
-                    lineno=self._end_line(text),
-                    incomplete=True,
-                    opener=scanned.incomplete.strip("("),
-                )
+                SyntaxError_(token="", lineno=self._end_line(text), incomplete=True)
             ]
         if scanned.truncated:
             self._log.info(
@@ -671,25 +664,17 @@ class BashParser:
         statements = self._split_statements(line, tree)
         if statements and isinstance(statements[-1], SyntaxError_):
             return statements
-        unterminated = [h for h in self._heredocs.values() if not h.terminated]
-        if unterminated:
-            # The body runs to the end of the input: a line-fed shell keeps
-            # reading, a whole-text one warns and runs what it has.
+        if scanned.incomplete in ("heredoc", "\\"):
+            # A here-document body runs to the end of the input, or the last
+            # line continues onto one not yet read: the statements stand, and
+            # a line-fed shell reads on while a whole-text one runs them.
             statements.append(
                 SyntaxError_(
                     token="",
                     lineno=self._end_line(line),
                     incomplete=True,
-                    opener="heredoc",
-                    heredocs=unterminated,
-                )
-            )
-        elif continued:
-            # The last line continues onto one not yet read; with no more
-            # input the continuation is simply dropped, as bash does.
-            statements.append(
-                SyntaxError_(
-                    token="", lineno=self._end_line(line), incomplete=True, opener="\\"
+                    opener=scanned.incomplete,
+                    heredocs=[h for h in self._heredocs.values() if not h.terminated],
                 )
             )
         return statements

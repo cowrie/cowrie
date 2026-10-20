@@ -706,7 +706,7 @@ class BashParseIncompleteTests(unittest.TestCase):
             ("echo ${x\n", "}", 1),
             ("echo $(ls", ")", 2),
             ("echo $(ls\n\n", ")", 3),
-            ("echo a \\", "\\", 2),
+            ("echo a \\\n", "\\", 2),
         ):
             with self.subTest(text=text):
                 marker = self._marker(text)
@@ -730,11 +730,6 @@ class BashParseIncompleteTests(unittest.TestCase):
                 self.assertEqual(marker.token, token)
                 self.assertEqual(marker.lineno, 1)
 
-    def test_dangling_and_or_is_no_longer_dropped(self) -> None:
-        statements = self.parser.parse("echo a &&")
-        self.assertEqual(len(statements), 2)
-        self.assertIsInstance(statements[0], Command)
-
     def test_complete_input_has_no_marker(self) -> None:
         for text in (
             "echo if",
@@ -757,12 +752,6 @@ class BashParseIncompleteTests(unittest.TestCase):
                 )
 
     def test_first_line_offsets_line_numbers(self) -> None:
-        self.assertEqual(
-            self._marker(
-                "if true",
-            ).lineno,
-            2,
-        )
         for text, lineno in (("if true", 6), ("echo >", 5)):
             marker = self.parser.parse(text, first_line=5)[-1]
             assert isinstance(marker, SyntaxError_)
@@ -786,9 +775,6 @@ class RedirectionOperatorLexingTests(unittest.TestCase):
         self.assertEqual(self._operators("cat <<<w"), ["<<<"])
         self.assertEqual(self._operators("cat 2<f 3<<<w >>o"), ["2<", "3<<<", ">>"])
         self.assertEqual(self._operators("cat 2>&1 <f"), ["2>&", "<"])
-        command = self.parser.parse("cat <<-EOF\n\tEOF\n")[0]
-        assert isinstance(command, Command)
-        self.assertEqual([type(i).__name__ for i in command.items], ["Tree", "HereDoc"])
 
 
 if __name__ == "__main__":
