@@ -640,6 +640,156 @@ class BashParseAmbiguityTests(unittest.TestCase):
         stmt = "echo $(id) ; (ls /proc | head -n 1) ; x=$(cat /etc/hostname)"
         self._assert_unambiguous(" ; ".join([stmt] * 2))
 
+    def test_heredoc_operators(self) -> None:
+        # What the grammar sees once the pre-scanner has cut the bodies out.
+        self._assert_unambiguous("cat <<EOF | tr a-z A-Z\n\n\n")
+        self._assert_unambiguous("cat <<-EOF 2<<'B' <<<word <f 3<<\\X\n\n")
+
+    def test_heredoc_body(self) -> None:
+        tree = Lark(
+            _GRAMMAR,
+            start="heredoc_body",
+            parser="earley",
+            lexer="dynamic",
+            ambiguity="explicit",
+        ).parse("a $x ${y} $(id) `uname` \\$ \\\\ \\a $ \\\nb\n")
+        ambiguous = sum(1 for t in tree.iter_subtrees() if t.data == "_ambig")
+        self.assertEqual(ambiguous, 0)
+
+
+class BashParseIncompleteTests(unittest.TestCase):
+    """Input that ends too early is flagged, not rejected, so a line-fed
+    shell can wait for the rest."""
+
+    def setUp(self) -> None:
+        self.parser = BashParser(FakeContext())
+
+    def _marker(self, text: str) -> SyntaxError_:
+        statements = self.parser.parse(text)
+        marker = statements[-1]
+        self.assertIsInstance(marker, SyntaxError_, statements)
+        assert isinstance(marker, SyntaxError_)
+        return marker
+
+    def test_open_constructs_are_incomplete(self) -> None:
+        for text in (
+            "if true",
+            "if true; then",
+            "while true; do",
+            "until false",
+            "for i in 1 2",
+            "for i",
+            "case x",
+            "case x in",
+            "case x in a)",
+            "case x in a) echo;;",
+            "{ echo a",
+            "( echo a",
+            "f() {",
+            "f()",
+            "function f",
+            "echo a |",
+            "echo a &&",
+            "echo a ||",
+        ):
+            with self.subTest(text=text):
+                marker = self._marker(text)
+                self.assertTrue(marker.incomplete)
+                self.assertEqual((marker.token, marker.opener), ("", ""))
+                self.assertEqual(marker.lineno, 2)
+
+    def test_open_quotes_name_their_closer_and_line(self) -> None:
+        for text, opener, lineno in (
+            ('echo "a\nb', '"', 1),
+            ("echo 'a\nb", "'", 1),
+            ("echo `ls\n", "`", 1),
+            ("echo ${x\n", "}", 1),
+            ("echo $(ls", ")", 2),
+            ("echo $(ls\n\n", ")", 3),
+            ("echo a \\", "\\", 2),
+        ):
+            with self.subTest(text=text):
+                marker = self._marker(text)
+                self.assertTrue(marker.incomplete)
+                self.assertEqual((marker.opener, marker.lineno), (opener, lineno))
+
+    def test_real_errors_are_not_incomplete(self) -> None:
+        for text, token in (
+            ("echo >", "newline"),
+            ("for", "newline"),
+            ("function", "newline"),
+            ("case", "newline"),
+            ("f() echo", "echo"),
+            ("fi", "fi"),
+            ("echo )", ")"),
+            ("case x in a) ;; esac extra)", ")"),
+        ):
+            with self.subTest(text=text):
+                marker = self._marker(text)
+                self.assertFalse(marker.incomplete)
+                self.assertEqual(marker.token, token)
+                self.assertEqual(marker.lineno, 1)
+
+    def test_dangling_and_or_is_no_longer_dropped(self) -> None:
+        statements = self.parser.parse("echo a &&")
+        self.assertEqual(len(statements), 2)
+        self.assertIsInstance(statements[0], Command)
+
+    def test_complete_input_has_no_marker(self) -> None:
+        for text in (
+            "echo if",
+            "echo done",
+            "echo a # 'b",
+            "case x in esac",
+            "echo a &&\necho b",
+            "echo a |\ncat",
+            "echo a \\\nb",
+            "cat <<< word",
+            "echo $((1+2))",
+        ):
+            with self.subTest(text=text):
+                statements = self.parser.parse(text)
+                self.assertFalse(
+                    statements
+                    and isinstance(statements[-1], SyntaxError_)
+                    and statements[-1].incomplete,
+                    statements,
+                )
+
+    def test_first_line_offsets_line_numbers(self) -> None:
+        self.assertEqual(
+            self._marker(
+                "if true",
+            ).lineno,
+            2,
+        )
+        for text, lineno in (("if true", 6), ("echo >", 5)):
+            marker = self.parser.parse(text, first_line=5)[-1]
+            assert isinstance(marker, SyntaxError_)
+            self.assertEqual(marker.lineno, lineno)
+        command = self.parser.parse("echo a\necho b", first_line=5)[1]
+        assert isinstance(command, Command)
+        self.assertEqual(command.lineno, 6)
+
+
+class RedirectionOperatorLexingTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.parser = BashParser(FakeContext())
+
+    def _operators(self, text: str) -> list[str]:
+        command = self.parser.parse(text)[0]
+        assert isinstance(command, Command)
+        return [item for item in command.items if isinstance(item, str)]
+
+    def test_each_operator_is_one_token(self) -> None:
+        self.assertEqual(self._operators("cat <f"), ["<"])
+        self.assertEqual(self._operators("cat <<<w"), ["<<<"])
+        self.assertEqual(self._operators("cat 2<f 3<<<w >>o"), ["2<", "3<<<", ">>"])
+        self.assertEqual(self._operators("cat 2>&1 <f"), ["2>&", "<"])
+        command = self.parser.parse("cat <<-EOF\n\tEOF\n")[0]
+        assert isinstance(command, Command)
+        self.assertEqual([type(i).__name__ for i in command.items], ["Tree", "HereDoc"])
+
 
 if __name__ == "__main__":
     unittest.main()
