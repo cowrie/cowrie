@@ -40,6 +40,7 @@ class Command_grep(HoneyPotCommand):
     quiet: bool = False
     max_count: int | None = None
     match_count: int = 0
+    ignore_case: bool = False
 
     def grep_get_contents(self, filename: str, match: str) -> None:
         try:
@@ -51,7 +52,10 @@ class Command_grep(HoneyPotCommand):
 
     def compile_match(self, match: str) -> re.Pattern[bytes]:
         bmatch = os.path.basename(match).replace('"', "").encode("utf8")
-        return re.compile(bmatch)
+        flags = re.NOFLAGS
+        if self.ignore_case:
+            flags = re.IGNORECASE
+        return re.compile(bmatch, flags)
 
     def grep_application(self, contents: bytes, match: str) -> None:
         matcher = self.compile_match(match)
@@ -119,6 +123,8 @@ class Command_grep(HoneyPotCommand):
                     self.exit(2)
                     return
                 self.max_count = n
+            elif opt == "-i":
+                self.ignore_case = True
 
         if not args:
             # Options only, no pattern (e.g. `grep -h`).
