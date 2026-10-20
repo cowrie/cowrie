@@ -52,7 +52,7 @@ class Command_grep(HoneyPotCommand):
 
     def compile_match(self, match: str) -> re.Pattern[bytes]:
         bmatch = os.path.basename(match).replace('"', "").encode("utf8")
-        flags = re.NOFLAGS
+        flags = re.NOFLAG
         if self.ignore_case:
             flags = re.IGNORECASE
         return re.compile(bmatch, flags)
