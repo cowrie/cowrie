@@ -219,6 +219,14 @@ class FlowControlTests(unittest.TestCase):
             b"before after\n",
         )
 
+    def test_top_level_has_no_positional_parameters(self) -> None:
+        """An interactive shell has no positional parameters: $@ and $* are
+        empty and $# is 0, never the literal text."""
+        self.assertEqual(self._run('echo "[$@]" "[$*]" "[$#]"'), b"[] [] [0]\n")
+
+    def test_top_level_unquoted_at_expands_to_nothing(self) -> None:
+        self.assertEqual(self._run("echo before $@ after"), b"before after\n")
+
     # -- exit status propagation -------------------------------------------
 
     def test_status_after_if(self) -> None:

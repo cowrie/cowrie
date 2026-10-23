@@ -172,6 +172,36 @@ class ScriptExecutionTests(unittest.TestCase):
         self.proto.lineReceived(b"/tmp/abs.sh")
         self.assertEqual(self.tr.value(), b"absolute\n" + PROMPT)
 
+    def test_sh_script_sees_its_arguments(self) -> None:
+        """sh script a b binds $1, $2, $# and $@ to the script's arguments."""
+        self.proto.lineReceived(b"echo 'echo $# $1 $2 [$@]' > /tmp/args.sh")
+        self.tr.clear()
+        self.proto.lineReceived(b"sh /tmp/args.sh x y")
+        self.assertEqual(self.tr.value(), b"2 x y [x y]\n" + PROMPT)
+
+    def test_dotslash_script_sees_its_arguments(self) -> None:
+        self.proto.lineReceived(b"echo 'echo $# [$*]' > /tmp/args.sh")
+        self.proto.lineReceived(b"chmod +x /tmp/args.sh")
+        self.tr.clear()
+        self.proto.lineReceived(b"/tmp/args.sh one two three")
+        self.assertEqual(self.tr.value(), b"3 [one two three]\n" + PROMPT)
+
+    def test_script_without_arguments_has_empty_positional_parameters(
+        self,
+    ) -> None:
+        self.proto.lineReceived(b"echo 'echo \"[$@]\" $#' > /tmp/args.sh")
+        self.tr.clear()
+        self.proto.lineReceived(b"sh /tmp/args.sh")
+        self.assertEqual(self.tr.value(), b"[] 0\n" + PROMPT)
+
+    def test_script_does_not_inherit_function_arguments(self) -> None:
+        """A script is a new process: it gets its own arguments, not those of
+        the function that ran it."""
+        self.proto.lineReceived(b"echo 'echo $# [$1]' > /tmp/args.sh")
+        self.tr.clear()
+        self.proto.lineReceived(b"f() { sh /tmp/args.sh; }; f a b")
+        self.assertEqual(self.tr.value(), b"0 []\n" + PROMPT)
+
     def test_bash_dash_c_still_works(self) -> None:
         """Existing sh -c 'cmd' functionality still works."""
         self.proto.lineReceived(b"sh -c 'echo still_works'")

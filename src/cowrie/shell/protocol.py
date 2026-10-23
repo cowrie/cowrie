@@ -219,6 +219,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
                     self,
                     path,
                     name=name,
+                    args=self.args,
                     not_found_message=f"{prefix}{name}: No such file or directory\n",
                     binary_message=(
                         f"{prefix}{name}: cannot execute binary file: "

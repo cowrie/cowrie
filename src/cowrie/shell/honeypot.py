@@ -703,6 +703,14 @@ class HoneyPotShell:
             return pattern[1:-1]
         return pattern
 
+    def set_positional_params(self, args: list[str]) -> None:
+        """Bind $1.. , $#, $@ and $* to ``args``."""
+        for i, value in enumerate(args, start=1):
+            self.environ[str(i)] = value
+        self.environ["#"] = str(len(args))
+        self.environ["@"] = " ".join(args)
+        self.environ["*"] = " ".join(args)
+
     def _call_function(self, name: str, args: list[str]) -> None:
         """Run a function body with $1.. , $#, $@ and $* bound to ``args``.
 
@@ -714,12 +722,7 @@ class HoneyPotShell:
         body = self.functions[name]
         params = [str(i) for i in range(1, len(args) + 1)] + ["#", "@", "*"]
         saved = {key: self.environ.get(key) for key in params}
-
-        for i, value in enumerate(args, start=1):
-            self.environ[str(i)] = value
-        self.environ["#"] = str(len(args))
-        self.environ["@"] = " ".join(args)
-        self.environ["*"] = " ".join(args)
+        self.set_positional_params(args)
 
         def restore() -> None:
             for key, value in saved.items():

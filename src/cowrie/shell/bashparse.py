@@ -53,9 +53,9 @@ Known deviations from standard bash (none are emulated yet):
   operators are tokenised as plain ``<`` redirections.
 * A compound command nested inside ``$(...)`` is not captured (its output is
   empty); command substitution captures simple commands and subshells only.
-* ``$@`` / ``$#`` / ``$*`` expand to the positional parameters only while a
-  function is running; elsewhere they are kept literally. Other special
-  parameters (``$!``, ``$$`` ...) other than ``$?`` are kept literally.
+* ``$@`` / ``$#`` / ``$*`` expand to the positional parameters of the running
+  function or script; with none set they are empty (``$#`` is 0). Other
+  special parameters (``$!``, ``$$`` ...) other than ``$?`` are kept literally.
 
 Input the grammar cannot parse at all (e.g. an unterminated quote) surfaces as
 a syntax error, exactly as the previous implementation degraded on input it
@@ -1204,9 +1204,9 @@ class BashParser:
         None for an ordinary ``$name`` reference the caller should look up.
 
         ``$?`` is the last exit status. ``$@`` / ``$#`` / ``$*`` resolve to the
-        positional parameters the shell sets while running a function; outside a
-        function they are unset and kept verbatim. Other specials are kept
-        verbatim.
+        positional parameters the shell sets while running a function or
+        script; with none set, ``$@`` / ``$*`` are empty and ``$#`` is 0.
+        Other specials are kept verbatim.
         """
         _, special = self._var_name(node)
         if special is None:
@@ -1215,7 +1215,9 @@ class BashParser:
             return self.context.get_status()
         if special in ("@", "#", "*"):
             value = self.context.get_variable(special)
-            return value if value is not None else self._leaf_value(node)
+            if value is None:
+                return "0" if special == "#" else ""
+            return value
         return self._leaf_value(node)
 
     def _leaf_value(self, node: Tree) -> str:
