@@ -265,6 +265,20 @@ class FlowControlTests(unittest.TestCase):
             b"n=1\n<a b c>\n",
         )
 
+    def test_braced_quoted_at_keeps_each_argument_a_separate_word(self) -> None:
+        self.assertEqual(
+            self._run(self.SHOW_ARGS + 'f() { g "${@}"; }; f a "b c"'),
+            b"n=2\n<a>\n<b c>\n",
+        )
+
+    def test_braced_special_parameters_expand(self) -> None:
+        self.assertEqual(
+            self._run('f() { echo ${#} "${*}" ${1}; }; f a b'), b"2 a b a\n"
+        )
+
+    def test_braced_status_expands(self) -> None:
+        self.assertEqual(self._run("false; echo ${?}"), b"1\n")
+
     def test_top_level_has_no_positional_parameters(self) -> None:
         """An interactive shell has no positional parameters: $@ and $* are
         empty and $# is 0, never the literal text."""
