@@ -218,7 +218,8 @@ class Command_curl(HoneyPotCommand):
     @inlineCallbacks
     def start(self):
         try:
-            optlist, args = getopt.getopt(
+            # curl accepts options anywhere on the line, e.g. `curl URL -o f`.
+            optlist, args = getopt.gnu_getopt(
                 self.args, "Lsho:IO", ["help", "manual", "silent", "head"]
             )
         except getopt.GetoptError as err:
