@@ -83,6 +83,12 @@ class ShellVariableTests(unittest.TestCase):
         self.proto.lineReceived(b"x=hi")
         self.assertIn(b"x=hi", self.run_line(b"set"))
 
+    # Positional parameters are not variables: `set` does not list them
+    def test_set_omits_positional_parameters(self) -> None:
+        output = self.run_line(b"f() { set; }; f a")
+        for line in (b"1=a", b"#=1", b"@=a", b"*=a"):
+            self.assertNotIn(b"\n" + line + b"\n", b"\n" + output)
+
     # export VAR=value sets and exports
     def test_export_assignment_in_env(self) -> None:
         self.proto.lineReceived(b"export y=bye")
