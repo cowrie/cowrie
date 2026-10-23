@@ -181,7 +181,7 @@ sq: SQ
 SQ: /'[^']*'/
 
 dollar_brace: "${" BRACE_NAME "}"
-BRACE_NAME: /[_a-zA-Z0-9]+/
+BRACE_NAME: /[_a-zA-Z0-9]+|[?@$#!*]/
 
 dollar_var: DOLLAR_NAME | DOLLAR_SPECIAL
 DOLLAR_NAME: /\$[_a-zA-Z0-9]+/
@@ -571,6 +571,9 @@ _ASSIGNMENT_PREFIX = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
 _DECLARATION_BUILTINS = frozenset({"declare", "export", "local", "readonly", "typeset"})
 # The characters an unquoted expansion splits on: bash's default IFS.
 _IFS_WHITESPACE = " \t\n"
+# The special parameters a ``$x`` / ``${x}`` reference can name.
+_SPECIAL_PARAMS = frozenset("?@$#!*")
+
 _UNQUOTED_EXPANSIONS = frozenset({"dollar_var", "dollar_brace", "cmdsub", "backtick"})
 
 
@@ -1491,7 +1494,10 @@ class BashParser:
 
     def _is_at(self, node: Tree) -> bool:
         """Whether a node is the ``$@`` special parameter."""
-        return node.data == "dollar_var" and self._var_name(node)[1] == "@"
+        return (
+            node.data in ("dollar_var", "dollar_brace")
+            and self._var_name(node)[1] == "@"
+        )
 
     def _positional_params(self) -> list[str]:
         """The positional parameters $1..$#, in order."""
@@ -1545,6 +1551,8 @@ class BashParser:
             if value is None:
                 return "0" if special == "#" else ""
             return value
+        if node.data == "dollar_brace":
+            return "${" + self._leaf_value(node) + "}"
         return self._leaf_value(node)
 
     def _leaf_value(self, node: Tree) -> str:
@@ -1556,7 +1564,8 @@ class BashParser:
     def _var_name(self, node: Tree) -> tuple[str, str | None]:
         """Return (name, special) for a dollar_var/dollar_brace node."""
         if node.data == "dollar_brace":
-            return self._leaf_value(node), None
+            name = self._leaf_value(node)
+            return name, name if name in _SPECIAL_PARAMS else None
         tok = node.children[0]
         assert isinstance(tok, Token)
         text = str(tok)
