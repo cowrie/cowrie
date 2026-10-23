@@ -41,9 +41,11 @@ Known deviations from standard bash (none are emulated yet):
 
 * A trailing ``&`` is treated as a literal argument, not a background job.
 * No word expansions beyond ``$VAR`` / ``${VAR}``: tilde (``~``), brace
-  (``{a,b}`` / ``{1..3}``), arithmetic (``$((...))``), the parameter
-  expansion operators (``${x:-y}``, ``${#x}``, ``${x/a/b}`` ...), and ANSI-C
-  quoting (``$'...'``) are all passed through literally.
+  (``{a,b}`` / ``{1..3}``) and ANSI-C quoting (``$'...'``) are passed through
+  literally. Arithmetic (``$((1+2))``) runs as a command substitution of a
+  subshell, so ``1+2`` is reported as a command not found. The parameter
+  expansion operators (``${x:-y}``, ``${#x}``, ``${x/a/b}`` ...) are a syntax
+  error.
 * Word splitting always uses the default ``IFS`` (space, tab, newline); an
   assigned ``IFS`` is ignored.
 * Pathname expansion (globbing of ``*`` / ``?`` / ``[...]``) is left to the
