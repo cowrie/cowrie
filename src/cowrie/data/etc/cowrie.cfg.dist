@@ -1122,6 +1122,31 @@ anonymous = 0
 # Comma-separated list of tags to attach to each submission
 tags = cowrie,honeypot
 
+# Submit malware samples to MalwareBazaar.
+# Register at https://auth.abuse.ch/ to get your Auth-Key (same key portal as URLhaus).
+# NOTE: samples submitted here may become publicly downloadable from
+# bazaar.abuse.ch. Only enable this if you're comfortable sharing captured
+# binaries. This plugin runs independently of [output_urlhaus] -- it does
+# not cross-reference submissions between the two services.
+[output_malwarebazaar]
+enabled = false
+api_key = yourkeyhere
+# Set to 1 to submit anonymously
+anonymous = 0
+# Comma-separated list of tags to attach to each submission
+tags = cowrie,honeypot
+# MalwareBazaar's delivery_method enum has no value for "attacker uploaded
+# this directly to the honeypot shell" -- delivery_method_upload defaults to
+# "other". See https://bazaar.abuse.ch/api/#upload for the full enum.
+delivery_method_download = web_download
+delivery_method_upload = other
+# Skip files larger than this (bytes). MalwareBazaar does not document an
+# upload size limit -- verify current limits before raising this.
+max_upload_size = 104857600
+# How many times to retry a sample that previously failed to submit, should
+# it be seen again (e.g. re-downloaded in a later session).
+max_retries = 3
+
 # Sends Cowrie event notifications to a Slack channel.
 # Warning: This will produce a _lot_ of messages unless `simplified = true` 
 #          and `verbose = false` are set.
