@@ -17,6 +17,7 @@ from cowrie.insults import insults
 from cowrie.shell import protocol
 from cowrie.test.eventcapture import CaptureSink, make_exec_transport
 from cowrie.test.fake_server import FakeAvatar, FakeServer
+from cowrie.test.reactorpump import pump
 
 _DOWNLOAD_DIR = tempfile.mkdtemp(prefix="cowrie_exec_shell_")
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
@@ -190,6 +191,66 @@ class ExecShellStdinTests(unittest.TestCase):
         out.clear()
         lsp.dataReceived(b"echo ok\n")
         self.assertEqual(bytes(out), b"ok\n")
+
+    def test_multiline_compound_command(self) -> None:
+        lsp, out, _ended = self.drive(b"bash")
+        lsp.dataReceived(b"if true\nthen echo yes\nfi\n")
+        self.assertEqual(bytes(out), b"yes\n")
+
+    def test_eof_in_open_compound_reports_unexpected_end_of_file(self) -> None:
+        lsp, out, ended = self.drive(b"bash")
+        lsp.dataReceived(b"echo a\nif true\n")
+        self.assertEqual(bytes(out), b"a\n")
+        lsp.eofReceived()
+        self.assertEqual(
+            bytes(out), b"a\nbash: line 3: syntax error: unexpected end of file\n"
+        )
+        self.assertEqual(ended.get("code"), 2)
+
+    def test_eof_in_quote_names_the_quote(self) -> None:
+        lsp, out, ended = self.drive(b"bash")
+        lsp.dataReceived(b'echo "a\n')
+        lsp.eofReceived()
+        self.assertEqual(
+            bytes(out),
+            b"bash: line 1: unexpected EOF while looking for matching `\"'\n",
+        )
+        self.assertEqual(ended.get("code"), 2)
+
+    def test_errors_count_lines_from_the_start_of_stdin(self) -> None:
+        lsp, out, _ended = self.drive(b"bash")
+        lsp.dataReceived(b"echo a\nxxxxxx\n")
+        self.assertEqual(bytes(out), b"a\nbash: line 2: xxxxxx: command not found\n")
+        out.clear()
+        lsp.dataReceived(b"if true\nthen echo y\nfi\nzz\n")
+        self.assertEqual(bytes(out), b"y\nbash: line 6: zz: command not found\n")
+
+    def test_continuation_prompt_with_pty(self) -> None:
+        lsp, out, _ended = self.drive(b"bash", term="xterm")
+        out.clear()
+        lsp.dataReceived(b"if true\r")
+        self.assertEqual(bytes(out), b"> ")
+        out.clear()
+        lsp.dataReceived(b"then echo yes; fi\r")
+        self.assertEqual(bytes(out), b"yes\n" + PROMPT)
+
+    def test_eof_while_a_command_runs_still_runs_the_typed_ahead_lines(self) -> None:
+        # The lines arrive while `sleep` holds the channel, so the EOF goes
+        # to sleep; once it exits the shell runs the lines and then ends.
+        lsp, out, ended = self.drive(b"bash")
+        lsp.dataReceived(b"sleep 1\nif true\nthen echo typed\nfi\n")
+        lsp.eofReceived()
+        self.assertEqual(ended, {})
+        self.assertTrue(pump(lambda: "code" in ended, 5))
+        self.assertEqual(bytes(out), b"typed\n")
+        self.assertEqual(ended.get("code"), 0)
+
+    def test_trailing_backslash_newline_at_eof_is_dropped(self) -> None:
+        lsp, out, ended = self.drive(b"bash")
+        lsp.dataReceived(b"echo a \\\n")
+        lsp.eofReceived()
+        self.assertEqual(bytes(out), b"a\n")
+        self.assertEqual(ended.get("code"), 0)
 
 
 if __name__ == "__main__":

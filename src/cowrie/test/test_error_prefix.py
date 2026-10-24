@@ -70,6 +70,22 @@ class ExecChannelPrefixTests(unittest.TestCase):
             b"bash: -c: line 2: `fi'\n",
         )
 
+    def test_unexpected_end_of_file_is_on_the_line_after_the_last(self) -> None:
+        self.assertEqual(
+            run_exec(b"if true"),
+            b"bash: -c: line 2: syntax error: unexpected end of file\n",
+        )
+
+    def test_unexpected_eof_names_what_is_open(self) -> None:
+        self.assertEqual(
+            run_exec(b'echo "a'),
+            b"bash: -c: line 1: unexpected EOF while looking for matching `\"'\n",
+        )
+        self.assertEqual(
+            run_exec(b"echo $(ls"),
+            b"bash: -c: line 2: unexpected EOF while looking for matching `)'\n",
+        )
+
 
 class InteractivePrefixTests(unittest.TestCase):
     def setUp(self) -> None:

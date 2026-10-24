@@ -15,6 +15,15 @@ Release 3.1.0
 **NEW FEATURES:**
 
 * **New shell commands**: ``sed`` and ``tr``.
+* The shell reads multi-line input like bash: an unfinished ``if`` /
+  ``for`` / ``while`` / ``case`` / ``{`` / ``(``, an open quote, ``$(`` or
+  backtick, and a line ending in ``\``, ``|``, ``&&`` or ``||`` continue
+  on the next line at a ``> `` prompt, and ``bash -c``, scripts and exec
+  commands that end inside one report bash's unexpected end of file.
+* Here-documents (``<<EOF``, ``<<-EOF``, quoted delimiters) and
+  here-strings (``<<<word``) feed a command's stdin, with the usual
+  expansion of an unquoted body. The new ``[shell] max_heredoc_size``
+  option caps a body's size.
 * The emulated machine now booted before Cowrie started. ``uptime``,
   ``/proc/uptime`` and ``last`` count from that boot, so a restarted
   honeypot no longer reports a few seconds of uptime. The new

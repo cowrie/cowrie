@@ -647,6 +647,14 @@ ssh_version = OpenSSH_7.9p1, OpenSSL 1.1.1a  20 Nov 2018
 # (default: 16384)
 #max_input_size = 16384
 
+# Maximum characters kept of one here-document body (cat <<EOF ... EOF). This is
+# a memory cap only: a body never reaches the parser unexpanded (an unquoted
+# body larger than max_input_size is used literally), so lines beyond the cap
+# are dropped while the delimiter is still awaited, and the input is still
+# logged.
+# (default: 1048576)
+#max_heredoc_size = 1048576
+
 # Length in characters of shell input that triggers a garbage-collection sweep after
 # parsing. Lark's Earley parser creates cyclic intermediate structures, which
 # normal reference counting cannot promptly reclaim. Set to 0 to collect after

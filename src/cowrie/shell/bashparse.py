@@ -49,17 +49,25 @@ Known deviations from standard bash (none are emulated yet):
 * Pathname expansion (globbing of ``*`` / ``?`` / ``[...]``) is left to the
   individual command implementations, not done by the parser; ``case`` patterns
   are matched with fnmatch.
-* Here-documents (``<<EOF``) and here-strings (``<<<``) are not supported; the
-  operators are tokenised as plain ``<`` redirections.
 * A compound command nested inside ``$(...)`` is not captured (its output is
   empty); command substitution captures simple commands and subshells only.
 * ``$@`` / ``$#`` / ``$*`` expand to the positional parameters of the running
   function or script; with none set they are empty (``$#`` is 0). Other
   special parameters (``$!``, ``$$`` ...) other than ``$?`` are kept literally.
 
-Input the grammar cannot parse at all (e.g. an unterminated quote) surfaces as
-a syntax error, exactly as the previous implementation degraded on input it
-could not handle.
+Here-documents are lifted out of the input before the grammar sees it, by the
+pre-scanner in ``prescan`` (the body of ``<<EOF`` depends on an earlier word,
+which a context-free grammar cannot express): each rides on its command as a
+:class:`HereDoc` item and is expanded with the command's words.
+
+Incomplete input -- an open quote, ``$(``, ``${`` or backtick, a trailing
+backslash, a compound command still missing its closing word, a line ending
+in ``|`` / ``&&`` / ``||``, or a here-document body without its delimiter --
+comes back as a single trailing :class:`SyntaxError_` with ``incomplete``
+set. A shell reading line by line keeps the text and asks for more (the
+``> `` prompt); one given the whole text at once reports it the way bash
+does at end of file. Any other input the grammar cannot parse surfaces as a
+plain syntax error.
 """
 
 from __future__ import annotations
@@ -70,17 +78,18 @@ import re
 import signal
 import threading
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Protocol, Self
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Iterator
 
 from lark import Lark, Token, Tree
-from lark.exceptions import LarkError, UnexpectedCharacters
+from lark.exceptions import LarkError, UnexpectedCharacters, UnexpectedEOF
 from twisted.logger import Logger
 
 from cowrie.core.config import CowrieConfig
-from cowrie.shell.parser import Field
+from cowrie.shell.parser import Field, HereDocBody
+from cowrie.shell.prescan import HereDoc, scan
 
 # Grammar for the supported bash subset. Whitespace is significant as a word
 # separator, so it is matched explicitly rather than ignored: adjacent atoms
@@ -190,9 +199,13 @@ AMP: /&(?![&>])/
 // "1>>"): one token, so the digit is a file descriptor, not an argument (a
 // LITERAL never matches digits directly before "<" or ">"). A digit separated
 // by whitespace ("2 >") stays an ordinary word, which is how bash tells the
-// two apart.
-IO_REDIR: /\d+(?:>>|>&|>|<)/
-REDIR: />>|>&|&>>|&>|>(?![>&])|</
+// two apart. The here-document operators "<<" and "<<-" and the here-string
+// "<<<" are tokens of their own, longest first, and "<" / "<<" never match
+// where a longer one starts, so each has exactly one reading. The body of a
+// here-document is not in the input the grammar sees: the pre-scanner lifted
+// it out (see prescan.py), leaving the operator and its delimiter word.
+IO_REDIR: /\d+(?:>>|>&|>|<<<|<<-|<<(?![<-])|<(?!<))/
+REDIR: />>|>&|&>>|&>|>(?![>&])|<<<|<<-|<<(?![<-])|<(?!<)/
 
 LPAR: "("
 RPAR: ")"
@@ -213,11 +226,20 @@ _COMMENT: /#[^\r\n]*/
 
 // Inline whitespace and line continuations only; a bare newline is NEWLINE.
 _WS: /([ \t]|\\\r?\n)+/
+
+// Second start rule: the body of a here-document with an unquoted delimiter.
+// It reads like the inside of double quotes -- parameter and command
+// substitution, no quoting -- except that a backslash escapes only $ ` \
+// and a newline (a line continuation); before anything else it is literal.
+heredoc_body: _hd_part*
+_hd_part: cmdsub | backtick | dollar_brace | dollar_var | HD_ESC | HD_TEXT | BARE_DOLLAR
+HD_TEXT: /[^$`\\]+/
+HD_ESC: /\\[$`\\]/ | /\\\r?\n/ | /\\(?![$`\\\r\n])/
 """
 
 _parser = Lark(
     _GRAMMAR,
-    start="start",
+    start=["start", "heredoc_body"],
     parser="earley",
     lexer="dynamic",
     propagate_positions=True,
@@ -231,6 +253,15 @@ def max_input_size() -> int:
     page downloaded in place of a payload and run with ``sh x``) could block
     the reactor for hours and exhaust memory."""
     return CowrieConfig.getint("shell", "max_input_size", fallback=16384)
+
+
+def max_heredoc_size() -> int:
+    """Maximum characters kept of one here-document body ([shell]
+    max_heredoc_size). A body is attacker data that never reaches the Earley
+    parser unexpanded (an unquoted body larger than max_input_size is used
+    literally), so this is a memory cap only: lines beyond it are dropped
+    while the delimiter is still awaited, and the input is still logged."""
+    return CowrieConfig.getint("shell", "max_heredoc_size", fallback=1048576)
 
 
 def gc_collect_threshold() -> int:
@@ -321,15 +352,17 @@ class Command:
     """A simple command, structure only.
 
     ``items`` keeps the ordered word trees (still unevaluated) interleaved with
-    the redirection operator strings (``>``, ``2>`` ...). Words are expanded
-    against the live shell by :meth:`BashParser.evaluate` only when the command
-    is about to run, so a same-line ``x=hi; echo $x`` sees the assignment.
-    ``op`` is the operator that joins this statement to the previous one
-    (``None`` / ``;`` / ``&&`` / ``||``); ``line`` is the source the word trees
-    point into, and ``lineno`` the 1-based line of that source it starts on.
+    the redirection operator strings (``>``, ``2>`` ...) and any here-document
+    (a :class:`HereDoc`, standing for its ``<<WORD`` operator and delimiter).
+    Words are expanded against the live shell by :meth:`BashParser.evaluate`
+    only when the command is about to run, so a same-line ``x=hi; echo $x``
+    sees the assignment. ``op`` is the operator that joins this statement to
+    the previous one (``None`` / ``;`` / ``&&`` / ``||``); ``line`` is the
+    source the word trees point into, and ``lineno`` the 1-based line of that
+    source it starts on.
     """
 
-    items: list[str | Tree] = field(default_factory=list)
+    items: list[str | Tree | HereDoc] = field(default_factory=list)
     line: str = ""
     op: str | None = None
     lineno: int = 0
@@ -449,6 +482,36 @@ class SyntaxError_:
     # text, which a non-interactive bash quotes after the message.
     lineno: int = 0
     source: str = ""
+    # The input ended before the construct did. ``opener`` names what is
+    # still open: the closing quote, backtick, ``)`` or ``}`` bash reports in
+    # "unexpected EOF while looking for matching `X'", ``\\`` for a trailing
+    # backslash, ``heredoc`` for a body without its delimiter (``heredocs``
+    # lists them, for the warning), or empty for a compound command or
+    # operator still waiting for more words ("unexpected end of file").
+    incomplete: bool = False
+    opener: str = ""
+    heredocs: list[HereDoc] = field(default_factory=list)
+
+
+class SourceText(str):
+    """The stripped input the parser's trees point into, when the pre-scanner
+    cut here-document bodies out of it. A plain str otherwise: this subclass
+    remembers the original text and the cuts, so a span of a substitution or
+    subshell can be sliced from the original with its bodies intact (see
+    :meth:`BashParser._slice`)."""
+
+    original: str
+    cuts: list[tuple[int, int]]
+
+    def __new__(cls, stripped: str, original: str, cuts: list[tuple[int, int]]) -> Self:
+        text = super().__new__(cls, stripped)
+        text.original = original
+        text.cuts = cuts
+        return text
+
+    def to_original(self, pos: int) -> int:
+        """The position in the original text of ``pos`` in the stripped one."""
+        return pos + sum(removed for at, removed in self.cuts if at <= pos)
 
 
 Statement = (
@@ -520,7 +583,7 @@ class _Cursor:
 
     def peek(self, ahead: int = 0) -> Tree | Token | None:
         index = self.pos + ahead
-        return self.tokens[index] if index < len(self.tokens) else None
+        return self.tokens[index] if 0 <= index < len(self.tokens) else None
 
     def next(self) -> Tree | Token:
         token = self.tokens[self.pos]
@@ -535,54 +598,118 @@ class BashParser:
 
     def __init__(self, context: ShellContext) -> None:
         self.context = context
+        # Per-parse state: the number to add to every 1-based line of the
+        # text being parsed (its first line in the shell's input), and the
+        # here-documents the pre-scanner lifted out of it, by the position
+        # of their "<<" in the stripped text.
+        self._line_offset = 0
+        self._heredocs: dict[int, HereDoc] = {}
 
     # -- public API ---------------------------------------------------------
 
-    def parse(self, line: str) -> list[Statement]:
+    def parse(self, text: str, *, first_line: int = 1) -> list[Statement]:
         """
-        Parse ``line`` into ordered statements. Raises nothing for input the
+        Parse ``text`` into ordered statements. Raises nothing for input the
         grammar rejects: it returns a single :class:`SyntaxError_` with an
         empty token so the caller can emit the generic message, matching the
-        previous "unexpected end of file" fallback.
+        previous "unexpected end of file" fallback. Input that merely ends
+        too early comes back with a trailing :class:`SyntaxError_` whose
+        ``incomplete`` flag is set (see the module docstring). ``first_line``
+        is the line number of the text's first line, so a shell fed line by
+        line can number its errors from the start of its input.
         """
-        timed_out = False
+        self._line_offset = first_line - 1
+        scanned = scan(text, max_heredoc=max_heredoc_size())
+        if scanned.incomplete in ('"', "'", "`", ")", "}"):
+            return [
+                SyntaxError_(
+                    token="",
+                    lineno=scanned.incomplete_line + self._line_offset,
+                    incomplete=True,
+                    opener=scanned.incomplete,
+                )
+            ]
+        if scanned.incomplete == "(":
+            # bash reports an open "(" group like any unfinished compound.
+            return [
+                SyntaxError_(token="", lineno=self._end_line(text), incomplete=True)
+            ]
+        if scanned.truncated:
+            self._log.info(
+                "here-document body truncated to {limit} characters",
+                limit=max_heredoc_size(),
+            )
+        line: str = scanned.stripped
+        if scanned.cuts:
+            line = SourceText(scanned.stripped, text, scanned.cuts)
+        self._heredocs = scanned.heredocs
         try:
-            with _parse_alarm(parse_timeout_seconds()):
-                tree = _parser.parse(line)
+            tree = self._lark_parse(line, "start")
         except UnexpectedCharacters as error:
             return [
                 SyntaxError_(
-                    token=self._unexpected_char(line, error), lineno=error.line
+                    token=self._unexpected_char(line, error),
+                    lineno=error.line + self._line_offset,
                 )
             ]
-        except LarkError:
+        except UnexpectedEOF:
+            # The grammar ran out of input mid-construct (a case item with no
+            # esac after it): the backstop for anything the descent below
+            # does not see.
+            return [
+                SyntaxError_(token="", lineno=self._end_line(line), incomplete=True)
+            ]
+        except (LarkError, ParseTimeoutError):
             return [SyntaxError_(token="", lineno=self._end_line(line))]
+        statements = self._split_statements(line, tree)
+        if statements and isinstance(statements[-1], SyntaxError_):
+            return statements
+        if scanned.incomplete in ("heredoc", "\\"):
+            # A here-document body runs to the end of the input, or the last
+            # line continues onto one not yet read: the statements stand, and
+            # a line-fed shell reads on while a whole-text one runs them.
+            statements.append(
+                SyntaxError_(
+                    token="",
+                    lineno=self._end_line(line),
+                    incomplete=True,
+                    opener=scanned.incomplete,
+                    heredocs=[h for h in self._heredocs.values() if not h.terminated],
+                )
+            )
+        return statements
+
+    def _lark_parse(self, text: str, start: str) -> Tree:
+        """Run the grammar from ``start`` over ``text`` under the parse time
+        limit, collecting the Earley garbage afterwards for larger input.
+        Raises the Lark error or :class:`ParseTimeoutError`."""
+        timed_out = False
+        try:
+            with _parse_alarm(parse_timeout_seconds()):
+                return _parser.parse(text, start=start)
         except ParseTimeoutError:
             timed_out = True
             self._log.warn(
                 "Shell parse exceeded {timeout}s (input: {length} characters)",
                 timeout=parse_timeout_seconds(),
-                length=len(line),
+                length=len(text),
             )
-            return [SyntaxError_(token="", lineno=self._end_line(line))]
+            raise
         finally:
-            if timed_out or len(line) >= gc_collect_threshold():
+            if timed_out or len(text) >= gc_collect_threshold():
                 gc.collect()
-        return self._split_statements(line, tree)
 
-    @staticmethod
-    def _end_line(line: str) -> int:
+    def _end_line(self, line: str) -> int:
         """The line bash reports an unexpected end of input on: the one after
         the last."""
-        return len(line.rstrip("\n").split("\n")) + 1
+        return len(line.rstrip("\n").split("\n")) + 1 + self._line_offset
 
-    @staticmethod
-    def _node_line(node: Tree | Token | None) -> int:
+    def _node_line(self, node: Tree | Token | None) -> int:
         """The 1-based source line a grammar node starts on, or 0."""
         if isinstance(node, Token):
-            return node.line or 0
+            return node.line + self._line_offset if node.line else 0
         if isinstance(node, Tree) and not node.meta.empty:
-            return node.meta.line
+            return node.meta.line + self._line_offset
         return 0
 
     @staticmethod
@@ -670,6 +797,14 @@ class BashParser:
 
             node = cursor.peek()
             if node is None:
+                if seen and pending_op in ("&&", "||"):
+                    # The input ends after && / ||: bash reads on for the
+                    # command the operator needs.
+                    statements.append(
+                        SyntaxError_(
+                            token="", lineno=self._end_line(line), incomplete=True
+                        )
+                    )
                 break
             keyword = self._keyword(node)
             if keyword in stop:
@@ -688,9 +823,17 @@ class BashParser:
             seen = True
             pending_op = None
             if isinstance(statement, SyntaxError_):
-                if not statement.lineno:
-                    statement.lineno = self._node_line(cursor.peek()) or self._end_line(
-                        line
+                if statement.incomplete:
+                    # bash reports an unexpected end of file after the
+                    # last line.
+                    statement.lineno = self._end_line(line)
+                elif not statement.lineno:
+                    # The token found, or, for a `newline' with the input
+                    # run out, the line that ended.
+                    statement.lineno = (
+                        self._node_line(cursor.peek())
+                        or self._node_line(cursor.peek(-1))
+                        or self._end_line(line)
                     )
                 return statements
 
@@ -713,7 +856,8 @@ class BashParser:
                 cursor.next()
             node = cursor.peek()
             if node is None:
-                return SyntaxError_(token="")
+                # The input ends after the "|": bash reads on for the stage.
+                return SyntaxError_(token="", incomplete=True)
             if self._token_type(node) == "PIPE":
                 return SyntaxError_(token="|")
             stages.append(self._parse_command(line, cursor, None))
@@ -767,9 +911,12 @@ class BashParser:
         if keyword in ("while", "until"):
             return self._parse_while(line, cursor, op, until=keyword == "until")
         if keyword == "case":
-            # The grammar did not recognise a complete case clause here, so
-            # something after "case" is misplaced.
+            # The grammar did not recognise a complete case clause here: with
+            # no "esac" anywhere after it the clause is still being written
+            # ("case x in"), otherwise something after "case" is misplaced.
             cursor.next()
+            if cursor.peek() is not None and not self._esac_ahead(cursor):
+                return SyntaxError_(token="", incomplete=True)
             return SyntaxError_(token=self._unexpected(line, cursor))
         if keyword == "{":
             return self._parse_brace_group(line, cursor, op)
@@ -785,17 +932,36 @@ class BashParser:
         :class:`Command` of operator strings and target words, or None if
         there are none. The runtime evaluates and applies them like a simple
         command's own redirections."""
-        items: list[str | Tree] = []
+        items: list[str | Tree | HereDoc] = []
         while self._token_type(cursor.peek()) in ("REDIR", "IO_REDIR"):
             operator = cursor.next()
             assert isinstance(operator, Token)
-            items.append(str(operator.value))
             target = cursor.peek()
+            heredoc = self._heredoc_for(operator)
+            if heredoc is not None and isinstance(target, Tree):
+                cursor.next()
+                items.append(heredoc)
+                continue
+            items.append(str(operator.value))
             if isinstance(target, Tree) and target.data == "word":
                 items.append(cursor.next())
         if not items:
             return None
         return Command(items=items, line=line)
+
+    def _heredoc_for(self, operator: Token) -> HereDoc | None:
+        """The here-document a ``<<`` / ``<<-`` operator token (with or
+        without a leading fd) introduces, with its fd filled in; None for any
+        other redirection, or when the pre-scanner found no delimiter word
+        after it (the grammar then reports the syntax error)."""
+        value = str(operator.value)
+        op = value.lstrip("0123456789")
+        if op not in ("<<", "<<-") or operator.start_pos is None:
+            return None
+        heredoc = self._heredocs.get(operator.start_pos + len(value) - len(op))
+        if heredoc is not None:
+            heredoc.fd = int(value[: len(value) - len(op)] or 0)
+        return heredoc
 
     def _parse_simple(self, line: str, cursor: _Cursor, op: str | None) -> Statement:
         """Gather one simple command up to the next ``|`` or statement end."""
@@ -815,13 +981,12 @@ class BashParser:
             if self._token_type(node) == "FUNC_PARENS":
                 return SyntaxError_(token="(")
             units.append(cursor.next())
-        if (
-            self._token_type(node) == "PIPE"
-            and units
-            and self._token_type(units[-1]) in ("REDIR", "IO_REDIR")
-        ):
-            # A redirection with the "|" where its target should be.
-            return SyntaxError_(token="|")
+        if units and self._token_type(units[-1]) in ("REDIR", "IO_REDIR"):
+            # A redirection with an operator where its target should be:
+            # bash names it ("|", ";", "&&" ...), or `newline'.
+            if isinstance(node, Token) and node.type != "NEWLINE":
+                return SyntaxError_(token=str(node.value))
+            return SyntaxError_(token="newline")
         return self._make_command(line, units, op)
 
     def _make_command(
@@ -830,19 +995,27 @@ class BashParser:
         # A redirection operator must be followed by a target word. A redirect at
         # the end of a statement, or directly before another operator, is a bash
         # syntax error (e.g. `echo >` reports the unexpected token `newline').
+        # Keep the structure; words are evaluated later by evaluate(). An
+        # operator token (PIPE / AMP / REDIR / IO_REDIR) is a fixed string,
+        # except "<<WORD", which the pre-scanner's HereDoc stands in for.
+        items: list[str | Tree | HereDoc] = []
+        skip = False
         for i, unit in enumerate(units):
+            if skip:
+                skip = False
+                continue
             if isinstance(unit, Token) and unit.type in ("REDIR", "IO_REDIR"):
                 target = units[i + 1] if i + 1 < len(units) else None
                 if target is None:
                     return SyntaxError_(token="newline")
                 if isinstance(target, Token):
                     return SyntaxError_(token=target.value)
-
-        # Keep the structure; words are evaluated later by evaluate(). An
-        # operator token (PIPE / AMP / REDIR / IO_REDIR) is a fixed string.
-        items: list[str | Tree] = [
-            unit.value if isinstance(unit, Token) else unit for unit in units
-        ]
+                heredoc = self._heredoc_for(unit)
+                if heredoc is not None:
+                    items.append(heredoc)
+                    skip = True
+                    continue
+            items.append(unit.value if isinstance(unit, Token) else unit)
         return Command(items=items, line=line, op=op, lineno=self._node_line(units[0]))
 
     # -- compound commands --------------------------------------------------
@@ -871,7 +1044,7 @@ class BashParser:
 
         self._skip_separators(cursor)
         if self._keyword(cursor.peek()) != "do":
-            return SyntaxError_(token=self._unexpected(line, cursor))
+            return self._unexpected_error(line, cursor)
         cursor.next()  # "do"
         body = self._parse_list(line, cursor, stop=frozenset({"done"}))
         error = self._expect(cursor, "done")
@@ -995,7 +1168,7 @@ class BashParser:
     ) -> Statement:
         self._skip_separators(cursor)
         if self._keyword(cursor.peek()) != "{":
-            return SyntaxError_(token=self._unexpected(line, cursor))
+            return self._unexpected_error(line, cursor)
         group = self._parse_brace_group(line, cursor, None)
         if isinstance(group, SyntaxError_):
             return group
@@ -1010,13 +1183,39 @@ class BashParser:
 
     def _expect(self, cursor: _Cursor, keyword: str) -> Statement | None:
         if self._keyword(cursor.peek()) != keyword:
-            return SyntaxError_(token=self._unexpected("", cursor))
+            return self._unexpected_error("", cursor)
         cursor.next()
         return None
 
+    def _unexpected_error(self, line: str, cursor: _Cursor) -> SyntaxError_:
+        """The error for a construct that needed another word here: a
+        syntax error naming the token found, or, with the input run out, an
+        incomplete marker (bash reads on: `for i` and `f() {` wait for more,
+        `for` alone does not -- its callers report that themselves)."""
+        if cursor.peek() is None:
+            return SyntaxError_(token="", incomplete=True)
+        return SyntaxError_(token=self._unexpected(line, cursor))
+
+    def _esac_ahead(self, cursor: _Cursor) -> bool:
+        """Whether an ``esac`` is still to come: the grammar only lexes one
+        as ESAC (bare, or an ``esac_arg`` word), never as a LITERAL."""
+        for node in cursor.tokens[cursor.pos :]:
+            if isinstance(node, Token) and node.type == "ESAC":
+                return True
+            if (
+                isinstance(node, Tree)
+                and node.data == "word"
+                and any(
+                    isinstance(child, Token) and child.type == "ESAC"
+                    for child in node.children
+                )
+            ):
+                return True
+        return False
+
     def _unexpected(self, line: str, cursor: _Cursor) -> str:
         node = cursor.peek()
-        if node is None:
+        if node is None or self._token_type(node) == "NEWLINE":
             return "newline"
         if isinstance(node, Token):
             return str(node.value)
@@ -1029,7 +1228,17 @@ class BashParser:
         if not line or word.meta.empty:
             literal = self._word_literal(word)
             return literal if literal is not None else ""
-        return line[word.meta.start_pos : word.meta.end_pos]
+        return self._slice(line, word.meta.start_pos, word.meta.end_pos)
+
+    @staticmethod
+    def _slice(line: str, start: int, end: int) -> str:
+        """``line[start:end]`` in the text the trees point into -- taken from
+        the original input, here-document bodies included, when the parser
+        worked on a stripped copy (see :class:`SourceText`), so a ``$(cat
+        <<EOF ...)`` re-parses with its body."""
+        if isinstance(line, SourceText):
+            return line.original[line.to_original(start) : line.to_original(end)]
+        return line[start:end]
 
     # -- word evaluation ----------------------------------------------------
 
@@ -1044,15 +1253,25 @@ class BashParser:
         does every word when ``split`` is false (a ``case`` word). A command
         substitution suspends the expansion until its subshell finishes, as
         bash blocks on the substitution pipe; substitutions therefore run left
-        to right, each to completion before the next.
+        to right, each to completion before the next. A here-document, and a
+        here-string's word with a newline appended, become a
+        :class:`HereDocBody` token carrying the fd it feeds.
         """
         tokens: list[str] = []
         leading = True  # still in the NAME=value words before the command
         declaration = False
         redirect_target = False
+        here_string_fd: int | None = None  # a "<<<" awaiting its word
         for item in command.items:
+            if isinstance(item, HereDoc):
+                tokens.append(await self._eval_heredoc(item))
+                continue
             if isinstance(item, str):
-                tokens.append(item)
+                op = item.lstrip("0123456789")
+                if op == "<<<":
+                    here_string_fd = int(item[: len(item) - len(op)] or 0)
+                else:
+                    tokens.append(item)
                 redirect_target = "<" in item or ">" in item
                 continue
             assignment = self._is_assignment(item)
@@ -1063,11 +1282,69 @@ class BashParser:
             )
             redirect_target = False
             fields = await self._eval_word(command.line, item, split=not whole)
+            if here_string_fd is not None:
+                tokens.append(HereDocBody("".join(fields) + "\n", fd=here_string_fd))
+                here_string_fd = None
+                continue
             if leading and not assignment and fields:
                 leading = False
                 declaration = fields[0] in _DECLARATION_BUILTINS
             tokens.extend(Field(value) for value in fields)
         return tokens
+
+    async def _eval_heredoc(self, heredoc: HereDoc) -> HereDocBody:
+        """The body a here-document feeds its command: literal under a quoted
+        delimiter, otherwise expanded like the inside of double quotes (a
+        body past max_input_size is kept literal rather than parsed)."""
+        text = heredoc.body
+        if heredoc.expand and len(text) <= max_input_size():
+            text = await self._expand_heredoc(text)
+        elif heredoc.expand:
+            self._log.info(
+                "here-document body of {length} characters left unexpanded",
+                length=len(text),
+            )
+        return HereDocBody(text, fd=heredoc.fd)
+
+    async def _expand_heredoc(self, text: str) -> str:
+        """Parameter and command substitution over a here-document body, by
+        the grammar's ``heredoc_body`` rule. A backslash is removed before
+        ``$``, `````, ``\\`` and a newline (a line continuation) and kept
+        before anything else."""
+        try:
+            tree = self._lark_parse(text, "heredoc_body")
+        except (LarkError, ParseTimeoutError):
+            # An unbalanced "$(" in the body: bash would report it, Cowrie
+            # feeds the body as written.
+            return text
+        parts: list[str] = []
+        for part in tree.children:
+            if isinstance(part, Token):
+                if part.type == "HD_ESC":
+                    escaped = str(part.value)[1:]
+                    if escaped in ("$", "`", "\\"):
+                        parts.append(escaped)
+                    elif escaped.endswith("\n"):
+                        pass
+                    else:
+                        parts.append(str(part.value))
+                else:  # HD_TEXT, BARE_DOLLAR
+                    parts.append(str(part.value))
+            elif part.data == "dollar_var" or part.data == "dollar_brace":
+                parts.append(self._expand_embedded(part))
+            elif part.data == "cmdsub":
+                parts.append(
+                    await self.context.command_substitution(
+                        self._group_source(text, part)
+                    )
+                )
+            elif part.data == "backtick":
+                parts.append(
+                    await self.context.command_substitution(
+                        self._backtick_source(text, part)
+                    )
+                )
+        return "".join(parts)
 
     @staticmethod
     def _is_assignment(word: Tree) -> bool:
@@ -1252,14 +1529,14 @@ class BashParser:
             if isinstance(child, Tree) and child.data == "start":
                 if child.meta.empty:
                     return ""
-                return line[child.meta.start_pos : child.meta.end_pos]
+                return self._slice(line, child.meta.start_pos, child.meta.end_pos)
         return ""
 
     def _backtick_source(self, line: str, node: Tree) -> str:
         if node.meta.empty:
             return ""
         # Drop the surrounding backtick delimiters from the matched span.
-        return line[node.meta.start_pos + 1 : node.meta.end_pos - 1]
+        return self._slice(line, node.meta.start_pos + 1, node.meta.end_pos - 1)
 
     def _error_token(self, line: str, subshell: Tree) -> str:
         """Reconstruct bash's reported token for a misplaced ``(``.
