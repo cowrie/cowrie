@@ -97,15 +97,26 @@ class TelnetClient(StatefulTelnetProtocol):
         Sends exit to the Telnet server and closes connection.
         Fires the deferred with the command's output.
         """
+        if self.factory.done_deferred.called:
+            return
+        if self.done_callback is not None and self.done_callback.active():
+            self.done_callback.cancel()
         self.sendLine(b"exit")
-        self.transport.loseConnection()
-
-        # deferred to signal command's output was fully received
+        # Complete before disconnecting so normal teardown cannot turn
+        # successfully received output into a connection-lost failure.
         self.factory.done_deferred.callback(self.response)
+        try:
+            if self.factory.callback:
+                self.factory.callback(self.response)
+        finally:
+            self.transport.loseConnection()
 
-        # call the request client callback, if any
-        if self.factory.callback:
-            self.factory.callback(self.response)
+    def connectionLost(self, reason):
+        if self.done_callback is not None and self.done_callback.active():
+            self.done_callback.cancel()
+        if not self.factory.done_deferred.called:
+            self.factory.done_deferred.errback(reason)
+        super().connectionLost(reason)
 
 
 class TelnetFactory(ClientFactory):
@@ -128,6 +139,12 @@ class TelnetFactory(ClientFactory):
 
     def clientConnectionFailed(self, connector, reason):
         self._log.failure("Telnet connection failed.", failure=reason)
+        if not self.done_deferred.called:
+            self.done_deferred.errback(reason)
+
+    def clientConnectionLost(self, connector, reason):
+        if not self.done_deferred.called:
+            self.done_deferred.errback(reason)
 
 
 class TelnetClientCommand:
