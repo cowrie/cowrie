@@ -1154,6 +1154,18 @@ anonymous = 0
 # Comma-separated list of tags to attach to each submission
 tags = cowrie,honeypot
 
+# Submit downloaded and uploaded malware samples to MalwareBazaar.
+# Register at https://auth.abuse.ch/ to get your Auth-Key (the same key works
+# for URLhaus).
+# Submitted samples are publicly downloadable from bazaar.abuse.ch.
+[output_malwarebazaar]
+enabled = false
+api_key = yourkeyhere
+# Set to 1 to submit anonymously
+anonymous = 0
+# Comma-separated list of tags to attach to each submission
+tags = cowrie,honeypot
+
 # Sends Cowrie event notifications to a Slack channel.
 # Warning: This will produce a _lot_ of messages unless `simplified = true` 
 #          and `verbose = false` are set.
