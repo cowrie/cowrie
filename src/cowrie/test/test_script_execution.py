@@ -194,6 +194,15 @@ class ScriptExecutionTests(unittest.TestCase):
         self.proto.lineReceived(b"sh /tmp/args.sh")
         self.assertEqual(self.tr.value(), b"[] 0\n" + PROMPT)
 
+    def test_script_forwards_quoted_arguments_intact(self) -> None:
+        """The dropper idiom `./bin "$@"` passes each argument as one word."""
+        self.proto.lineReceived(
+            b'echo \'for a in "$@"; do echo "<$a>"; done\' > /tmp/args.sh'
+        )
+        self.tr.clear()
+        self.proto.lineReceived(b'sh /tmp/args.sh a "b c"')
+        self.assertEqual(self.tr.value(), b"<a>\n<b c>\n" + PROMPT)
+
     def test_script_does_not_inherit_function_arguments(self) -> None:
         """A script is a new process: it gets its own arguments, not those of
         the function that ran it."""

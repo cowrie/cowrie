@@ -1363,30 +1363,51 @@ class BashParser:
         expansion's result is split on whitespace when ``split`` is set. A
         word made only of empty unquoted expansions yields no field at all,
         like ``echo $unset`` or ``$(true)``, while a quoted empty string
-        (``""``) is a field.
+        (``""``) is a field. A ``"$@"`` ends a field at each boundary between
+        positional parameters; where the word stays one field, those
+        boundaries become spaces, as in ``x="$@"``.
         """
-        pieces: list[tuple[str, bool]] = []
+        pieces: list[tuple[str, bool] | None] = []
         for atom in word.children:
+            if isinstance(atom, Tree) and atom.data == "dq":
+                segments = await self._eval_dquoted(line, atom)
+                if not segments:
+                    # A "$@" with no positional parameters: no text at all,
+                    # like an empty unquoted expansion.
+                    pieces.append(("", True))
+                for i, segment in enumerate(segments):
+                    if i:
+                        pieces.append(None)
+                    pieces.append((segment, False))
+                continue
             unquoted = isinstance(atom, Tree) and atom.data in _UNQUOTED_EXPANSIONS
             pieces.append((await self._eval_atom(line, atom), unquoted))
         if not split:
-            if all(unquoted and not text for text, unquoted in pieces):
+            if all(piece is not None and piece[1] and not piece[0] for piece in pieces):
                 return []
-            return ["".join(text for text, _ in pieces)]
+            return ["".join(" " if piece is None else piece[0] for piece in pieces)]
         return self._split_fields(pieces)
 
     @staticmethod
-    def _split_fields(pieces: list[tuple[str, bool]]) -> list[str]:
+    def _split_fields(pieces: list[tuple[str, bool] | None]) -> list[str]:
         """Join a word's pieces into fields, splitting unquoted expansions.
 
         ``pieces`` pairs each atom's text with whether it came from an unquoted
-        expansion. Whitespace inside such text ends the current field; other
-        text, and any quoted text even when empty, extends it.
+        expansion; ``None`` marks a ``"$@"`` parameter boundary, which always
+        ends the current field. Whitespace inside unquoted text ends the
+        current field; other text, and any quoted text even when empty,
+        extends it.
         """
         fields: list[str] = []
         current = ""
         started = False
-        for text, unquoted in pieces:
+        for piece in pieces:
+            if piece is None:
+                fields.append(current)
+                current = ""
+                started = False
+                continue
+            text, unquoted = piece
             if not unquoted:
                 current += text
                 started = True
@@ -1413,8 +1434,6 @@ class BashParser:
 
         if atom.data == "sq":
             return self._leaf_value(atom)[1:-1]  # strip surrounding quotes
-        if atom.data == "dq":
-            return await self._eval_dquoted(line, atom)
         if atom.data == "dollar_var" or atom.data == "dollar_brace":
             return self._expand_embedded(atom)
         if atom.data == "cmdsub":
@@ -1427,30 +1446,61 @@ class BashParser:
             )
         return ""
 
-    async def _eval_dquoted(self, line: str, dq: Tree) -> str:
-        parts: list[str] = []
+    async def _eval_dquoted(self, line: str, dq: Tree) -> list[str]:
+        """Evaluate a double-quoted string to its segments.
+
+        It is one segment, except that ``$@`` expands each positional
+        parameter to a segment of its own: text before it joins the first
+        parameter, text after it the last. A string of only ``$@`` with no
+        positional parameters has no segments at all, so ``"$@"`` then
+        yields no word.
+        """
+        segments = [""]
+        only_at = True
         for part in dq.children:
-            if isinstance(part, Token):
-                if part.type in ("DQ_TEXT", "BARE_DOLLAR"):
-                    parts.append(part.value)
-                elif part.type == "DQ_ESC":
-                    parts.append(self._unescape_dq(part.value))
+            if isinstance(part, Tree) and self._is_at(part):
+                params = self._positional_params()
+                if params:
+                    segments[-1] += params[0]
+                    segments.extend(params[1:])
                 continue
-            if part.data == "dollar_var" or part.data == "dollar_brace":
-                parts.append(self._expand_embedded(part))
-            elif part.data == "cmdsub":
-                parts.append(
-                    await self.context.command_substitution(
-                        self._group_source(line, part)
-                    )
-                )
-            elif part.data == "backtick":
-                parts.append(
-                    await self.context.command_substitution(
-                        self._backtick_source(line, part)
-                    )
-                )
-        return "".join(parts)
+            only_at = False
+            segments[-1] += await self._eval_dquoted_part(line, part)
+        if only_at and dq.children and not self._positional_params():
+            return []
+        return segments
+
+    async def _eval_dquoted_part(self, line: str, part: Tree | Token) -> str:
+        if isinstance(part, Token):
+            if part.type in ("DQ_TEXT", "BARE_DOLLAR"):
+                return str(part.value)
+            if part.type == "DQ_ESC":
+                return self._unescape_dq(part.value)
+            return ""
+        if part.data == "dollar_var" or part.data == "dollar_brace":
+            return self._expand_embedded(part)
+        if part.data == "cmdsub":
+            return await self.context.command_substitution(
+                self._group_source(line, part)
+            )
+        if part.data == "backtick":
+            return await self.context.command_substitution(
+                self._backtick_source(line, part)
+            )
+        return ""
+
+    def _is_at(self, node: Tree) -> bool:
+        """Whether a node is the ``$@`` special parameter."""
+        return node.data == "dollar_var" and self._var_name(node)[1] == "@"
+
+    def _positional_params(self) -> list[str]:
+        """The positional parameters $1..$#, in order."""
+        count = self.context.get_variable("#")
+        if count is None or not count.isdigit():
+            return []
+        return [
+            self.context.get_variable(str(i)) or "" for i in range(1, int(count) + 1)
+        ]
 
     def _unescape_dq(self, text: str) -> str:
         # Inside double quotes a backslash is literal unless it precedes one of
