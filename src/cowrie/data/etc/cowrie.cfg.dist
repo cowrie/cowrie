@@ -424,12 +424,34 @@ log_raw = false
 
 [llm]
 
+# Named provider preset: `custom` (the historical free-form host/path below),
+# `openai`, or `orcarouter` for OrcaRouter Cyber Inference. With `orcarouter`
+# the host, path and model default to the OrcaRouter relay, an explicit
+# api_key still wins, and the credential file written by
+# `cowrie-orcarouter-auth` is used otherwise.
+# (default: custom)
+#provider = orcarouter
+
 # API key for the LLM service (required for LLM backend)
 # For OpenAI: get your key from https://platform.openai.com/api-keys
+# For OrcaRouter, prefer `cowrie-orcarouter-auth` instead of storing it here.
 #api_key = sk-xxx
 
+# OrcaRouter credential file written by `cowrie-orcarouter-auth` (mode 0600).
+# Used only when [llm] api_key is unset. Override with the
+# COWRIE_LLM_CREDENTIALS_FILE environment variable.
+# (default: var/lib/cowrie/orcarouter.json)
+#credentials_file = var/lib/cowrie/orcarouter.json
+
+# OrcaRouter origins. Authentication uses the www origin; inference and model
+# discovery use the API origin. The ORCA_BASE_URL (shared self-hosted base),
+# ORCA_AUTH_BASE_URL and ORCA_API_BASE_URL environment variables take
+# precedence over these keys. Remote origins must be HTTPS.
+#auth_base_url = https://www.orcarouter.ai
+#api_base_url = https://api.orcarouter.ai/v1
+
 # LLM model to use
-# (default: gpt-4o-mini)
+# (default: gpt-4o-mini; orcarouter/auto when provider = orcarouter)
 #model = gpt-4o-mini
 
 # API host URL

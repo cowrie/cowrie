@@ -60,6 +60,8 @@ asciinema = "cowrie.scripts.asciinema:run"
 createfs = "cowrie.scripts.createfs:run"
 dumpfs = "cowrie.scripts.dumpfs:run"
 playlog = "cowrie.scripts.playlog:run"
+"cowrie-orcarouter-auth" = "cowrie.scripts.orcarouter_auth:run"
+"cowrie-orcarouter-models" = "cowrie.scripts.orcarouter_models:run"
 
 [project.optional-dependencies]
 csirtg = ["csirtgsdk==1.1.5"]
