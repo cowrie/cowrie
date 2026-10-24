@@ -80,6 +80,12 @@ class PipeProtocol:
 
         self.redirection_error = False
         self.redirect_real_files: list[tuple[str, str]] = []
+        # One-shot throttle for the "Could not write to terminal" log: a
+        # command that keeps writing after its client is gone (a download
+        # outliving a hung-up attacker) logs the loss once per episode, not
+        # once per write (#40691). Successful delivery re-arms it, so a
+        # fresh loss after a recovery is recorded again.
+        self._terminal_lost_logged: bool = False
         self._setup_redirections()
         self.has_redirection_error = self.redirection_error
 
@@ -317,8 +323,10 @@ class PipeProtocol:
 
     def _write_to_terminal(self, data: bytes) -> None:
         if self.protocol is not None and self.protocol.terminal is not None:
+            self._terminal_lost_logged = False
             self.protocol.terminal.write(data)
-        else:
+        elif not self._terminal_lost_logged:
+            self._terminal_lost_logged = True
             self._log.info("Connection was probably lost. Could not write to terminal")
 
     def write_stdout(self, data: bytes) -> None:
