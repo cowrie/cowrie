@@ -135,9 +135,7 @@ def run_script_file(
         shell.syntax_label = None
         # A script is a new process: it sees its own arguments, never the
         # positional parameters of a function that ran it.
-        for key in [k for k in shell.environ if k.isdigit() or k in ("#", "@", "*")]:
-            del shell.environ[key]
-        shell.set_positional_params(args)
+        shell.replace_positional_params(args)
         protocol.cmdstack.append(shell)
         # Hand the whole script to the parser: newlines separate statements and
         # "#" lines (the shebang included) are comments, so flow control that
