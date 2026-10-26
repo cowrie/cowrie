@@ -86,7 +86,7 @@ dev = [
 "pyre-check==0.10.0",
 "pyright==1.1.414",
 "pytype==2024.10.11; platform_python_implementation=='CPython'",
-"pyupgrade==3.21.2",
+"pyupgrade==3.22.0",
 "pyyaml==6.0.3",
 "readthedocs-sphinx-search==0.3.2",
 "ruff==0.17.0",
