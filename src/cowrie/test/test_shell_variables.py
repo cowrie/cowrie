@@ -89,6 +89,25 @@ class ShellVariableTests(unittest.TestCase):
         for line in (b"1=a", b"#=1", b"@=a", b"*=a"):
             self.assertNotIn(b"\n" + line + b"\n", b"\n" + output)
 
+    # $$ is the shell's process ID: a number, the same for the whole session
+    def test_dollar_dollar_is_a_stable_number(self) -> None:
+        pid = self.run_line(b"echo $$")
+        self.assertRegex(pid, rb"^[1-9][0-9]*\n$")
+        self.assertEqual(self.run_line(b'echo "$$" ${$}'), pid.strip() + b" " + pid)
+
+    # A command substitution is a subshell, which keeps its parent's $$
+    def test_command_substitution_keeps_parent_pid(self) -> None:
+        self.assertEqual(
+            self.run_line(b'[ "$(echo $$)" = "$$" ] && echo same'), b"same\n"
+        )
+
+    # sh -c starts a new shell process, with a PID of its own
+    def test_new_shell_has_its_own_pid(self) -> None:
+        pid = self.run_line(b"echo $$")
+        child = self.run_line(b"sh -c 'echo $$'")
+        self.assertRegex(child, rb"^[1-9][0-9]*\n$")
+        self.assertNotEqual(child, pid)
+
     # export VAR=value sets and exports
     def test_export_assignment_in_env(self) -> None:
         self.proto.lineReceived(b"export y=bye")

@@ -95,6 +95,9 @@ class HoneyPotShell:
     ) -> None:
         self.protocol = protocol
         self.interactive: bool = interactive
+        # $$: a new shell is a new process. A command substitution's subshell
+        # takes its parent's instead (see run_child).
+        self.pid: int = protocol.next_pid()
         # The shell's commands arrive over a live stdin (an SSH exec channel
         # running `bash`): a drained queue means idle, not done, until EOF.
         self.reads_stdin: bool = reads_stdin
@@ -255,6 +258,10 @@ class HoneyPotShell:
         """Return $? -- the last command's exit status as a string."""
         return str(self.last_exit_code)
 
+    def get_pid(self) -> str:
+        """Return $$ -- this shell's process ID as a string."""
+        return str(self.pid)
+
     @property
     def captured(self) -> bytes:
         """The stdout captured by this child, when fd 1 points at a sink."""
@@ -322,6 +329,7 @@ class HoneyPotShell:
         synchronously the Deferred has already fired by the time this returns.
         """
         shell = HoneyPotShell(self.protocol, interactive=False)
+        shell.pid = self.pid
         shell.fds = fds
         shell._capture = capture_buf
         shell.stdin = stdin

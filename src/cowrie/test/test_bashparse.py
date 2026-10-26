@@ -42,6 +42,9 @@ class FakeContext:
     def get_status(self) -> str:
         return self.status
 
+    def get_pid(self) -> str:
+        return "4242"
+
     def command_substitution(self, source: str) -> Deferred[str]:
         self.substitutions.append(source)
         # Echo back a marker so tests can assert the captured source text.
@@ -149,6 +152,11 @@ class BashParseVariableTests(unittest.TestCase):
 
     def test_question_mark_status(self) -> None:
         self.assertEqual(self._tokens("echo $?"), ["echo", "0"])
+
+    def test_dollar_dollar_is_shell_pid(self) -> None:
+        self.assertEqual(
+            self._tokens('echo $$ "${$}" a$$b'), ["echo", "4242", "4242", "a4242b"]
+        )
 
 
 class BashParseRedirectionTests(unittest.TestCase):
