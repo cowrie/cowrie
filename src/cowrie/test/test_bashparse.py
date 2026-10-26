@@ -159,6 +159,50 @@ class BashParseVariableTests(unittest.TestCase):
         )
 
 
+class BashParseArithmeticTests(unittest.TestCase):
+    """$((...)) is arithmetic, evaluated after the expansions inside it."""
+
+    def setUp(self) -> None:
+        self.ctx = FakeContext({"x": "4", "sum": "1+2"})
+        self.parser = BashParser(self.ctx)
+
+    def _tokens(self, line: str) -> list[str]:
+        statement = self.parser.parse(line)[0]
+        assert isinstance(statement, Command)
+        return evaluate_now(self.parser, statement)
+
+    def test_arithmetic_expands_to_its_value(self) -> None:
+        self.assertEqual(self._tokens("echo $((952*665+17))"), ["echo", "633097"])
+
+    def test_arithmetic_in_double_quotes(self) -> None:
+        self.assertEqual(self._tokens('echo "[$((x * 2))]"'), ["echo", "[8]"])
+
+    def test_dollar_names_expand_as_text(self) -> None:
+        # $sum is replaced by its text before evaluation: 2*1+2, not 2*(1+2)
+        self.assertEqual(
+            self._tokens("echo $((2*$sum)) $((2*sum))"), ["echo", "4", "6"]
+        )
+
+    def test_nested_arithmetic_and_parentheses(self) -> None:
+        self.assertEqual(
+            self._tokens("echo $(( $((1+2)) * (3 + (4)) ))"), ["echo", "21"]
+        )
+
+    def test_subshells_in_command_substitution_stay_commands(self) -> None:
+        self._tokens("echo $((echo a); (echo b))")
+        self.assertEqual(self.ctx.substitutions, ["(echo a); (echo b)"])
+
+    def test_arithmetic_error_is_raised(self) -> None:
+        statement = self.parser.parse("echo $((1/0))")[0]
+        assert isinstance(statement, Command)
+        failures: list = []
+        ensureDeferred(self.parser.evaluate(statement)).addErrback(failures.append)
+        self.assertEqual(len(failures), 1)
+        self.assertEqual(
+            str(failures[0].value), '1/0: division by 0 (error token is "0")'
+        )
+
+
 class BashParseRedirectionTests(unittest.TestCase):
     """Redirection operators are emitted as discrete tokens for runCommand."""
 
@@ -642,6 +686,11 @@ class BashParseAmbiguityTests(unittest.TestCase):
         without ;; cannot absorb the next esac as a command."""
         self._assert_unambiguous(
             "case a in N) ;; *) case a in N) ;; *) echo two; esac; esac"
+        )
+
+    def test_arithmetic(self) -> None:
+        self._assert_unambiguous(
+            'echo $((1+2)) "$(( (x) * $((y)) ))" $((echo a); (echo b)) $(id)'
         )
 
     def test_recon_shaped_line(self) -> None:

@@ -42,10 +42,12 @@ Known deviations from standard bash (none are emulated yet):
 * A trailing ``&`` is treated as a literal argument, not a background job.
 * No word expansions beyond ``$VAR`` / ``${VAR}``: tilde (``~``), brace
   (``{a,b}`` / ``{1..3}``) and ANSI-C quoting (``$'...'``) are passed through
-  literally. Arithmetic (``$((1+2))``) runs as a command substitution of a
-  subshell, so ``1+2`` is reported as a command not found. The parameter
-  expansion operators (``${x:-y}``, ``${#x}``, ``${x/a/b}`` ...) are a syntax
-  error.
+  literally. The parameter expansion operators (``${x:-y}``, ``${#x}``,
+  ``${x/a/b}`` ...) are a syntax error.
+* Arithmetic expansion (``$((...))``, see ``arithmetic``) has no assignment,
+  increment or comma operators, and nests parentheses at most three deep.
+  A rejected expression fails only its own statement, where bash also
+  discards the rest of the line.
 * Word splitting always uses the default ``IFS`` (space, tab, newline); an
   assigned ``IFS`` is ignored.
 * Pathname expansion (globbing of ``*`` / ``?`` / ``[...]``) is left to the
@@ -91,6 +93,7 @@ from lark.exceptions import LarkError, UnexpectedCharacters, UnexpectedEOF
 from twisted.logger import Logger
 
 from cowrie.core.config import CowrieConfig
+from cowrie.shell import arithmetic
 from cowrie.shell.parser import Field, HereDocBody
 from cowrie.shell.prescan import HereDoc, scan
 
@@ -111,6 +114,20 @@ from cowrie.shell.prescan import HereDoc, scan
 # The grammar is unambiguous: every line has exactly one parse. That is what
 # keeps the Earley parse linear in the input size (issue #40597), and
 # test_bashparse asserts it with an explicit-ambiguity parse of sample lines.
+
+
+def _balanced(depth: int) -> str:
+    """A regex for text whose parentheses balance, nested up to ``depth``."""
+    group = r"\((?:[^()])*\)"
+    for _ in range(depth - 1):
+        group = r"\((?:[^()]|" + group + r")*\)"
+    return r"(?:[^()]|" + group + r")*"
+
+
+# The text between "$((" and "))": balanced parentheses up to three deep,
+# which also holds a nested $((...)) or $(...)
+_ARITH_BODY = _balanced(3)
+
 _GRAMMAR = r"""
 // A line is contents (words, groups, comments) and operators in any order.
 // Whitespace is REQUIRED between two contents, so a run of atoms with no
@@ -160,19 +177,23 @@ ESAC: /esac(?![^\s;&|<>()])/
 // A "#" starts a comment only at a word start (see _COMMENT), so a LITERAL
 // never begins with one; inside a word ("a#b", "''#x") it is ordinary text.
 word: _atom (_atom | HASH_LITERAL)*
-_atom: sq | dq | cmdsub | backtick | dollar_brace | dollar_var | ESC | BARE_DOLLAR | LITERAL
+_atom: sq | dq | arith | cmdsub | backtick | dollar_brace | dollar_var | ESC | BARE_DOLLAR | LITERAL
 HASH_LITERAL: /#[^ \t\r\n|&;<>()$`'"\\]*/
 
-// An explicit "$(" terminal: BARE_DOLLAR never matches before a "(".
+// An explicit "$(" terminal: BARE_DOLLAR never matches before a "(". A
+// "$((" that a "))" closes is arithmetic, so "$(" never starts one; any other
+// "$((", such as "$((echo a); (echo b))", is a substitution of a subshell.
 cmdsub: CMDSUB_OPEN start ")"
-CMDSUB_OPEN: "$("
+CMDSUB_OPEN: /\$\((?!\(@ARITH_BODY@\)\))/
+arith: ARITH
+ARITH: /\$\(\(@ARITH_BODY@\)\)/
 
 backtick: "`" _bq_atom* "`"
 _bq_atom: dollar_var | dollar_brace | BQ_LITERAL
 BQ_LITERAL: /[^`]+/
 
 dq: "\"" _dq_part* "\""
-_dq_part: cmdsub | backtick | dollar_brace | dollar_var | DQ_ESC | DQ_TEXT | BARE_DOLLAR
+_dq_part: arith | cmdsub | backtick | dollar_brace | dollar_var | DQ_ESC | DQ_TEXT | BARE_DOLLAR
 DQ_TEXT: /[^"$`\\]+/
 // A lone backslash is literal only where it escapes nothing, so "\\" has
 // exactly one reading: one escaped backslash, never two literal ones. The
@@ -235,10 +256,10 @@ _WS: /([ \t]|\\\r?\n)+/
 // substitution, no quoting -- except that a backslash escapes only $ ` \
 // and a newline (a line continuation); before anything else it is literal.
 heredoc_body: _hd_part*
-_hd_part: cmdsub | backtick | dollar_brace | dollar_var | HD_ESC | HD_TEXT | BARE_DOLLAR
+_hd_part: arith | cmdsub | backtick | dollar_brace | dollar_var | HD_ESC | HD_TEXT | BARE_DOLLAR
 HD_TEXT: /[^$`\\]+/
 HD_ESC: /\\[$`\\]/ | /\\\r?\n/ | /\\(?![$`\\\r\n])/
-"""
+""".replace("@ARITH_BODY@", _ARITH_BODY)
 
 _parser = Lark(
     _GRAMMAR,
@@ -1342,6 +1363,8 @@ class BashParser:
                     parts.append(str(part.value))
             elif part.data == "dollar_var" or part.data == "dollar_brace":
                 parts.append(self._expand_embedded(part))
+            elif part.data == "arith":
+                parts.append(await self._eval_arith(part))
             elif part.data == "cmdsub":
                 parts.append(
                     await self.context.command_substitution(
@@ -1446,6 +1469,8 @@ class BashParser:
             return self._leaf_value(atom)[1:-1]  # strip surrounding quotes
         if atom.data == "dollar_var" or atom.data == "dollar_brace":
             return self._expand_embedded(atom)
+        if atom.data == "arith":
+            return await self._eval_arith(atom)
         if atom.data == "cmdsub":
             return await self.context.command_substitution(
                 self._group_source(line, atom)
@@ -1489,6 +1514,8 @@ class BashParser:
             return ""
         if part.data == "dollar_var" or part.data == "dollar_brace":
             return self._expand_embedded(part)
+        if part.data == "arith":
+            return await self._eval_arith(part)
         if part.data == "cmdsub":
             return await self.context.command_substitution(
                 self._group_source(line, part)
@@ -1498,6 +1525,14 @@ class BashParser:
                 self._backtick_source(line, part)
             )
         return ""
+
+    async def _eval_arith(self, node: Tree) -> str:
+        """Evaluate a ``$((...))``: expand the ``$name`` references and
+        command substitutions in it, as inside double quotes, then compute
+        it. A rejected expression raises
+        :class:`~cowrie.shell.arithmetic.ArithmeticExpansionError`."""
+        expression = await self._expand_heredoc(self._leaf_value(node)[3:-2])
+        return str(arithmetic.evaluate(expression, self.context.get_variable))
 
     def _is_at(self, node: Tree) -> bool:
         """Whether a node is the ``$@`` special parameter."""

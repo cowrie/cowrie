@@ -108,6 +108,31 @@ class ShellVariableTests(unittest.TestCase):
         self.assertRegex(child, rb"^[1-9][0-9]*\n$")
         self.assertNotEqual(child, pid)
 
+    # $((...)) is integer arithmetic
+    def test_arithmetic_expansion(self) -> None:
+        self.proto.lineReceived(b"n=4")
+        self.assertEqual(
+            self.run_line(b'echo $((952*665+17)) "$((n * 2))" $(( $(echo 3) + n ))'),
+            b"633097 8 7\n",
+        )
+
+    # The probe a payload-dropping bot runs before uploading
+    def test_arithmetic_in_sh_c_probe(self) -> None:
+        self.assertEqual(
+            self.run_line(
+                b"sh -c 'printf '\"'\"'\\n%s|%s\\n'\"'\"' '\"'\"'check_small_math'\"'\"'"
+                b' "$((952*665+17))"\''
+            ),
+            b"\ncheck_small_math|633097\n",
+        )
+
+    # A rejected expression reports bash's error and fails only that command
+    def test_arithmetic_error_fails_the_command(self) -> None:
+        self.assertEqual(
+            self.run_line(b"echo $((1/0)); echo $?"),
+            b'-bash: 1/0: division by 0 (error token is "0")\n1\n',
+        )
+
     # export VAR=value sets and exports
     def test_export_assignment_in_env(self) -> None:
         self.proto.lineReceived(b"export y=bye")
