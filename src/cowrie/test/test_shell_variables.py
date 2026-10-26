@@ -133,6 +133,34 @@ class ShellVariableTests(unittest.TestCase):
             b'-bash: 1/0: division by 0 (error token is "0")\n1\n',
         )
 
+    # set with operands replaces the positional parameters and prints nothing
+    def test_set_double_dash_binds_positional_parameters(self) -> None:
+        self.assertEqual(
+            self.run_line(b"set -- a 'b c'; echo \"$1|$2|$#\""), b"a|b c|2\n"
+        )
+
+    def test_set_operands_bind_positional_parameters(self) -> None:
+        self.assertEqual(self.run_line(b'set x y; echo "$@"'), b"x y\n")
+
+    def test_set_replaces_all_previous_positional_parameters(self) -> None:
+        self.assertEqual(
+            self.run_line(b'set a b c; set -- d; echo "$#|$1|$2"'), b"1|d|\n"
+        )
+
+    def test_set_double_dash_alone_clears_positional_parameters(self) -> None:
+        self.assertEqual(self.run_line(b'set a b; set --; echo "$#"'), b"0\n")
+
+    # Options alone change shell options, not the positional parameters, and
+    # print nothing
+    def test_set_options_print_nothing(self) -> None:
+        self.assertEqual(self.run_line(b"set -e; set +x; echo ok"), b"ok\n")
+
+    def test_set_option_name_is_not_a_positional_parameter(self) -> None:
+        self.assertEqual(self.run_line(b'set -o pipefail; echo "$#"'), b"0\n")
+
+    def test_set_options_then_operands(self) -> None:
+        self.assertEqual(self.run_line(b'set -e a b; echo "$#|$1"'), b"2|a\n")
+
     # export VAR=value sets and exports
     def test_export_assignment_in_env(self) -> None:
         self.proto.lineReceived(b"export y=bye")

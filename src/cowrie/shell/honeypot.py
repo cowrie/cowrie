@@ -874,6 +874,13 @@ class HoneyPotShell:
         self.environ["@"] = " ".join(args)
         self.environ["*"] = " ".join(args)
 
+    def replace_positional_params(self, args: list[str]) -> None:
+        """Make ``args`` the only positional parameters, dropping any higher
+        ones left from an earlier binding."""
+        for key in [k for k in self.environ if k.isdigit() or k in ("#", "@", "*")]:
+            del self.environ[key]
+        self.set_positional_params(args)
+
     def _call_function(self, name: str, args: list[str]) -> None:
         """Run a function body with $1.. , $#, $@ and $* bound to ``args``.
 
