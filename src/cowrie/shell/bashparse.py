@@ -54,8 +54,9 @@ Known deviations from standard bash (none are emulated yet):
 * A compound command nested inside ``$(...)`` is not captured (its output is
   empty); command substitution captures simple commands and subshells only.
 * ``$@`` / ``$#`` / ``$*`` expand to the positional parameters of the running
-  function or script; with none set they are empty (``$#`` is 0). Other
-  special parameters (``$!``, ``$$`` ...) other than ``$?`` are kept literally.
+  function or script; with none set they are empty (``$#`` is 0). ``$?`` is
+  the last exit status and ``$$`` the shell's process ID; ``$!`` is kept
+  literally.
 
 Here-documents are lifted out of the input before the grammar sees it, by the
 pre-scanner in ``prescan`` (the body of ``<<EOF`` depends on an earlier word,
@@ -341,6 +342,10 @@ class ShellContext(Protocol):
 
     def get_status(self) -> str:
         """Return ``$?`` -- the last command's exit status, as a string."""
+        ...
+
+    def get_pid(self) -> str:
+        """Return ``$$`` -- the shell's process ID, as a string."""
         ...
 
     def command_substitution(self, source: str) -> Awaitable[str]:
@@ -1538,16 +1543,18 @@ class BashParser:
         """Expand a special parameter ($?, $@, $#, ...) to its string value, or
         None for an ordinary ``$name`` reference the caller should look up.
 
-        ``$?`` is the last exit status. ``$@`` / ``$#`` / ``$*`` resolve to the
-        positional parameters the shell sets while running a function or
-        script; with none set, ``$@`` / ``$*`` are empty and ``$#`` is 0.
-        Other specials are kept verbatim.
+        ``$?`` is the last exit status and ``$$`` the shell's process ID.
+        ``$@`` / ``$#`` / ``$*`` resolve to the positional parameters the shell
+        sets while running a function or script; with none set, ``$@`` /
+        ``$*`` are empty and ``$#`` is 0. Other specials are kept verbatim.
         """
         _, special = self._var_name(node)
         if special is None:
             return None
         if special == "?":
             return self.context.get_status()
+        if special == "$":
+            return self.context.get_pid()
         if special in ("@", "#", "*"):
             value = self.context.get_variable(special)
             if value is None:
