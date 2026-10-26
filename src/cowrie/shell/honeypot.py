@@ -27,6 +27,7 @@ from twisted.python.compat import iterbytes
 
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
+from cowrie.shell.arithmetic import ArithmeticExpansionError
 from cowrie.shell.bashparse import (
     REDIRECTABLE,
     BashParser,
@@ -647,8 +648,15 @@ class HoneyPotShell:
     def _statement_failed(self, failure: Failure) -> None:
         """An error escaped a statement's expansion or setup: log it, give the
         statement bash's generic failure status, and carry on with the queue --
-        a shell that stops responding would fingerprint the honeypot."""
-        self._log.failure("shell statement failed", failure=failure)
+        a shell that stops responding would fingerprint the honeypot.
+
+        A rejected ``$((...))`` is the user's error, not ours: it is reported
+        the way bash reports it, and only that statement fails (bash also
+        discards the rest of the line)."""
+        if failure.check(ArithmeticExpansionError):
+            self._write_shell_error(f"{self.error_prefix()}{failure.value}\n".encode())
+        else:
+            self._log.failure("shell statement failed", failure=failure)
         self.last_exit_code = 1
         self._advance()
 
