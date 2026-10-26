@@ -246,7 +246,7 @@ class TelnetTransportEventLogTests(unittest.TestCase):
     """The telnet transport binds an EventLog for the connection's lifetime."""
 
     def make_transport(self) -> tuple[Any, CaptureSink]:
-        from twisted.test.proto_helpers import StringTransport
+        from twisted.internet.testing import StringTransport
 
         from cowrie.telnet.transport import CowrieTelnetTransport
 

@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 from twisted.conch.insults import insults
-from twisted.test import proto_helpers
+from twisted.internet import testing
 
 from cowrie.core.events import EventDispatcher, EventLog
 from cowrie.test.eventcapture import CaptureSink
@@ -49,7 +49,7 @@ class Container:
         pass
 
 
-class FakeTransport(proto_helpers.StringTransport):
+class FakeTransport(testing.StringTransport):
     """Fake transport with abortConnection() method."""
 
     # Thanks to TerminalBuffer (some code was taken from twisted Terminal Buffer)
@@ -172,7 +172,7 @@ class FakeTransport(proto_helpers.StringTransport):
         }
 
     def clear(self):
-        proto_helpers.StringTransport.clear(self)
+        testing.StringTransport.clear(self)
         self.dispatchedEvents.clear()
         self.transport = Container()
         self.transport.session = Container()
