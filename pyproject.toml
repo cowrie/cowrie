@@ -95,7 +95,7 @@ dev = [
 "sphinx-copybutton==0.5.2",
 "sphinx_rtd_theme==3.1.0",
 "sphinxcontrib-googleanalytics==0.6",
-"tox==4.64.9",
+"tox==4.67.1",
 "yamllint==1.38.0",
 ]
 
