@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 import os
-import sys
 from configparser import NoOptionError
 from typing import Any
 
@@ -24,7 +23,7 @@ class QemuGuestError(Exception):
 
 def create_guest(
     connection: Any, mac_address: str, guest_unique_id: str
-) -> tuple[Any, str]:
+) -> tuple[Any, str] | None:
     # lazy import to avoid exception if not using the backend_pool and libvirt not installed (#1185)
     import libvirt
 
@@ -91,7 +90,7 @@ def create_guest(
         dom = connection.createXML(guest_config, 0)
         if dom is None:
             _log.error("Failed to create a domain from an XML definition.")
-            sys.exit(1)
+            return None
     except libvirt.libvirtError:
         _log.failure("Error booting guest")
         raise
