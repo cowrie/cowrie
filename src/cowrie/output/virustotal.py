@@ -58,6 +58,23 @@ def readBody(response: IResponse) -> defer.Deferred:
     return d
 
 
+def _parse_json_body(body_bytes: bytes) -> dict[str, Any] | None:
+    """Decode a JSON object from a VT response body.
+
+    Returns None for an empty body and for anything that is not a JSON object.
+    A malformed or truncated response is then reported by the caller instead
+    of letting a JSONDecodeError escape as an unhandled Deferred error.
+    """
+    text = body_bytes.decode("utf8", errors="replace").strip()
+    if not text:
+        return None
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError:
+        return None
+    return parsed if isinstance(parsed, dict) else None
+
+
 class Output(cowrie.core.output.Output):
     """
     virustotal output
@@ -237,8 +254,12 @@ class Output(cowrie.core.output.Output):
         def process_response(body_bytes):
             if self.debug:
                 self._log.info("VT scanfile result: {body}", body=body_bytes)
-            result = body_bytes.decode("utf8")
-            j = json.loads(result)
+            j = _parse_json_body(body_bytes)
+            if j is None:
+                self._log.info(
+                    "VT: unexpected response format: {body!r}", body=body_bytes
+                )
+                return
 
             # Check for errors in v3 API response
             if "error" in j:
@@ -341,8 +362,12 @@ class Output(cowrie.core.output.Output):
         def process_response(body_bytes):
             if self.debug:
                 self._log.info("VT postfile result: {body}", body=body_bytes)
-            result = body_bytes.decode("utf8")
-            j = json.loads(result)
+            j = _parse_json_body(body_bytes)
+            if j is None:
+                self._log.info(
+                    "VT: unexpected response format: {body!r}", body=body_bytes
+                )
+                return
 
             # Check for errors in v3 API response
             if "error" in j:
@@ -403,8 +428,12 @@ class Output(cowrie.core.output.Output):
                     "VT scanurl did not return results: {body}", body=body_bytes
                 )
                 return
-            result = body_bytes.decode("utf8")
-            j = json.loads(result)
+            j = _parse_json_body(body_bytes)
+            if j is None:
+                self._log.info(
+                    "VT: unexpected response format: {body!r}", body=body_bytes
+                )
+                return
 
             # we got a status=200 assume it was successfully submitted
             self.url_cache[event["url"]] = datetime.datetime.now()
@@ -503,8 +532,12 @@ class Output(cowrie.core.output.Output):
         def process_response(body_bytes):
             if self.debug:
                 self._log.info("VT submiturl result: {body}", body=body_bytes)
-            result = body_bytes.decode("utf8")
-            j = json.loads(result)
+            j = _parse_json_body(body_bytes)
+            if j is None:
+                self._log.info(
+                    "VT: unexpected response format: {body!r}", body=body_bytes
+                )
+                return
 
             # Check for errors in v3 API response
             if "error" in j:
@@ -570,8 +603,14 @@ class Output(cowrie.core.output.Output):
                     comment_type=comment_type.lower(),
                     body=body_bytes,
                 )
-            result = body_bytes.decode("utf8")
-            j = json.loads(result)
+            j = _parse_json_body(body_bytes)
+            if j is None:
+                self._log.info(
+                    "VT: unexpected {comment_type} response format: {body!r}",
+                    comment_type=comment_type.lower(),
+                    body=body_bytes,
+                )
+                return False
 
             # Check for errors in v3 API response
             if "error" in j:
@@ -633,11 +672,17 @@ class Output(cowrie.core.output.Output):
         def process_response(body_bytes):
             if self.debug:
                 self._log.info("VT add to collection result: {body}", body=body_bytes)
-            result = body_bytes.decode("utf8")
-            j = json.loads(result)
+            body = body_bytes.decode("utf8", errors="replace").strip()
+            j = _parse_json_body(body_bytes)
+            if j is None and body:
+                self._log.info(
+                    "VT: add to collection returned an unexpected response: {body!r}",
+                    body=body_bytes,
+                )
+                return False
 
             # Check for errors in v3 API response
-            if "error" in j:
+            if j is not None and "error" in j:
                 self._log.info(
                     "VT: Add to collection error - {code}: {msg}",
                     code=j["error"]["code"],
@@ -645,7 +690,8 @@ class Output(cowrie.core.output.Output):
                 )
                 return False
 
-            # Success
+            # Success. VT reports a successful collection update with an empty
+            # body, so an empty response is a success rather than bad JSON.
             self._log.info(
                 "VT: Added {resource} to collection '{collection}'",
                 resource=resource_descriptor,
