@@ -281,11 +281,24 @@ class ShellFdRedirectionTests(unittest.TestCase):
         self.proto.lineReceived(b"echo $(echo a) $(echo b)")
         self.assertEqual(self.tr.value(), b"a b\n" + PROMPT)
 
-    def test_heredoc_style_not_supported(self) -> None:
-        # << is not supported, should not crash
-        self.proto.lineReceived(b"cat << EOF")
-        # Should handle gracefully (may show error or just prompt)
-        self.assertTrue(self.tr.value().endswith(PROMPT))
+    def test_last_stdin_redirection_wins(self) -> None:
+        self.proto.lineReceived(b"echo filed > /tmp/last_in; cat < /tmp/last_in <<EOF")
+        self.proto.lineReceived(b"from heredoc")
+        self.tr.clear()
+        self.proto.lineReceived(b"EOF")
+        self.assertEqual(self.tr.value(), b"from heredoc\n" + PROMPT)
+        self.proto.lineReceived(b"cat <<EOF < /tmp/last_in")
+        self.proto.lineReceived(b"from heredoc")
+        self.tr.clear()
+        self.proto.lineReceived(b"EOF")
+        self.assertEqual(self.tr.value(), b"filed\n" + PROMPT)
+
+    def test_pipe_into_heredoc_command_uses_heredoc(self) -> None:
+        self.proto.lineReceived(b"echo piped | cat <<EOF")
+        self.proto.lineReceived(b"from heredoc")
+        self.tr.clear()
+        self.proto.lineReceived(b"EOF")
+        self.assertEqual(self.tr.value(), b"from heredoc\n" + PROMPT)
 
     def test_redirect_stderr_only_to_pipe(self) -> None:
         # Only stderr goes to pipe, stdout to terminal

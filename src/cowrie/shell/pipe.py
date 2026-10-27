@@ -80,6 +80,9 @@ class PipeProtocol:
 
         self.redirection_error = False
         self.redirect_real_files: list[tuple[str, str]] = []
+        # Set once a write finds the client gone, so a command that keeps
+        # writing (a download's progress meter) logs the loss only once
+        self.terminal_lost = False
         self._setup_redirections()
         self.has_redirection_error = self.redirection_error
 
@@ -115,8 +118,10 @@ class PipeProtocol:
         # when an output redirection truncates the file also used for input
         # (`cat < f > f`) the read sees the truncated file, as in a real shell.
         # The file is still looked up in order, so a missing one is reported
-        # in its place among the other redirection errors.
-        pending_stdin_path: str | None = None
+        # in its place among the other redirection errors. The last input
+        # redirection wins (`cat < f <<EOF` reads the here-document): a path
+        # to read, or the bytes of a here-document.
+        pending_stdin: str | bytes | None = None
 
         # bash applies redirections left to right and stops at the first one
         # that fails; the command does not run (POSIX XCU 2.8.1).
@@ -146,19 +151,26 @@ class PipeProtocol:
             elif op["type"] == "stdin":
                 fd = op["fd"]
                 target = op["target"]
-                pending_stdin_path = self._open_stdin(target)
-                if pending_stdin_path is None:
+                path = self._open_stdin(target)
+                if path is None:
                     break
+                pending_stdin = path
                 # Stdin is handled by loading input_data, so we don't strictly need it in targets for writing,
                 # but we track it for completeness if needed.
                 self.targets[fd] = (FD_FILE_INPUT, target)
+
+            elif op["type"] == "heredoc":
+                pending_stdin = op["data"]
+                self.targets[op["fd"]] = (FD_FILE_INPUT, "<<")
 
             elif op["type"] == "dup":
                 fd = op["fd"]
                 self.targets[fd] = self.targets[op["target"]]
 
-        if pending_stdin_path is not None:
-            self.input_data = self.protocol.fs.file_contents(pending_stdin_path)
+        if isinstance(pending_stdin, str):
+            self.input_data = self.protocol.fs.file_contents(pending_stdin)
+        elif pending_stdin is not None:
+            self.input_data = pending_stdin
 
     def _open_stdin(self, target: str) -> str | None:
         """Resolve a stdin redirection's file, or report it missing and return
@@ -309,7 +321,8 @@ class PipeProtocol:
     def _write_to_terminal(self, data: bytes) -> None:
         if self.protocol is not None and self.protocol.terminal is not None:
             self.protocol.terminal.write(data)
-        else:
+        elif not self.terminal_lost:
+            self.terminal_lost = True
             self._log.info("Connection was probably lost. Could not write to terminal")
 
     def write_stdout(self, data: bytes) -> None:

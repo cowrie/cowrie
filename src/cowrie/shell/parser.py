@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any
+from typing import Any, Self
 
 # Pre-compiled regex for extracting redirection operators
 _REDIR_OP_RE = re.compile(r"^(\d*)(>>|>&|>|<)(.*)$")
@@ -20,6 +20,23 @@ class Field(str):
     never a redirection operator, whatever its text: in bash only an
     unquoted operator redirects, so ``echo '>x'`` prints ``>x``.
     """
+
+
+class HereDocBody(str):
+    """
+    The expanded body of a here-document (``<<EOF``) or here-string
+    (``<<<word``), standing in the token list for the operator and its
+    word. It is never an argument: :meth:`CommandParser.parse_redirections`
+    turns it into a ``heredoc`` redirection feeding ``fd`` (0 unless the
+    operator named one, as in ``3<<EOF``).
+    """
+
+    fd: int
+
+    def __new__(cls, text: str, fd: int = 0) -> Self:
+        body = super().__new__(cls, text)
+        body.fd = fd
+        return body
 
 
 class CommandParser:
@@ -41,6 +58,13 @@ class CommandParser:
         while i < len(arguments):
             tok = arguments[i]
             next_token = arguments[i + 1] if (i + 1) < len(arguments) else None
+
+            if isinstance(tok, HereDocBody):
+                # The body is attacker text decoded with replacement, so it
+                # always encodes.
+                ops.append({"type": "heredoc", "fd": tok.fd, "data": tok.encode()})
+                i += 1
+                continue
 
             if isinstance(tok, Field):
                 cleaned.append(tok)

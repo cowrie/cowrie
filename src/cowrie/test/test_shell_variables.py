@@ -89,6 +89,78 @@ class ShellVariableTests(unittest.TestCase):
         for line in (b"1=a", b"#=1", b"@=a", b"*=a"):
             self.assertNotIn(b"\n" + line + b"\n", b"\n" + output)
 
+    # $$ is the shell's process ID: a number, the same for the whole session
+    def test_dollar_dollar_is_a_stable_number(self) -> None:
+        pid = self.run_line(b"echo $$")
+        self.assertRegex(pid, rb"^[1-9][0-9]*\n$")
+        self.assertEqual(self.run_line(b'echo "$$" ${$}'), pid.strip() + b" " + pid)
+
+    # A command substitution is a subshell, which keeps its parent's $$
+    def test_command_substitution_keeps_parent_pid(self) -> None:
+        self.assertEqual(
+            self.run_line(b'[ "$(echo $$)" = "$$" ] && echo same'), b"same\n"
+        )
+
+    # sh -c starts a new shell process, with a PID of its own
+    def test_new_shell_has_its_own_pid(self) -> None:
+        pid = self.run_line(b"echo $$")
+        child = self.run_line(b"sh -c 'echo $$'")
+        self.assertRegex(child, rb"^[1-9][0-9]*\n$")
+        self.assertNotEqual(child, pid)
+
+    # $((...)) is integer arithmetic
+    def test_arithmetic_expansion(self) -> None:
+        self.proto.lineReceived(b"n=4")
+        self.assertEqual(
+            self.run_line(b'echo $((952*665+17)) "$((n * 2))" $(( $(echo 3) + n ))'),
+            b"633097 8 7\n",
+        )
+
+    # The probe a payload-dropping bot runs before uploading
+    def test_arithmetic_in_sh_c_probe(self) -> None:
+        self.assertEqual(
+            self.run_line(
+                b"sh -c 'printf '\"'\"'\\n%s|%s\\n'\"'\"' '\"'\"'check_small_math'\"'\"'"
+                b' "$((952*665+17))"\''
+            ),
+            b"\ncheck_small_math|633097\n",
+        )
+
+    # A rejected expression reports bash's error and fails only that command
+    def test_arithmetic_error_fails_the_command(self) -> None:
+        self.assertEqual(
+            self.run_line(b"echo $((1/0)); echo $?"),
+            b'-bash: 1/0: division by 0 (error token is "0")\n1\n',
+        )
+
+    # set with operands replaces the positional parameters and prints nothing
+    def test_set_double_dash_binds_positional_parameters(self) -> None:
+        self.assertEqual(
+            self.run_line(b"set -- a 'b c'; echo \"$1|$2|$#\""), b"a|b c|2\n"
+        )
+
+    def test_set_operands_bind_positional_parameters(self) -> None:
+        self.assertEqual(self.run_line(b'set x y; echo "$@"'), b"x y\n")
+
+    def test_set_replaces_all_previous_positional_parameters(self) -> None:
+        self.assertEqual(
+            self.run_line(b'set a b c; set -- d; echo "$#|$1|$2"'), b"1|d|\n"
+        )
+
+    def test_set_double_dash_alone_clears_positional_parameters(self) -> None:
+        self.assertEqual(self.run_line(b'set a b; set --; echo "$#"'), b"0\n")
+
+    # Options alone change shell options, not the positional parameters, and
+    # print nothing
+    def test_set_options_print_nothing(self) -> None:
+        self.assertEqual(self.run_line(b"set -e; set +x; echo ok"), b"ok\n")
+
+    def test_set_option_name_is_not_a_positional_parameter(self) -> None:
+        self.assertEqual(self.run_line(b'set -o pipefail; echo "$#"'), b"0\n")
+
+    def test_set_options_then_operands(self) -> None:
+        self.assertEqual(self.run_line(b'set -e a b; echo "$#|$1"'), b"2|a\n")
+
     # export VAR=value sets and exports
     def test_export_assignment_in_env(self) -> None:
         self.proto.lineReceived(b"export y=bye")

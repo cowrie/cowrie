@@ -88,6 +88,14 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.data = None
         self.password_input = False
         self.cmdstack = []
+        # The last process ID handed out in this session. Each new shell takes
+        # the next one, so $$ grows the way PIDs do on a busy host.
+        self.last_pid: int = random.randint(2000, 30000)
+
+    def next_pid(self) -> int:
+        """Allocate a process ID for a new process in this session."""
+        self.last_pid += random.randint(1, 8)
+        return self.last_pid
 
     def getProtoTransport(self):
         """
@@ -460,10 +468,18 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
                 # A final line without a terminator still runs, as bash does
                 # when its stdin ends without a newline.
                 self._dispatch_stdin_line()
-            if not any(getattr(item, "reads_stdin", False) for item in self.cmdstack):
+            readers = [
+                item for item in self.cmdstack if getattr(item, "reads_stdin", False)
+            ]
+            if not readers:
                 # The stdin-reading shell already exited (e.g. `exit`) and
                 # ended the process; nothing is left to deliver EOF to.
                 return
+            # The shell learns of the EOF now even when a running command
+            # receives it: once that command exits, the shell has nothing
+            # more to read and must finish its buffered lines, then end.
+            for shell in readers:
+                shell.stdin_eof = True
         HoneyPotBaseProtocol.eofReceived(self)
 
 

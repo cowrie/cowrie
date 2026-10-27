@@ -219,6 +219,66 @@ class FlowControlTests(unittest.TestCase):
             b"before after\n",
         )
 
+    # A function that reports how many arguments it got and each one.
+    SHOW_ARGS = 'g() { echo n=$#; for a in "$@"; do echo "<$a>"; done; };'
+
+    def test_quoted_at_keeps_each_argument_a_separate_word(self) -> None:
+        self.assertEqual(
+            self._run(self.SHOW_ARGS + 'f() { g "$@"; }; f a "b c" ""'),
+            b"n=3\n<a>\n<b c>\n<>\n",
+        )
+
+    def test_quoted_at_with_no_arguments_is_no_word(self) -> None:
+        self.assertEqual(self._run(self.SHOW_ARGS + 'f() { g "$@"; }; f'), b"n=0\n")
+
+    def test_quoted_at_joins_prefix_and_suffix_to_outer_arguments(self) -> None:
+        self.assertEqual(
+            self._run(self.SHOW_ARGS + 'f() { g "x$@y"; }; f a "b c"'),
+            b"n=2\n<xa>\n<b cy>\n",
+        )
+
+    def test_quoted_at_with_no_arguments_keeps_surrounding_text(self) -> None:
+        self.assertEqual(
+            self._run(self.SHOW_ARGS + 'f() { g "x$@y"; }; f'), b"n=1\n<xy>\n"
+        )
+
+    def test_quoted_at_next_to_empty_quotes_is_one_empty_word(self) -> None:
+        self.assertEqual(
+            self._run(self.SHOW_ARGS + 'f() { g "$@"""; }; f'), b"n=1\n<>\n"
+        )
+
+    def test_quoted_at_twice_in_one_word_joins_last_to_first(self) -> None:
+        self.assertEqual(
+            self._run(self.SHOW_ARGS + 'f() { g "$@$@"; }; f a b'),
+            b"n=3\n<a>\n<ba>\n<b>\n",
+        )
+
+    def test_quoted_at_in_assignment_joins_with_spaces(self) -> None:
+        self.assertEqual(
+            self._run(self.SHOW_ARGS + 'f() { x="$@"; g "$x"; }; f a "b c"'),
+            b"n=1\n<a b c>\n",
+        )
+
+    def test_quoted_star_stays_one_word(self) -> None:
+        self.assertEqual(
+            self._run(self.SHOW_ARGS + 'f() { g "$*"; }; f a "b c"'),
+            b"n=1\n<a b c>\n",
+        )
+
+    def test_braced_quoted_at_keeps_each_argument_a_separate_word(self) -> None:
+        self.assertEqual(
+            self._run(self.SHOW_ARGS + 'f() { g "${@}"; }; f a "b c"'),
+            b"n=2\n<a>\n<b c>\n",
+        )
+
+    def test_braced_special_parameters_expand(self) -> None:
+        self.assertEqual(
+            self._run('f() { echo ${#} "${*}" ${1}; }; f a b'), b"2 a b a\n"
+        )
+
+    def test_braced_status_expands(self) -> None:
+        self.assertEqual(self._run("false; echo ${?}"), b"1\n")
+
     def test_top_level_has_no_positional_parameters(self) -> None:
         """An interactive shell has no positional parameters: $@ and $* are
         empty and $# is 0, never the literal text."""

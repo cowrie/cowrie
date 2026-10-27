@@ -556,6 +556,20 @@ Attributes:
     * `result`: ``success`` or ``error``
     * `http_status`: HTTP status code (on HTTP errors)
 
+cowrie.malwarebazaar.submitted
+==============================
+
+The MalwareBazaar output plugin finished submitting a downloaded or uploaded
+file.
+
+Attributes:
+
+    * `sha256`: SHA-256 checksum of the submitted file
+    * `result`: ``success`` or ``error``
+    * `query_status`: MalwareBazaar's ``query_status``, e.g. ``inserted`` or
+      ``file_already_known``; ``None`` when no valid response arrived
+    * `http_status`: HTTP status code (on HTTP errors)
+
 cowrie.virustotal.scanfile
 ==========================
 

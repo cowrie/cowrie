@@ -42,6 +42,9 @@ class FakeContext:
     def get_status(self) -> str:
         return self.status
 
+    def get_pid(self) -> str:
+        return "4242"
+
     def command_substitution(self, source: str) -> Deferred[str]:
         self.substitutions.append(source)
         # Echo back a marker so tests can assert the captured source text.
@@ -149,6 +152,55 @@ class BashParseVariableTests(unittest.TestCase):
 
     def test_question_mark_status(self) -> None:
         self.assertEqual(self._tokens("echo $?"), ["echo", "0"])
+
+    def test_dollar_dollar_is_shell_pid(self) -> None:
+        self.assertEqual(
+            self._tokens('echo $$ "${$}" a$$b'), ["echo", "4242", "4242", "a4242b"]
+        )
+
+
+class BashParseArithmeticTests(unittest.TestCase):
+    """$((...)) is arithmetic, evaluated after the expansions inside it."""
+
+    def setUp(self) -> None:
+        self.ctx = FakeContext({"x": "4", "sum": "1+2"})
+        self.parser = BashParser(self.ctx)
+
+    def _tokens(self, line: str) -> list[str]:
+        statement = self.parser.parse(line)[0]
+        assert isinstance(statement, Command)
+        return evaluate_now(self.parser, statement)
+
+    def test_arithmetic_expands_to_its_value(self) -> None:
+        self.assertEqual(self._tokens("echo $((952*665+17))"), ["echo", "633097"])
+
+    def test_arithmetic_in_double_quotes(self) -> None:
+        self.assertEqual(self._tokens('echo "[$((x * 2))]"'), ["echo", "[8]"])
+
+    def test_dollar_names_expand_as_text(self) -> None:
+        # $sum is replaced by its text before evaluation: 2*1+2, not 2*(1+2)
+        self.assertEqual(
+            self._tokens("echo $((2*$sum)) $((2*sum))"), ["echo", "4", "6"]
+        )
+
+    def test_nested_arithmetic_and_parentheses(self) -> None:
+        self.assertEqual(
+            self._tokens("echo $(( $((1+2)) * (3 + (4)) ))"), ["echo", "21"]
+        )
+
+    def test_subshells_in_command_substitution_stay_commands(self) -> None:
+        self._tokens("echo $((echo a); (echo b))")
+        self.assertEqual(self.ctx.substitutions, ["(echo a); (echo b)"])
+
+    def test_arithmetic_error_is_raised(self) -> None:
+        statement = self.parser.parse("echo $((1/0))")[0]
+        assert isinstance(statement, Command)
+        failures: list = []
+        ensureDeferred(self.parser.evaluate(statement)).addErrback(failures.append)
+        self.assertEqual(len(failures), 1)
+        self.assertEqual(
+            str(failures[0].value), '1/0: division by 0 (error token is "0")'
+        )
 
 
 class BashParseRedirectionTests(unittest.TestCase):
@@ -636,9 +688,150 @@ class BashParseAmbiguityTests(unittest.TestCase):
             "case a in N) ;; *) case a in N) ;; *) echo two; esac; esac"
         )
 
+    def test_arithmetic(self) -> None:
+        self._assert_unambiguous(
+            'echo $((1+2)) "$(( (x) * $((y)) ))" $((echo a); (echo b)) $(id)'
+        )
+
     def test_recon_shaped_line(self) -> None:
         stmt = "echo $(id) ; (ls /proc | head -n 1) ; x=$(cat /etc/hostname)"
         self._assert_unambiguous(" ; ".join([stmt] * 2))
+
+    def test_heredoc_operators(self) -> None:
+        # What the grammar sees once the pre-scanner has cut the bodies out.
+        self._assert_unambiguous("cat <<EOF | tr a-z A-Z\n\n\n")
+        self._assert_unambiguous("cat <<-EOF 2<<'B' <<<word <f 3<<\\X\n\n")
+
+    def test_heredoc_body(self) -> None:
+        tree = Lark(
+            _GRAMMAR,
+            start="heredoc_body",
+            parser="earley",
+            lexer="dynamic",
+            ambiguity="explicit",
+        ).parse("a $x ${y} $(id) `uname` \\$ \\\\ \\a $ \\\nb\n")
+        ambiguous = sum(1 for t in tree.iter_subtrees() if t.data == "_ambig")
+        self.assertEqual(ambiguous, 0)
+
+
+class BashParseIncompleteTests(unittest.TestCase):
+    """Input that ends too early is flagged, not rejected, so a line-fed
+    shell can wait for the rest."""
+
+    def setUp(self) -> None:
+        self.parser = BashParser(FakeContext())
+
+    def _marker(self, text: str) -> SyntaxError_:
+        statements = self.parser.parse(text)
+        marker = statements[-1]
+        self.assertIsInstance(marker, SyntaxError_, statements)
+        assert isinstance(marker, SyntaxError_)
+        return marker
+
+    def test_open_constructs_are_incomplete(self) -> None:
+        for text in (
+            "if true",
+            "if true; then",
+            "while true; do",
+            "until false",
+            "for i in 1 2",
+            "for i",
+            "case x",
+            "case x in",
+            "case x in a)",
+            "case x in a) echo;;",
+            "{ echo a",
+            "( echo a",
+            "f() {",
+            "f()",
+            "function f",
+            "echo a |",
+            "echo a &&",
+            "echo a ||",
+        ):
+            with self.subTest(text=text):
+                marker = self._marker(text)
+                self.assertTrue(marker.incomplete)
+                self.assertEqual((marker.token, marker.opener), ("", ""))
+                self.assertEqual(marker.lineno, 2)
+
+    def test_open_quotes_name_their_closer_and_line(self) -> None:
+        for text, opener, lineno in (
+            ('echo "a\nb', '"', 1),
+            ("echo 'a\nb", "'", 1),
+            ("echo `ls\n", "`", 1),
+            ("echo ${x\n", "}", 1),
+            ("echo $(ls", ")", 2),
+            ("echo $(ls\n\n", ")", 3),
+            ("echo a \\\n", "\\", 2),
+        ):
+            with self.subTest(text=text):
+                marker = self._marker(text)
+                self.assertTrue(marker.incomplete)
+                self.assertEqual((marker.opener, marker.lineno), (opener, lineno))
+
+    def test_real_errors_are_not_incomplete(self) -> None:
+        for text, token in (
+            ("echo >", "newline"),
+            ("for", "newline"),
+            ("function", "newline"),
+            ("case", "newline"),
+            ("f() echo", "echo"),
+            ("fi", "fi"),
+            ("echo )", ")"),
+            ("case x in a) ;; esac extra)", ")"),
+        ):
+            with self.subTest(text=text):
+                marker = self._marker(text)
+                self.assertFalse(marker.incomplete)
+                self.assertEqual(marker.token, token)
+                self.assertEqual(marker.lineno, 1)
+
+    def test_complete_input_has_no_marker(self) -> None:
+        for text in (
+            "echo if",
+            "echo done",
+            "echo a # 'b",
+            "case x in esac",
+            "echo a &&\necho b",
+            "echo a |\ncat",
+            "echo a \\\nb",
+            "cat <<< word",
+            "echo $((1+2))",
+        ):
+            with self.subTest(text=text):
+                statements = self.parser.parse(text)
+                self.assertFalse(
+                    statements
+                    and isinstance(statements[-1], SyntaxError_)
+                    and statements[-1].incomplete,
+                    statements,
+                )
+
+    def test_first_line_offsets_line_numbers(self) -> None:
+        for text, lineno in (("if true", 6), ("echo >", 5)):
+            marker = self.parser.parse(text, first_line=5)[-1]
+            assert isinstance(marker, SyntaxError_)
+            self.assertEqual(marker.lineno, lineno)
+        command = self.parser.parse("echo a\necho b", first_line=5)[1]
+        assert isinstance(command, Command)
+        self.assertEqual(command.lineno, 6)
+
+
+class RedirectionOperatorLexingTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.parser = BashParser(FakeContext())
+
+    def _operators(self, text: str) -> list[str]:
+        command = self.parser.parse(text)[0]
+        assert isinstance(command, Command)
+        return [item for item in command.items if isinstance(item, str)]
+
+    def test_each_operator_is_one_token(self) -> None:
+        self.assertEqual(self._operators("cat <f"), ["<"])
+        self.assertEqual(self._operators("cat <<<w"), ["<<<"])
+        self.assertEqual(self._operators("cat 2<f 3<<<w >>o"), ["2<", "3<<<", ">>"])
+        self.assertEqual(self._operators("cat 2>&1 <f"), ["2>&", "<"])
 
 
 if __name__ == "__main__":
