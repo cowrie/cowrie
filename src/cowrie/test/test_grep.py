@@ -38,6 +38,14 @@ class ShellGrepCommandTests(unittest.TestCase):
         self.proto.lineReceived(b"echo hello | grep zzz\n")
         self.assertEqual(self.tr.value(), PROMPT)
 
+    def test_grep_pipe_ignore_case_match(self) -> None:
+        self.proto.lineReceived(b"echo HELLO | grep -i hell\n")
+        self.assertEqual(self.tr.value(), b"HELLO\n" + PROMPT)
+
+    def test_grep_pipe_ignore_case_no_match(self) -> None:
+        self.proto.lineReceived(b"echo HELLO | grep -i zzz\n")
+        self.assertEqual(self.tr.value(), PROMPT)
+
     def test_grep_pipe_exit_code_match(self) -> None:
         self.proto.lineReceived(b"echo hello | grep hell; echo $?\n")
         self.assertEqual(self.tr.value(), b"hello\n0\n" + PROMPT)

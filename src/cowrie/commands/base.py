@@ -1053,10 +1053,30 @@ commands["chattr"] = Command_chattr
 
 
 class Command_set(HoneyPotCommand):
-    # Basic functionaltly (show only), need enhancements
+    """
+    With operands, replace the positional parameters. Options (-e, +x,
+    -o name ...) are accepted and ignored. With no arguments, list the
+    shell's variables.
+    """
+
     # This will show ALL environ vars, not only the global ones
     # With enhancements it should work like env when -o posix is used
     def call(self) -> None:
+        if not self.args:
+            self.list_variables()
+            return
+        args = iter(self.args)
+        for arg in args:
+            if arg == "--":
+                self.shell.replace_positional_params(list(args))
+                return
+            if arg[:1] not in ("-", "+"):
+                self.shell.replace_positional_params([arg, *args])
+                return
+            if arg in ("-o", "+o"):
+                next(args, None)
+
+    def list_variables(self) -> None:
         for i in sorted(self.environ):
             # Positional parameters live in environ but are not variables.
             if i.isdigit() or i in ("#", "@", "*"):

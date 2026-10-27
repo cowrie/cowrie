@@ -51,7 +51,9 @@ class GarbageCollectionTests(unittest.TestCase):
     def test_collects_at_threshold_after_success_and_parse_error(self) -> None:
         threshold = gc_collect_threshold()
         valid = "echo #" + "x" * (threshold - len("echo #"))
-        invalid = "'" + "x" * threshold
+        # Rejected by the grammar itself (an unterminated quote never reaches
+        # it: the pre-scanner reports that as incomplete input first).
+        invalid = "echo ) #" + "x" * threshold
         with patch("cowrie.shell.bashparse.gc.collect") as collect:
             self.parser.parse(valid)
             self.parser.parse(invalid)
@@ -79,9 +81,9 @@ class ParseAlarmTests(unittest.TestCase):
     def test_timeout_returns_syntax_error_and_cancels_alarm(self) -> None:
         original_parse = bashparse._parser.parse
 
-        def slow_parse(line: str) -> object:
+        def slow_parse(line: str, start: str = "start") -> object:
             time.sleep(0.2)
-            return original_parse(line)
+            return original_parse(line, start=start)
 
         with patch.object(bashparse._parser, "parse", side_effect=slow_parse):
             with patch(

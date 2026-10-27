@@ -54,6 +54,8 @@ ALL: frozenset[str] = frozenset(
         "cowrie.tunnelproxy-tcpip.data",
         # GreyNoise reputation lookups
         "cowrie.greynoise.result",
+        # MalwareBazaar sample submissions
+        "cowrie.malwarebazaar.submitted",
         # TTY session recordings
         "cowrie.log.closed",
         "cowrie.log.open",
