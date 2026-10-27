@@ -80,6 +80,9 @@ class PipeProtocol:
 
         self.redirection_error = False
         self.redirect_real_files: list[tuple[str, str]] = []
+        # Set once a write finds the client gone, so a command that keeps
+        # writing (a download's progress meter) logs the loss only once
+        self.terminal_lost = False
         self._setup_redirections()
         self.has_redirection_error = self.redirection_error
 
@@ -318,7 +321,8 @@ class PipeProtocol:
     def _write_to_terminal(self, data: bytes) -> None:
         if self.protocol is not None and self.protocol.terminal is not None:
             self.protocol.terminal.write(data)
-        else:
+        elif not self.terminal_lost:
+            self.terminal_lost = True
             self._log.info("Connection was probably lost. Could not write to terminal")
 
     def write_stdout(self, data: bytes) -> None:
