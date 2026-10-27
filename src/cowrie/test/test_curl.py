@@ -15,7 +15,7 @@ from unittest import mock
 
 from twisted.internet import defer, error
 from twisted.python.failure import Failure
-from twisted.web.client import URI
+from twisted.web.client import URI, ResponseNeverReceived
 from twisted.web.http_headers import Headers
 
 from cowrie.commands.curl import Command_curl
@@ -115,6 +115,26 @@ class CurlArtifactCleanupTests(unittest.TestCase):
         cmd.error(Failure(error.TCPTimedOutError()))
 
         self.assertIn(b"Connection timed out", b"".join(writes))
+
+    def test_request_timeout_reports_operation_timed_out(self) -> None:
+        # treq reports a request timeout by cancelling the request, which
+        # Twisted surfaces wrapped in ResponseNeverReceived. It must be
+        # reported as a timeout instead of falling through to the CRITICAL
+        # "Unhandled curl error" branch.
+        cmd = Command_curl.__new__(Command_curl)
+        cmd.protocol = self.proto
+        writes: list[bytes] = []
+        cmd.writefn = lambda data: writes.append(data)
+        cmd.errorWritefn = lambda data: writes.append(data)
+        cmd.exit = lambda code=None: None  # type: ignore[method-assign]
+        cmd.url = b"http://192.0.2.1/file"
+        cmd.host = "192.0.2.1"
+        cmd.port = 80
+        cmd.artifact = Artifact("curl-download")
+
+        cmd.error(Failure(ResponseNeverReceived([Failure(defer.CancelledError())])))
+
+        self.assertIn(b"Operation timed out", b"".join(writes))
 
     def test_missing_host_reports_error_without_crashing(self) -> None:
         # A URL with no host must report an error and stop, not fall through
