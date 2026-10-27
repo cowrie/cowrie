@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import os
 import stat
 from typing import TYPE_CHECKING, Any
 
@@ -362,5 +363,12 @@ class PipeProtocol:
         # The write offset lives in the shared file record, so several commands
         # redirected to the same file (a group's `{ ...; } > f`) keep a correct
         # cumulative size, as they share one inherited fd in a real shell.
+        # Redirections that reach one file through separate records
+        # (`cmd > f 2> f`) carry independent counters, so for the size the
+        # filesystem reports, trust the backing file itself (issue #40349).
         file_info["written"] += len(data)
-        self.protocol.fs.update_size(file_info["virtual"], file_info["written"])
+        try:
+            size: int = os.path.getsize(real_path)
+        except OSError:
+            size = file_info["written"]
+        self.protocol.fs.update_size(file_info["virtual"], size)
