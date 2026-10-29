@@ -45,6 +45,7 @@ command_modules = [
     "ping",
     "printf",
     "python",
+    "read",
     "scp",
     "sed",
     "service",
