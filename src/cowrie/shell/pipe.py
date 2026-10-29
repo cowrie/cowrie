@@ -62,6 +62,9 @@ class PipeProtocol:
         # they create are owned by the user.
         self.cwd = cwd
         self.user = user
+        # Assignments written before the command name (`IFS=: read ...`),
+        # which hold for this command only
+        self.assignments: dict[str, str] = {}
         # True when ``input_data`` came from a pipe (an upstream pipeline
         # stage); stdin is then closed (EOF) once it is read, as no terminal
         # will ever feed it.

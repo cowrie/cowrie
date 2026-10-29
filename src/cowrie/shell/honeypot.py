@@ -1159,12 +1159,14 @@ class HoneyPotShell:
 
         # Probably no reason to be this comprehensive for just PATH...
         environ = copy.copy(self.environ)
+        assignments: dict[str, str] = {}
         cmd_tokens: list[str] = []
         while cmdAndArgs:
             piece = cmdAndArgs.pop(0)
             if ASSIGNMENT_WORD.match(piece):
                 key, val = piece.split("=", 1)
                 environ[key] = val
+                assignments[key] = val
                 continue
             cmd_tokens = [piece, *cmdAndArgs]
             break
@@ -1251,6 +1253,7 @@ class HoneyPotShell:
         )
         # The name the command was invoked by, its argv[0].
         pp.argv0 = cmd
+        pp.assignments = assignments
         if pp.has_redirection_error:
             # bash reports the failure (already written) and skips the command.
             self.last_exit_code = 1
