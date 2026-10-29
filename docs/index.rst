@@ -44,6 +44,7 @@ Welcome to Cowrie's documentation!
    datadog/README.rst
    elk/README.rst
    graylog/README.rst
+   otx/README.rst
    prometheus/README.rst
    sentinel/README.rst
    splunk/README.rst
