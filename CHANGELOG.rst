@@ -47,6 +47,10 @@ Release 3.1.0
 * Idle LLM sessions time out after 300 seconds by default, the same as
   the shell.
 
+**DEPENDENCIES:**
+
+* Twisted bumped to 26.10.0.
+
 
 Releases 3.0.1 -- 3.0.15
 ************************
