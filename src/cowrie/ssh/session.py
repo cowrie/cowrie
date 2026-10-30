@@ -38,7 +38,7 @@ class HoneyPotSSHSession(session.SSHSession):
         # not be valid UTF-8.
         name_str = name.decode("utf-8", errors="replace")
         value_str = value.decode("utf-8", errors="replace")
-        self.conn.transport.events.dispatch(
+        self.conn.transport.events.dispatch(  # type: ignore[union-attr]
             "cowrie.client.var",
             "request_env: %(name)s=%(value)s",
             name=name_str,
@@ -46,7 +46,7 @@ class HoneyPotSSHSession(session.SSHSession):
         )
         # FIXME: This only works for shell, not for exec command
         if self.session:
-            self.session.environ[name_str] = value_str
+            self.session.environ[name_str] = value_str  # type: ignore[attr-defined]
         return 0
 
     def request_agent(self, data: bytes) -> int:
@@ -77,12 +77,14 @@ class HoneyPotSSHSession(session.SSHSession):
         """
         Utility function to request to send EOF for this session
         """
+        assert self.conn is not None
         self.conn.sendEOF(self)
 
     def sendClose(self) -> None:
         """
         Utility function to request to send close for this session
         """
+        assert self.conn is not None
         self.conn.sendClose(self)
 
     def channelClosed(self) -> None:

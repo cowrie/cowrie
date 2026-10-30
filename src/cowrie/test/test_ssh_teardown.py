@@ -50,7 +50,7 @@ class SessionTeardownTestCase(unittest.TestCase):
         channel = HoneyPotSSHSession.__new__(HoneyPotSSHSession)
         channel.session = adapter
         channel.client = SSHSessionProcessProtocol(channel)
-        channel.client.transport = ProtocolTransport(proto)
+        channel.client.transport = ProtocolTransport(proto)  # type: ignore[assignment]
         return channel
 
     def test_channel_close_tears_down_protocol_once(self) -> None:
