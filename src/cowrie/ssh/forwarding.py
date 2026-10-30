@@ -129,7 +129,7 @@ class FakeForwardingChannel(forwarding.SSHConnectForwardingChannel):
         pass
 
     def dataReceived(self, data: bytes) -> None:
-        events = self.conn.transport.events
+        events = self.conn.transport.events  # type: ignore[union-attr]
         # Try to fingerprint the forwarded traffic
 
         # Check for TLS Client Hello (0x16 = Handshake, 0x01 = Client Hello)
@@ -224,7 +224,7 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
         forwarding.SSHConnectForwardingChannel.dataReceived(self, connect_hdr)
 
     def dataReceived(self, data: bytes) -> None:
-        events = self.conn.transport.events
+        events = self.conn.transport.events  # type: ignore[union-attr]
         # Try to fingerprint the tunneled traffic
 
         # Check for TLS Client Hello

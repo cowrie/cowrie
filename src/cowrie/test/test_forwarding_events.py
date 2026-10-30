@@ -49,8 +49,10 @@ class ForwardingEventTests(unittest.TestCase):
     def test_discarded_data_dispatches_with_session_identity(self) -> None:
         events, dispatched = capture_eventlog(protocol="ssh")
         channel = forwarding.FakeForwardingChannel(("198.51.100.7", 80))
-        channel.conn = SimpleNamespace(transport=SimpleNamespace(events=events))
-        channel.id = 0
+        channel.conn = SimpleNamespace(  # type: ignore[assignment]
+            transport=SimpleNamespace(events=events)
+        )
+        channel.id = 0  # type: ignore[assignment]
         with patch.object(channel, "_close"):
             channel.dataReceived(b"GET / HTTP/1.0\r\n\r\n")
 

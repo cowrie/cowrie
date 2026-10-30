@@ -32,25 +32,26 @@ class CommandChannel(channel.SSHChannel):
         self.done_deferred = done_deferred
         self.callback = callback
 
-        self.data = b""
+        self.output = b""
 
     def channelOpen(self, specificData: bytes) -> None:
         assert self.conn is not None
         self.conn.sendRequest(self, "exec", common.NS(self.command), wantReply=True)
 
     def dataReceived(self, data: bytes) -> None:
-        self.data += data
+        self.output += data
 
     def extReceived(self, dataType: int, data: bytes) -> None:
-        self.data += data
+        self.output += data
 
     def closeReceived(self) -> None:
+        assert self.conn is not None and self.conn.transport is not None
         self.conn.transport.loseConnection()
-        self.done_deferred.callback(self.data)
+        self.done_deferred.callback(self.output)
 
         # call the request client callback, if any
         if self.callback:
-            self.callback(self.data)
+            self.callback(self.output)
 
 
 class ClientConnection(connection.SSHConnection):

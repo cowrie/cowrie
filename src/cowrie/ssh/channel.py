@@ -65,11 +65,11 @@ class CowrieSSHChannel(channel.SSHChannel):
 
     def channelOpen(self, specificData: bytes) -> None:
         self.startTime = time.time()
-        self.events = self.conn.transport.events
+        self.events = self.conn.transport.events  # type: ignore[union-attr]
         self.ttylogFile = "{}/tty/{}-{}-{}.log".format(
             self.ttylogPath,
             time.strftime("%Y%m%d-%H%M%S"),
-            self.conn.transport.transportId,
+            self.conn.transport.transportId,  # type: ignore[union-attr]
             self.id,
         )
         self.events.dispatch(

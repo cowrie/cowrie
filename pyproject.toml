@@ -43,7 +43,7 @@ dependencies = [
         "pyasn1_modules==0.4.2",
         "service_identity==26.1.0",
         "treq==26.7.0",
-        "twisted[conch]==26.4.0",
+        "twisted[conch]==26.10.0",
 ]
 
 [project.urls]
