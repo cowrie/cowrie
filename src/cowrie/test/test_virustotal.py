@@ -429,6 +429,21 @@ class VirusTotalOutputTests(unittest.TestCase):
         self.assertEqual(data["data"][0]["type"], "url")
         self.assertEqual(data["data"][0]["id"], "test-url-id")
 
+    def test_add_to_collection_accepts_empty_success_body(self) -> None:
+        """VT answers a successful collection update with 200 and no body."""
+        self.output.collection_id = "test-collection-id"
+        captured: dict = {}
+
+        def fake_make_request(*args, **kwargs):
+            captured["process_response"] = kwargs.get("process_response")
+            return defer.succeed(None)
+
+        self.output._make_request = fake_make_request  # type: ignore[method-assign]
+        self.output._add_to_collection("files", "test-file-hash", "test file")
+
+        self.assertTrue(captured["process_response"](b""))
+        self.assertFalse(captured["process_response"](b"<html>not json</html>"))
+
     def test_no_collection_when_not_configured(self) -> None:
         """Test that collection operations are skipped when not configured"""
         # Ensure no collection is configured
