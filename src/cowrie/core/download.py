@@ -12,9 +12,9 @@ from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import urljoin, urlparse
 
 import treq
-from twisted.internet.defer import Deferred, inlineCallbacks
+from twisted.internet.defer import CancelledError, Deferred, inlineCallbacks
 from twisted.internet.endpoints import HostnameEndpoint, wrapClientTLS
-from twisted.web.client import Agent, BrowserLikePolicyForHTTPS
+from twisted.web.client import Agent, BrowserLikePolicyForHTTPS, ResponseFailed
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.network import outbound_bind_address, resolve_allowed
@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
 
     from twisted.internet.interfaces import IReactorCore
+    from twisted.python.failure import Failure
     from twisted.web.client import URI
 
     from cowrie.core.artifact import Artifact
@@ -50,6 +51,23 @@ class UnreachableAddress(Exception):
 
 class TooManyRedirects(Exception):
     """A redirect chain ran past its hop limit."""
+
+
+def is_timeout(failure: Failure) -> bool:
+    """Whether ``failure`` is how treq reports a request timeout.
+
+    treq cancels a request that runs past its timeout. Depending on when the
+    cancellation lands, Twisted surfaces it either as a bare CancelledError or
+    wrapped in ResponseNeverReceived, so the wrapped reasons are inspected too.
+    """
+    if failure.check(CancelledError) is not None:
+        return True
+    if failure.check(ResponseFailed) is not None:
+        return any(
+            reason.check(CancelledError) is not None
+            for reason in getattr(failure.value, "reasons", ())
+        )
+    return False
 
 
 def outbound_rate_limiter(command: str) -> RateLimiter:

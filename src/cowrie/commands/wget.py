@@ -13,11 +13,12 @@ from urllib import parse
 
 import treq
 from twisted.internet import defer, error, reactor
-from twisted.internet.defer import CancelledError, inlineCallbacks
+from twisted.internet.defer import inlineCallbacks
 from twisted.internet.protocol import ClientCreator, Protocol
 from twisted.logger import Logger
 from twisted.protocols.ftp import CommandFailed, FTPClient
 from twisted.python import failure
+from twisted.web.client import ResponseFailed
 from twisted.web.iweb import UNKNOWN_LENGTH
 
 from cowrie.core.artifact import Artifact
@@ -27,6 +28,7 @@ from cowrie.core.download import (
     UnreachableAddress,
     capture_download,
     fetch,
+    is_timeout,
     outbound_rate_limiter,
     report_download_failure,
 )
@@ -685,8 +687,13 @@ class Command_wget(HoneyPotCommand):
             self.exit()
             return
 
-        if response.check(CancelledError) is not None:
+        if is_timeout(response):
             self.errorWrite("failed: Operation timed out.\n")
+            self.exit()
+            return
+
+        if response.check(ResponseFailed) is not None:
+            self.errorWrite("failed: Connection failed.\n")
             self.exit()
             return
 
