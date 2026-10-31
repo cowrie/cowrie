@@ -30,6 +30,7 @@ from twisted.python import failure, randbytes
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.events import EventLog, transport_events
+from cowrie.core.traffic import CountingTransport
 from cowrie.core.utils import escape_nonprintable, hassh_client
 from cowrie.ssh.kex import KexMessageTransport
 
@@ -37,6 +38,9 @@ from cowrie.ssh.kex import KexMessageTransport
 class HoneyPotSSHTransport(KexMessageTransport, TimeoutMixin):
     _log = Logger()
     startTime: float = 0.0
+    # Bytes received from and sent to the client, for cowrie.session.closed.
+    bytes_in: int = 0
+    bytes_out: int = 0
     gotVersion: bool = False
     buf: bytes
     transportId: str
@@ -88,6 +92,9 @@ class HoneyPotSSHTransport(KexMessageTransport, TimeoutMixin):
         else:
             self._emit_connect()
 
+        # After the ProtocolWrapper check above, which must see the real
+        # transport, and before the first byte is written.
+        self.transport = CountingTransport(self.transport, self)
         self.transport.write(self.ourVersionString + b"\r\n")
         self.currentEncryptions = transport.SSHCiphers(
             b"none", b"none", b"none", b"none"
@@ -145,6 +152,7 @@ class HoneyPotSSHTransport(KexMessageTransport, TimeoutMixin):
 
         @type data: C{str}
         """
+        self.bytes_in += len(data)
         if self._emit_connect_pending:
             # First bytes have arrived, which under the PROXY protocol means
             # the header has been parsed and getPeer() now reflects the real
@@ -322,7 +330,9 @@ class HoneyPotSSHTransport(KexMessageTransport, TimeoutMixin):
         self.transport = None
         duration_ms = round((time.time() - self.startTime) * 1000)
         if self.events is not None:
-            self.events.session_closed(duration_ms)
+            self.events.session_closed(
+                duration_ms, bytes_in=self.bytes_in, bytes_out=self.bytes_out
+            )
 
     def sendDisconnect(self, reason, desc):
         """
