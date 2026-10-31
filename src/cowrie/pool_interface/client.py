@@ -13,6 +13,32 @@ from twisted.logger import Logger
 from cowrie.core.config import CowrieConfig
 
 
+def _response_size(buf: bytes) -> int | None:
+    """Length of the pool response at the start of ``buf``, or None when more
+    bytes are needed to tell. Raises ValueError for an unknown op-code, after
+    which the stream cannot be split into messages any more."""
+    if len(buf) < 5:
+        return None
+    op, code = struct.unpack("!cI", buf[:5])
+    if op == b"i" or (op == b"r" and code != 0):
+        size = 5  # !cI
+    elif op == b"r":
+        # !cIIH, the guest IP, !HHH, then the snapshot path
+        if len(buf) < 11:
+            return None
+        (ip_len,) = struct.unpack("!H", buf[9:11])
+        snapshot_len_at = 15 + ip_len
+        if len(buf) < snapshot_len_at + 2:
+            return None
+        (snapshot_len,) = struct.unpack(
+            "!H", buf[snapshot_len_at : snapshot_len_at + 2]
+        )
+        size = snapshot_len_at + 2 + snapshot_len
+    else:
+        raise ValueError(op)
+    return size if len(buf) >= size else None
+
+
 class PoolClient(Protocol):
     """
     Represents the connection between a protocol instance (SSH or Telnet) and a QEMU pool
@@ -24,6 +50,7 @@ class PoolClient(Protocol):
         self.factory = factory
         self.parent = None
         self.vm_id = None  # used when disconnecting
+        self._buffer = b""
 
     def connectionMade(self):
         pass
@@ -65,6 +92,26 @@ class PoolClient(Protocol):
             self._log.error("Parent not set, discarding data from pool")
             return
 
+        # TCP is a byte stream: one read can hold part of a response or several
+        # of them. Keep what has arrived and handle each response once complete.
+        self._buffer += data
+        while self._buffer:
+            try:
+                size = _response_size(self._buffer)
+            except ValueError as e:
+                self._log.error(
+                    "Dropping pool connection: unknown op-code {op!r}", op=e.args[0]
+                )
+                self._buffer = b""
+                if self.transport:
+                    self.transport.loseConnection()
+                return
+            if size is None:
+                return
+            response, self._buffer = self._buffer[:size], self._buffer[size:]
+            self._handle_response(response)
+
+    def _handle_response(self, data):
         response = struct.unpack("!cI", data[0:5])
 
         res_op = response[0]
