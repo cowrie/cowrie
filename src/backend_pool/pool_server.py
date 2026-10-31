@@ -32,6 +32,25 @@ RES_OP_F = b"f"
 RES_OP_U = b"u"
 
 
+def _request_size(buf: bytes) -> int | None:
+    """Length of the request at the start of ``buf``, or None when more bytes
+    are needed to tell. Raises ValueError for an unknown op-code, after which
+    the stream cannot be split into messages any more."""
+    op = buf[:1]
+    if op == RES_OP_I:
+        size = 10  # !cII?
+    elif op in (RES_OP_F, RES_OP_U):
+        size = 5  # !cI
+    elif op == RES_OP_R:
+        if len(buf) < 3:
+            return None
+        (ip_len,) = struct.unpack("!H", buf[1:3])
+        size = 3 + ip_len  # !cH, then the attacker's IP
+    else:
+        raise ValueError(op)
+    return size if len(buf) >= size else None
+
+
 class PoolServer(Protocol):
     """
     Main PoolServer
@@ -41,6 +60,7 @@ class PoolServer(Protocol):
 
     def __init__(self, factory: PoolServerFactory) -> None:
         self.factory: PoolServerFactory = factory
+        self._buffer: bytes = b""
         self.local_pool: bool = (
             CowrieConfig.get("proxy", "pool", fallback="local") == "local"
         )
@@ -54,6 +74,26 @@ class PoolServer(Protocol):
             self.nat_public_ip: str = CowrieConfig.get("backend_pool", "nat_public_ip")
 
     def dataReceived(self, data: bytes) -> None:
+        # TCP is a byte stream: one read can hold part of a request or several
+        # of them. Keep what has arrived and handle each request once complete.
+        self._buffer += data
+        while self._buffer:
+            try:
+                size = _request_size(self._buffer)
+            except ValueError as e:
+                self._log.error(
+                    "Dropping pool client: unknown op-code {op!r}", op=e.args[0]
+                )
+                self._buffer = b""
+                if self.transport:
+                    self.transport.loseConnection()
+                return
+            if size is None:
+                return
+            request, self._buffer = self._buffer[:size], self._buffer[size:]
+            self._handle_request(request)
+
+    def _handle_request(self, data: bytes) -> None:
         res_op: bytes = struct.unpack("!c", bytes([data[0]]))[
             0
         ]  # yes, this needs to be done to extract the op code correctly
