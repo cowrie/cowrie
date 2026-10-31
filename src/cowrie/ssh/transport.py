@@ -271,6 +271,23 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         return transport.SSHServerTransport.ssh_KEXINIT(self, packet)
 
+    def ssh_KEX_DH_GEX_REQUEST(self, packet: bytes) -> None:
+        """
+        Drop a group-exchange request when no moduli file was loaded.
+
+        Without moduli the factory stops offering the group-exchange key
+        exchanges, but a client can still send the request message without
+        negotiating one. Twisted would then fail inside getDHPrime() and the
+        error would escape the transport (issue #40178). OpenSSH treats an
+        unexpected key exchange message as a fatal protocol error and drops
+        the connection, so do the same.
+        """
+        if not self.factory.primes:
+            self._log.info("Group exchange request but no moduli loaded, disconnecting")
+            self.transport.loseConnection()
+            return
+        transport.SSHServerTransport.ssh_KEX_DH_GEX_REQUEST(self, packet)
+
     def timeoutConnection(self) -> None:
         """
         Make sure all sessions time out eventually.

@@ -8,14 +8,17 @@
 
 from __future__ import annotations
 
+import struct
 import unittest
 from hashlib import md5
 from unittest.mock import MagicMock, patch
 
 from twisted.conch.ssh.common import NS
+from twisted.conch.ssh.factory import SSHFactory
 from twisted.conch.ssh.transport import (
     DISCONNECT_PROTOCOL_ERROR,
     MSG_DISCONNECT,
+    MSG_KEX_DH_GEX_REQUEST,
     MSG_SERVICE_REQUEST,
 )
 
@@ -159,6 +162,53 @@ class TestVersionStringCap(unittest.TestCase):
 
         self.assertEqual(send_packet.call_args.args[0], MSG_DISCONNECT)
         t.transport.loseConnection.assert_called_once()
+
+
+class TestGexWithoutModuli(unittest.TestCase):
+    """A group-exchange request with no moduli loaded is dropped, not a crash.
+
+    Regression test for issue #40178. Without a moduli file the factory stops
+    offering the group-exchange key exchanges, but a client can still send
+    MSG_KEX_DH_GEX_REQUEST. Twisted then asserts inside getDHPrime(), and the
+    AssertionError used to escape the transport.
+    """
+
+    REQUEST = struct.pack(">3L", 1024, 2048, 8192)
+
+    def _transport(
+        self, primes: dict[int, list[tuple[int, int]]] | None
+    ) -> ssh_transport.HoneyPotSSHTransport:
+        t = ssh_transport.HoneyPotSSHTransport()
+        t.transport = MagicMock()
+        t._log = MagicMock()
+        # The real Twisted factory, so the real getDHPrime() runs.
+        factory = SSHFactory()
+        factory.primes = primes
+        t.factory = factory
+        return t
+
+    def test_request_without_moduli_drops_connection(self) -> None:
+        cases: list[dict[int, list[tuple[int, int]]] | None] = [None, {}]
+        for primes in cases:
+            with self.subTest(primes=primes):
+                t = self._transport(primes)
+
+                t.dispatchMessage(MSG_KEX_DH_GEX_REQUEST, self.REQUEST)
+
+                t.transport.loseConnection.assert_called_once_with()
+
+    def test_request_with_moduli_is_still_served(self) -> None:
+        # With primes loaded the request is answered with a group, as before.
+        t = self._transport({2048: [(2, 23)]})
+
+        with (
+            patch.object(t, "sendPacket") as send_packet,
+            patch.object(t, "_startEphemeralDH"),
+        ):
+            t.dispatchMessage(MSG_KEX_DH_GEX_REQUEST, self.REQUEST)
+
+        send_packet.assert_called_once()
+        t.transport.loseConnection.assert_not_called()
 
 
 if __name__ == "__main__":
