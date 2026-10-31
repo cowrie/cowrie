@@ -21,12 +21,17 @@ from twisted.python import failure, randbytes
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.events import EventLog, transport_events
+from cowrie.core.traffic import CountingTransport
 from cowrie.core.utils import escape_nonprintable, hassh_client
 from cowrie.ssh_proxy import client_transport
 from cowrie.ssh_proxy.protocols import ssh
 
 
 class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
+    # Bytes received from and sent to the client, for cowrie.session.closed.
+    bytes_in: int = 0
+    bytes_out: int = 0
+
     """
     Represents a connection from the frontend (a client or attacker).
     When such connection is received, start the connection to the backend (the VM that will provide the session);
@@ -75,6 +80,8 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         Called when the connection is made to the other side.  We sent our
         version and the MSG_KEXINIT packet.
         """
+        # Before the first byte is written.
+        self.transport = CountingTransport(self.transport, self)
         self.sshParse = ssh.SSH(self)
         self.transportId = uuid.uuid4().hex[:12]
         self.sessionno = f"S{self.transport.sessionno}"
@@ -227,6 +234,7 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
 
         @type data: C{str}
         """
+        self.bytes_in += len(data)
         self.buf += data
 
         # get version from start of communication; check if valid and supported by Twisted
@@ -417,7 +425,9 @@ class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
         if self.startTime is not None:  # startTime is not set when auth fails
             duration_ms = round((time.time() - self.startTime) * 1000)
             if self.events is not None:
-                self.events.session_closed(duration_ms)
+                self.events.session_closed(
+                    duration_ms, bytes_in=self.bytes_in, bytes_out=self.bytes_out
+                )
         if self.events is not None:
             self.events.close()
 

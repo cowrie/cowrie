@@ -417,6 +417,11 @@ Session closed.
 Attributes:
 
     * `duration_ms`: duration of the session in milliseconds
+    * `bytes_in`: bytes received from the client over the connection
+    * `bytes_out`: bytes sent to the client over the connection
+
+    Both count raw bytes on the wire, including the protocol's own framing
+    (SSH packets after encryption, Telnet option negotiation).
 
 cowrie.session.connect
 ======================
