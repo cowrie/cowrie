@@ -24,6 +24,9 @@ Release 3.1.0
   here-strings (``<<<word``) feed a command's stdin, with the usual
   expansion of an unquoted body. The new ``[shell] max_heredoc_size``
   option caps a body's size.
+* **AlienVault OTX output plugin**: ``[output_otx]`` uploads captured files
+  for analysis and reports the sample hash, download URL and attacker IP in
+  one OTX pulse per UTC day.
 * The emulated machine now booted before Cowrie started. ``uptime``,
   ``/proc/uptime`` and ``last`` count from that boot, so a restarted
   honeypot no longer reports a few seconds of uptime. The new

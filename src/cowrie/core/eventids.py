@@ -62,6 +62,8 @@ ALL: frozenset[str] = frozenset(
         # Authentication
         "cowrie.login.failed",
         "cowrie.login.success",
+        # OTX submissions
+        "cowrie.otx.submitted",
         # Proxy backend plumbing
         "cowrie.proxy.backend_connect_error",
         "cowrie.proxy.backend_connected",

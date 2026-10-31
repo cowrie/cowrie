@@ -330,6 +330,22 @@ Attributes:
     * `password`: password (password and keyboard-interactive attempts)
     * `fingerprint`, `key`, `type`: the offered key (public-key attempts)
 
+cowrie.otx.submitted
+====================
+
+The AlienVault OTX output plugin finished submitting a file, a URL or a
+pulse to OTX.
+
+Attributes:
+
+    * `action`: ``file``, ``url`` or ``pulse``
+    * `result`: ``success`` or ``error``
+    * `sha256`: checksum of the file (``file`` and ``pulse`` actions)
+    * `url`: the submitted URL (``url`` action)
+    * `pulse_id`: OTX pulse the indicators were added to (``pulse`` action)
+    * `http_status`: HTTP status code (on HTTP errors)
+    * `detail`: status text returned by OTX, if any
+
 cowrie.proxy.backend_connect_error
 ==================================
 
