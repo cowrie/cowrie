@@ -22,6 +22,7 @@ from twisted.protocols.policies import ProtocolWrapper, TimeoutMixin
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.events import EventLog, transport_events
+from cowrie.core.traffic import CountingTransport
 from cowrie.telnet.userauth import HoneyPotTelnetAuthProtocol
 
 if TYPE_CHECKING:
@@ -62,6 +63,10 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
     # the real client.
     _emit_connect_pending: bool = False
 
+    # Bytes received from and sent to the client, for cowrie.session.closed.
+    bytes_in: int = 0
+    bytes_out: int = 0
+
     # Set while the connection is being torn down. Telnet.connectionLost()
     # iterates self.options and errbacks pending negotiations; our retry
     # machinery must not re-enter negotiation during that iteration, since
@@ -88,6 +93,9 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         else:
             self._emit_connect()
 
+        # After the ProtocolWrapper check above, which must see the real
+        # transport, and before the first byte is written.
+        self.transport = CountingTransport(self.transport, self)
         TelnetTransport.connectionMade(self)
 
     def _emit_connect(self) -> None:
@@ -151,6 +159,7 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
         it -- but not for the parser's own protocol error, which is expected
         garbage traffic (see below).
         """
+        self.bytes_in += len(data)
         if self._emit_connect_pending:
             # First bytes have arrived, which under the PROXY protocol means
             # the header has been parsed and getPeer() now reflects the real
@@ -218,7 +227,9 @@ class CowrieTelnetTransport(TelnetTransport, TimeoutMixin):
             self._emit_connect()
         duration_ms = round((time.time() - self.startTime) * 1000)
         if self.events is not None:
-            self.events.session_closed(duration_ms)
+            self.events.session_closed(
+                duration_ms, bytes_in=self.bytes_in, bytes_out=self.bytes_out
+            )
 
     def willChain(self, option):
         return self._chainNegotiation(None, self.will, option)

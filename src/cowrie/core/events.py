@@ -179,12 +179,16 @@ class EventLog:
         derived._root = self._root
         return derived
 
-    def session_closed(self, duration_ms: int) -> None:
+    def session_closed(
+        self, duration_ms: int, *, bytes_in: int, bytes_out: int
+    ) -> None:
         """Announce the connection's end and mark the emitter closed."""
         self.dispatch(
             "cowrie.session.closed",
             "Connection lost after %(duration_ms)d milliseconds",
             duration_ms=duration_ms,
+            bytes_in=bytes_in,
+            bytes_out=bytes_out,
         )
         self.close()
 
