@@ -113,6 +113,18 @@ Attributes:
     * `compCS`: compression algorithms offered by the client
     * `langCS`: languages offered by the client
 
+cowrie.client.kex_unexpected
+============================
+
+The client sent a key exchange message that does not belong to the
+negotiated algorithm, or sent one before KEXINIT. It is answered with
+SSH_MSG_UNIMPLEMENTED and the connection stays open.
+
+Attributes:
+
+    * `messagenum`: SSH message number of the unexpected packet
+    * `kexalg`: the negotiated key exchange algorithm, or null before KEXINIT
+
 cowrie.client.malformed_packet
 ==============================
 

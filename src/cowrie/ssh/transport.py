@@ -28,9 +28,10 @@ from twisted.python import failure, randbytes
 from cowrie.core.config import CowrieConfig
 from cowrie.core.events import EventLog, transport_events
 from cowrie.core.utils import escape_nonprintable, hassh_client
+from cowrie.ssh.kex import KexMessageTransport
 
 
-class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
+class HoneyPotSSHTransport(KexMessageTransport, TimeoutMixin):
     _log = Logger()
     startTime: float = 0.0
     gotVersion: bool = False
