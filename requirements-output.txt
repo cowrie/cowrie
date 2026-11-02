@@ -17,7 +17,7 @@ elasticsearch==9.5.1
 hpfeeds==3.1.0
 
 # mysql
-mysql-connector-python==26.7.0
+mysql-connector-python==26.10.0
 
 # mongodb
 txmongo==25.0.0
