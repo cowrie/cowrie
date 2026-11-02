@@ -20,7 +20,7 @@ hpfeeds==3.1.0
 mysql-connector-python==26.7.0
 
 # mongodb
-txmongo==25.0.0
+txmongo==26.0.0
 
 # postgresql
 psycopg2-binary==2.9.13
