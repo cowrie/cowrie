@@ -7,12 +7,15 @@
 
 from __future__ import annotations
 
+import struct
 import unittest
 from unittest.mock import MagicMock, patch
 
 from twisted.conch.ssh import transport
+from twisted.conch.ssh.factory import SSHFactory
 
 from cowrie.ssh_proxy.server_transport import FrontendSSHTransport
+from cowrie.test.eventcapture import capture_events, events_of
 
 
 def _transport() -> tuple[FrontendSSHTransport, MagicMock]:
@@ -118,6 +121,32 @@ class TestVersionStringCap(unittest.TestCase):
 
         self.assertEqual(send_packet.call_args.args[0], transport.MSG_DISCONNECT)
         connection.loseConnection.assert_called_once()
+
+
+class TestUnexpectedKexMessage(unittest.TestCase):
+    """The frontend transport answers a group-exchange request it cannot
+    serve with SSH_MSG_UNIMPLEMENTED instead of raising out of Twisted."""
+
+    def test_gex_request_before_kexinit_without_moduli(self) -> None:
+        t, connection = _transport()
+        t.incomingPacketSequence = 3
+        t.currentEncryptions = transport.SSHCiphers(b"none", b"none", b"none", b"none")
+        factory = SSHFactory()
+        factory.primes = None
+        t.factory = factory
+        dispatched = capture_events(t)
+
+        with patch.object(t, "sendPacket") as send_packet:
+            t.dispatchMessage(
+                transport.MSG_KEX_DH_GEX_REQUEST, struct.pack(">3L", 1024, 2048, 8192)
+            )
+
+        send_packet.assert_called_once_with(
+            transport.MSG_UNIMPLEMENTED, struct.pack("!L", 3)
+        )
+        connection.loseConnection.assert_not_called()
+        (event,) = events_of(dispatched, "cowrie.client.kex_unexpected")
+        self.assertEqual(event["messagenum"], transport.MSG_KEX_DH_GEX_REQUEST)
 
 
 if __name__ == "__main__":

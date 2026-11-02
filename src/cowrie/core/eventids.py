@@ -35,6 +35,7 @@ ALL: frozenset[str] = frozenset(
         # What the client told us about itself
         "cowrie.client.fingerprint",
         "cowrie.client.kex",
+        "cowrie.client.kex_unexpected",
         "cowrie.client.malformed_packet",
         "cowrie.client.size",
         "cowrie.client.var",

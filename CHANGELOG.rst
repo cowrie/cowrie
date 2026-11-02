@@ -32,6 +32,9 @@ Release 3.1.0
 
 **BUG FIXES:**
 
+* SSH key exchange messages that do not match the negotiated algorithm, or
+  arrive before KEXINIT, are answered with SSH_MSG_UNIMPLEMENTED and logged
+  as ``cowrie.client.kex_unexpected`` instead of crashing the connection.
 * Shell errors look more like bash: syntax errors and "command not
   found" go to stderr, carry the right prefix for interactive and
   script shells, and name the line number in scripts.

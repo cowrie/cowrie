@@ -22,11 +22,12 @@ from twisted.python import failure, randbytes
 from cowrie.core.config import CowrieConfig
 from cowrie.core.events import EventLog, transport_events
 from cowrie.core.utils import escape_nonprintable, hassh_client
+from cowrie.ssh.kex import KexMessageTransport
 from cowrie.ssh_proxy import client_transport
 from cowrie.ssh_proxy.protocols import ssh
 
 
-class FrontendSSHTransport(transport.SSHServerTransport, TimeoutMixin):
+class FrontendSSHTransport(KexMessageTransport, TimeoutMixin):
     """
     Represents a connection from the frontend (a client or attacker).
     When such connection is received, start the connection to the backend (the VM that will provide the session);
