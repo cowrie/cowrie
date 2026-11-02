@@ -313,7 +313,8 @@ intelligence services, and more.
 Setup guides for several of them are in the documentation at
 `docs.cowrie.org <https://docs.cowrie.org/>`_ (the ``docs/`` directory of
 the source tree): Datadog, ELK (Elastic) Stack, Graylog, Prometheus,
-Azure Sentinel, Splunk, SQL (MySQL/PostgreSQL), and VirusTotal.
+Azure Sentinel, Splunk, SQL (MySQL/PostgreSQL), VirusTotal, and AlienVault
+OTX.
 
 Troubleshooting
 ***************

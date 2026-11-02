@@ -1166,6 +1166,34 @@ anonymous = 0
 # Comma-separated list of tags to attach to each submission
 tags = cowrie,honeypot
 
+# Submit captured malware to AlienVault OTX (LevelBlue Open Threat Exchange).
+# Get your API key at https://otx.alienvault.com/api
+# Files are uploaded for static and sandbox analysis. The sample hash, the
+# download URL and the attacker's public IP are reported in one OTX pulse
+# per UTC day. Uploads and public pulses are visible to other OTX users.
+[output_otx]
+enabled = false
+api_key = yourkeyhere
+# Upload captured files for analysis
+upload = true
+# Also submit malware download URLs for analysis
+submit_url = true
+# Report indicators in one pulse per UTC day
+pulse = true
+pulse_name = Cowrie honeypot samples
+# Public pulses are visible to all OTX users. red and amber TLP force this off.
+public = true
+# white, green, amber or red
+tlp = white
+# Comma-separated list of tags to attach to each pulse
+tags = cowrie,honeypot
+# Comma-separated OTX group ids to publish the pulse to
+#group_ids =
+# Include the download URL and the attacker IP as pulse indicators
+include_url = true
+include_src_ip = true
+debug = false
+
 # Sends Cowrie event notifications to a Slack channel.
 # Warning: This will produce a _lot_ of messages unless `simplified = true` 
 #          and `verbose = false` are set.
