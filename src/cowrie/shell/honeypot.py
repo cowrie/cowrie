@@ -44,6 +44,7 @@ from cowrie.shell.bashparse import (
     WhileClause,
     max_input_size,
 )
+from cowrie.shell.llmfallback import Command_llm_fallback, fallback_applies
 from cowrie.shell.parser import CommandParser
 from cowrie.shell.pipe import FD_CAPTURE, FD_TERMINAL, PipeProtocol
 
@@ -1218,6 +1219,11 @@ class HoneyPotShell:
                 "Command not found: %(input)s",
                 input=cmd + " " + " ".join(args),
             )
+            if not exec_seen and fallback_applies(cmd):
+                # Hybrid mode: let the LLM answer a command that is not emulated.
+                # It prints the usual error itself when it cannot answer.
+                cmdclass = Command_llm_fallback
+        if not cmdclass:
             if exec_seen:
                 # exec reports a failed lookup as its own error.
                 message = f"{self.error_prefix()}exec: {cmd}: not found\n".encode()
