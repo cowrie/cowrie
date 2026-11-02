@@ -33,7 +33,7 @@ class Command_wc(HoneyPotCommand):
     # Which counts to print, set by start()
     show: tuple[bool, ...] = ()
     # The files to count; none means standard input
-    files: list[str] = []
+    files: tuple[str, ...] = ()
     # Standard input typed at a terminal, counted at ctrl-d
     typed: bytes = b""
     counted: bool = False
@@ -112,7 +112,9 @@ class Command_wc(HoneyPotCommand):
         return bool(kind == FD_FILE_INPUT and target != "<<")
 
     def format_counts(self, counts: list[int], width: int, name: str | None) -> str:
-        line = " ".join(f"{n:>{width}}" for n, shown in zip(counts, self.show) if shown)
+        line = " ".join(
+            f"{n:>{width}}" for n, shown in zip(counts, self.show, strict=True) if shown
+        )
         if name is not None:
             line += f" {name}"
         return line + "\n"
@@ -124,7 +126,7 @@ class Command_wc(HoneyPotCommand):
         size = 0
         # A pipe, a directory or a device has no known size
         unknown_size = False
-        for name in self.files or [None]:  # type: ignore[list-item]
+        for name in self.files or [None]:
             if name is None or name == "-":
                 contents = self.stdin_contents()
                 if self.stdin_is_file():
@@ -161,8 +163,8 @@ class Command_wc(HoneyPotCommand):
             width = 7
         else:
             width = len(str(size))
-        for name, counts in results:
-            self.write(self.format_counts(counts, width, name))
+        for label, counts in results:
+            self.write(self.format_counts(counts, width, label))
         if len(self.files) > 1:
             total = [sum(counts[i] for _, counts in results) for i in range(MAXLEN)]
             total.append(max((counts[MAXLEN] for _, counts in results), default=0))
@@ -213,7 +215,7 @@ class Command_wc(HoneyPotCommand):
         )
         # Without options wc prints lines, words and bytes
         self.show = show if any(show) else (True, True, False, True, False)
-        self.files = args
+        self.files = tuple(args)
 
         # Input from a terminal ends with ctrl-d, a pipe or a file is complete
         reads_stdin = not args or "-" in args
