@@ -110,7 +110,8 @@ class LLMFallbackTests(unittest.TestCase):
         client = FakeLLMClient("never used")
         self.enable(client)
         self.assertEqual(
-            self.run_line(b"./payload"), b"-bash: ./payload: No such file or directory\n"
+            self.run_line(b"./payload"),
+            b"-bash: ./payload: No such file or directory\n",
         )
         self.assertEqual(client.prompts, [])
 
@@ -139,7 +140,9 @@ class LLMFallbackTests(unittest.TestCase):
         client = FakeLLMClient("first answer", "never used")
         self.enable(client)
         self.assertEqual(self.run_line(b"foobar"), b"first answer\n")
-        self.assertEqual(self.run_line(b"foobar"), b"-bash: foobar: command not found\n")
+        self.assertEqual(
+            self.run_line(b"foobar"), b"-bash: foobar: command not found\n"
+        )
         self.assertEqual(len(client.prompts), 1)
 
     def test_later_answers_see_the_earlier_ones(self) -> None:

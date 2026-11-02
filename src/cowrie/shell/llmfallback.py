@@ -78,8 +78,8 @@ class Command_llm_fallback(HoneyPotCommand):
     def history(self) -> list[tuple[str, str]]:
         """The earlier fallback commands of this session and their answers."""
         if not hasattr(self.protocol, "llm_fallback_history"):
-            self.protocol.llm_fallback_history = []  # type: ignore[attr-defined]
-        history: list[tuple[str, str]] = self.protocol.llm_fallback_history  # type: ignore[attr-defined]
+            setattr(self.protocol, "llm_fallback_history", [])  # noqa: B010
+        history: list[tuple[str, str]] = getattr(self.protocol, "llm_fallback_history")  # noqa: B009
         return history
 
     def system_prompt(self) -> str:
