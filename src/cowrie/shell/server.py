@@ -22,12 +22,12 @@ if TYPE_CHECKING:
 
 class CowrieServer:
     """
-    In traditional Kippo each connection gets its own simulated machine.
-    This is not always ideal, sometimes two connections come from the same
-    source IP address. we want to give them the same environment as well.
-    So files uploaded through SFTP are visible in the SSH session.
-    This class represents a 'virtual server' that can be shared between
-    multiple Cowrie connections
+    The simulated machine associated with an authenticated avatar.
+
+    The realm creates a new server for each avatar request. SSH channels
+    using the same avatar share its environment, including the filesystem.
+    Separate authenticated connections do not share a server based on
+    their source IP address.
     """
 
     _log = Logger()
