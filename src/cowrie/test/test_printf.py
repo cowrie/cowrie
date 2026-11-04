@@ -10,6 +10,7 @@ from __future__ import annotations
 import os
 import unittest
 
+from cowrie.commands.printf import MAX_OUTPUT
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
@@ -121,6 +122,56 @@ class PrintfTests(unittest.TestCase):
             self.run_line(b"printf 'abc%'; echo rc=$?"),
             b"-bash: printf: `%': missing format character\nabcrc=1\n",
         )
+
+    def test_star_width_beyond_cap_stops_output(self) -> None:
+        """bash reports a * width past the C int range with this message;
+        the honeypot's range is MAX_OUTPUT, so the field is never built."""
+        self.assertEqual(
+            self.run_line(b"printf '%*d|%s' 700000000 1 x; echo rc=$?"),
+            b"-bash: printf: 700000000: Numerical result out of range\nrc=1\n",
+        )
+
+    def test_negative_star_width_beyond_cap_stops_output(self) -> None:
+        self.assertEqual(
+            self.run_line(b"printf '%*d|' -700000000 1; echo rc=$?"),
+            b"-bash: printf: -700000000: Numerical result out of range\nrc=1\n",
+        )
+
+    def test_star_precision_beyond_cap_stops_output(self) -> None:
+        self.assertEqual(
+            self.run_line(b"printf '%.*f|' 700000000 1; echo rc=$?"),
+            b"-bash: printf: 700000000: Numerical result out of range\nrc=1\n",
+        )
+
+    def test_literal_width_beyond_cap_stops_output(self) -> None:
+        """A literal width past the C int range is an EOVERFLOW from libc:
+        bash reports it and prints nothing more."""
+        self.assertEqual(
+            self.run_line(b"printf 'a%700000000d|%s' 1 x; echo rc=$?"),
+            b"-bash: printf: Value too large for defined data type\narc=1\n",
+        )
+
+    def test_literal_precision_beyond_cap_stops_output(self) -> None:
+        self.assertEqual(
+            self.run_line(b"printf '%.700000000f|' 1; echo rc=$?"),
+            b"-bash: printf: Value too large for defined data type\nrc=1\n",
+        )
+
+    def test_output_beyond_cap_stops(self) -> None:
+        """Format reuse multiplies the output; the total is bounded too."""
+        width = str(MAX_OUTPUT // 2).encode()
+        output = self.run_line(b"printf '%" + width + b"d' 1 1 1 1 1 1; echo rc=$?")
+        error = b"-bash: printf: Value too large for defined data type\n"
+        self.assertTrue(output.startswith(error), output[:100])
+        body = output[len(error) :]
+        # Two fields fit; the third takes the output past the cap and ends it.
+        self.assertEqual(len(body), 3 * (MAX_OUTPUT // 2) + len(b"rc=1\n"))
+
+    def test_width_at_cap_is_honoured(self) -> None:
+        width = str(MAX_OUTPUT).encode()
+        output = self.run_line(b"printf '%*d' " + width + b" 1; echo rc=$?")
+        self.assertEqual(len(output), MAX_OUTPUT + len(b"rc=0\n"))
+        self.assertTrue(output.endswith(b" 1rc=0\n"))
 
     def test_no_arguments_prints_usage(self) -> None:
         self.assertEqual(

@@ -38,6 +38,13 @@ _SIMPLE_ESCAPES = {
 _OCTAL = "01234567"
 _HEX = "0123456789abcdefABCDEF"
 
+# Honeypot safety cap on one printf invocation's output, in bytes. bash
+# streams its output, so a huge field width costs it nothing; here the
+# result is built in memory. A width or precision past this ends the output
+# with the error bash gives one past the C int range, and the output ends
+# with libc's overflow error once it exceeds this size.
+MAX_OUTPUT = 1 << 20
+
 
 class _Stop(Exception):
     """Output ends here: \\c in a %b argument, or a bad conversion."""
@@ -159,15 +166,35 @@ class Command_printf(HoneyPotCommand):
                 out += b"%"
                 continue
             if width == "*":
-                width = str(self._integer(next_arg()))
+                width = str(self._field(next_arg()))
+            elif width and int(width) > MAX_OUTPUT:
+                self._overflow()
             if precision == "*":
-                precision = str(self._integer(next_arg()))
+                precision = str(self._field(next_arg()))
+            elif precision and int(precision) > MAX_OUTPUT:
+                self._overflow()
             spec = "%" + flags.replace("'", "") + (width or "")
             if precision is not None:
                 spec += "." + (precision or "0")
             self._convert(spec, conv, next_arg(), out)
+            if len(out) > MAX_OUTPUT:
+                self._overflow()
         out += expand_escapes(fmt[pos:])[0]
         return taken
+
+    def _field(self, arg: str | None) -> int:
+        """A ``*`` width or precision argument. One past MAX_OUTPUT ends the
+        output with the error bash gives one past the C int range."""
+        value = self._integer(arg)
+        if abs(value) > MAX_OUTPUT:
+            self._error(f"{arg}: Numerical result out of range")
+            raise _Stop
+        return value
+
+    def _overflow(self) -> None:
+        """End the output as bash does when libc rejects a field: EOVERFLOW."""
+        self._error("Value too large for defined data type")
+        raise _Stop
 
     def _convert(self, spec: str, conv: str, arg: str | None, out: bytearray) -> None:
         """Append one conversion of ``arg`` to ``out``."""
