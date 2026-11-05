@@ -44,6 +44,10 @@ Release 3.1.0
   a field width or precision past that fails the way bash fails one past
   the C int range, instead of letting a short command exhaust the
   process's memory.
+* A session's TTY log is capped by the new ``[honeypot] ttylog_limit_size``
+  option (default 10 MiB); a session that fills it is disconnected. A TTY
+  log the disk refuses is logged and skipped instead of failing the
+  session.
 * ``awk -F`` accepts patterns with spaces and prints real output.
 * ``head`` and ``tail`` accept the GNU option forms and read piped input.
 * ``lscpu`` describes the same CPU as ``/proc/cpuinfo``.
