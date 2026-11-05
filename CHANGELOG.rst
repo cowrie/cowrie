@@ -40,6 +40,10 @@ Release 3.1.0
   script shells, and name the line number in scripts.
 * Scripts that cannot run exit 126, and missing interpreters exit 127.
 * ``printf`` implements its format conversions.
+* ``printf`` caps the output one invocation builds in memory at 1 MiB;
+  a field width or precision past that fails the way bash fails one past
+  the C int range, instead of letting a short command exhaust the
+  process's memory.
 * ``awk -F`` accepts patterns with spaces and prints real output.
 * ``head`` and ``tail`` accept the GNU option forms and read piped input.
 * ``lscpu`` describes the same CPU as ``/proc/cpuinfo``.
