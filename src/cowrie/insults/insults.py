@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import shutil
 import time
 from typing import TYPE_CHECKING, Any
 
@@ -25,6 +26,10 @@ if TYPE_CHECKING:
 
     from cowrie.core.events import EventLog
 
+# How many bytes a TTY log grows between checks of the free space left on
+# its filesystem.
+FREE_SPACE_CHECK_INTERVAL = 1 << 20
+
 
 class LoggingServerProtocol(insults.ServerProtocol):
     """
@@ -42,6 +47,7 @@ class LoggingServerProtocol(insults.ServerProtocol):
     ttylogSizeLimit: int = CowrieConfig.getint(
         "honeypot", "ttylog_limit_size", fallback=10485760
     )
+    ttylogMinFree: int = CowrieConfig.getint("honeypot", "ttylog_min_free", fallback=0)
 
     def __init__(self, protocolFactory=None, *a, **kw):
         self.type: str
@@ -105,8 +111,14 @@ class LoggingServerProtocol(insults.ServerProtocol):
             self.terminalProtocol.execcmd.encode("utf8")
 
     def ttylogStart(self) -> None:
-        """Open the TTY log, unless the disk refuses the file; the session
-        then runs unrecorded."""
+        """Open the TTY log, unless its filesystem is short of space or
+        refuses the file; the session then runs unrecorded."""
+        if not self.ttylogSpaceAvailable():
+            self._log.error(
+                "Not recording TTY log {ttylog}: free space below ttylog_min_free",
+                ttylog=self.ttylogFile,
+            )
+            return
         try:
             ttylog.ttylog_open(self.ttylogFile, self.startTime)
         except OSError as e:
@@ -121,12 +133,21 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.ttylogSize = 0
         self.ttylogWritten = 0
 
+    def ttylogSpaceAvailable(self) -> bool:
+        """Whether the TTY log's filesystem has ttylog_min_free bytes free."""
+        if not self.ttylogMinFree:
+            return True
+        try:
+            return shutil.disk_usage(self.ttylogPath).free >= self.ttylogMinFree
+        except OSError:
+            return False
+
     def ttylogWrite(self, direction: int, data: bytes) -> int:
         """Record ``data`` in the TTY log and return how many bytes went in.
 
         Recording stops for the rest of the session when the log reaches
-        ttylog_limit_size, which also ends the session, or when the disk
-        refuses a write.
+        ttylog_limit_size, which also ends the session, when the disk refuses
+        a write, or when free space drops below ttylog_min_free.
         """
         if not self.ttylogRecording:
             return 0
@@ -138,6 +159,17 @@ class LoggingServerProtocol(insults.ServerProtocol):
                 ttylog=self.ttylogFile,
             )
             self.loseConnection()
+            return 0
+        if (
+            self.ttylogWritten // FREE_SPACE_CHECK_INTERVAL
+            != written // FREE_SPACE_CHECK_INTERVAL
+            and not self.ttylogSpaceAvailable()
+        ):
+            self.ttylogRecording = False
+            self._log.error(
+                "Stopped recording TTY log {ttylog}: free space below ttylog_min_free",
+                ttylog=self.ttylogFile,
+            )
             return 0
         try:
             ttylog.ttylog_write(

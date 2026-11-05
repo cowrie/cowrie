@@ -48,6 +48,8 @@ Release 3.1.0
   option (default 10 MiB); a session that fills it is disconnected. A TTY
   log the disk refuses is logged and skipped instead of failing the
   session.
+* The new ``[honeypot] ttylog_min_free`` option stops TTY logging when the
+  filesystem holding the logs drops below that much free space.
 * ``awk -F`` accepts patterns with spaces and prints real output.
 * ``head`` and ``tail`` accept the GNU option forms and read piped input.
 * ``lscpu`` describes the same CPU as ``/proc/cpuinfo``.
