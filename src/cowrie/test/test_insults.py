@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import errno
 import os
+import shutil
 import struct
 import tempfile
 import unittest
@@ -18,7 +19,7 @@ from unittest import mock
 from twisted.python import log
 
 from cowrie.core import ttylog
-from cowrie.insults.insults import LoggingServerProtocol
+from cowrie.insults.insults import FREE_SPACE_CHECK_INTERVAL, LoggingServerProtocol
 
 
 class FakeTransport:
@@ -67,6 +68,7 @@ class TtylogRecordingTestCase(unittest.TestCase):
         lsp.ttylogPath = self.tmpdir.name
         lsp.ttylogFile = os.path.join(self.tmpdir.name, "session.log")
         lsp.ttylogSizeLimit = limit
+        lsp.ttylogMinFree = 0
         lsp.ttylogSize = 0
         lsp.startTime = 0.0
         lsp.ttylogWritten = 0
@@ -122,6 +124,37 @@ class TtylogRecordingTestCase(unittest.TestCase):
         lsp = self.make_recording(limit=0)
         lsp.write(b"1" * 100)
         self.assertEqual(self.recorded(lsp), b"1" * 100)
+        self.assertTrue(lsp.ttylogRecording)
+
+    def test_free_space_below_the_floor_stops_recording(self) -> None:
+        """Free space is checked once per FREE_SPACE_CHECK_INTERVAL bytes of
+        log; below ttylog_min_free the session goes on unrecorded."""
+        lsp = self.make_recording(limit=0)
+        lsp.ttylogMinFree = 1000
+        usage = SimpleNamespace(total=10**9, used=10**9 - 500, free=500)
+        with mock.patch.object(shutil, "disk_usage", return_value=usage):
+            lsp.write(b"a" * (FREE_SPACE_CHECK_INTERVAL - 1))
+            lsp.write(b"bb")
+            lsp.write(b"c")
+        self.assertEqual(self.recorded(lsp), b"a" * (FREE_SPACE_CHECK_INTERVAL - 1))
+        self.assertFalse(lsp.ttylogRecording)
+        self.assertFalse(lsp.transport.lost)
+        self.assertEqual(
+            lsp.transport.written, b"a" * (FREE_SPACE_CHECK_INTERVAL - 1) + b"bbc"
+        )
+        self.assertTrue(
+            any("free space below ttylog_min_free" in m for m in self.messages()),
+            self.messages(),
+        )
+
+    def test_free_space_above_the_floor_keeps_recording(self) -> None:
+        lsp = self.make_recording(limit=0)
+        lsp.ttylogMinFree = 1000
+        usage = SimpleNamespace(total=10**9, used=0, free=10**9)
+        with mock.patch.object(shutil, "disk_usage", return_value=usage):
+            lsp.write(b"a" * FREE_SPACE_CHECK_INTERVAL)
+            lsp.write(b"b")
+        self.assertEqual(self.recorded(lsp), b"a" * FREE_SPACE_CHECK_INTERVAL + b"b")
         self.assertTrue(lsp.ttylogRecording)
 
     def test_write_failure_stops_recording_and_keeps_the_session(self) -> None:
