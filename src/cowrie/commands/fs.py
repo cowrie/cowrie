@@ -17,6 +17,7 @@ import posixpath
 import re
 from typing import TYPE_CHECKING
 
+from cowrie.commands.chmod import MODE_REGEX, apply_mode
 from cowrie.shell import fs
 from cowrie.shell.command import HoneyPotCommand
 
@@ -696,29 +697,102 @@ class Command_mkdir(HoneyPotCommand):
     """
 
     def call(self) -> None:
-        if not self.args:
+        try:
+            optlist, args = getopt.gnu_getopt(
+                self.args, "pvm:", ["parents", "verbose", "mode="]
+            )
+        except getopt.GetoptError as err:
+            if "requires argument" in err.msg:
+                self.errorWrite(
+                    f"mkdir: option requires an argument -- '{err.opt}'\n"
+                )
+            elif len(err.opt) == 1:
+                self.errorWrite(f"mkdir: invalid option -- '{err.opt}'\n")
+            else:
+                self.errorWrite(f"mkdir: unrecognized option '--{err.opt}'\n")
+            self.errorWrite("Try 'mkdir --help' for more information.\n")
+            self.exit_code = 1
+            return
+
+        parents = verbose = False
+        mode: int | None = None
+        for opt, value in optlist:
+            if opt in ("-p", "--parents"):
+                parents = True
+            elif opt in ("-v", "--verbose"):
+                verbose = True
+            elif opt in ("-m", "--mode"):
+                if not re.fullmatch(MODE_REGEX, value):
+                    self.errorWrite(f"mkdir: invalid mode '{value}'\n")
+                    self.exit_code = 1
+                    return
+                mode = apply_mode(value, 0o777, True)
+
+        if not args:
             self.errorWrite("mkdir: missing operand\n")
             self.errorWrite("Try 'mkdir --help' for more information.\n")
             self.exit_code = 1
             return
-        for f in self.args:
-            pname = self.fs.resolve_path(f, self.cwd)
-            if self.fs.exists(pname):
-                self.errorWrite(f"mkdir: cannot create directory `{f}': File exists\n")
-                self.exit_code = 1
+        for f in args:
+            if parents:
+                self.make_with_parents(f, mode, verbose)
+            else:
+                self.make_directory(f, f, mode, verbose)
+
+    def make_directory(
+        self, f: str, shown: str, mode: int | None, verbose: bool
+    ) -> bool:
+        """Create the directory ``f``, report a failure like GNU mkdir does."""
+        pname = self.fs.resolve_path(f, self.cwd)
+        if self.fs.exists(pname):
+            self.errorWrite(f"mkdir: cannot create directory `{f}': File exists\n")
+            self.exit_code = 1
+            return False
+        parent = posixpath.dirname(pname)
+        if self.fs.exists(parent) and not self.fs.isdir(parent):
+            self.errorWrite(f"mkdir: cannot create directory `{f}': Not a directory\n")
+            self.exit_code = 1
+            return False
+        try:
+            self.fs.mkdir(pname, self.user["uid"], self.user["gid"], 4096, 16877)
+            if mode is not None:
+                self.fs.chmod(pname, mode)
+        except fs.FileNotFound:
+            self.errorWrite(
+                f"mkdir: cannot create directory `{f}': No such file or directory\n"
+            )
+            self.exit_code = 1
+            return False
+        except OSError as e:
+            self.errorWrite(f"mkdir: cannot create directory `{f}': {e.strerror}\n")
+            self.exit_code = 1
+            return False
+        if verbose:
+            self.write(f"mkdir: created directory '{shown}'\n")
+        return True
+
+    def make_with_parents(self, f: str, mode: int | None, verbose: bool) -> None:
+        """mkdir -p: create every missing directory of ``f``, none is an error."""
+        segments = list(re.finditer(r"[^/]+", f))
+        current = self.fs.resolve_path("/" if f.startswith("/") else ".", self.cwd)
+        for index, segment in enumerate(segments):
+            current = self.fs.resolve_path(segment.group(), current)
+            last = index == len(segments) - 1
+            # What was typed up to this directory, which is how GNU names it
+            shown = f[: segment.end()]
+            if segment.group() in (".", ".."):
                 continue
-            try:
-                self.fs.mkdir(pname, self.user["uid"], self.user["gid"], 4096, 16877)
-            except fs.FileNotFound:
-                self.errorWrite(
-                    f"mkdir: cannot create directory `{f}': No such file or directory\n"
-                )
-                self.exit_code = 1
-            except OSError as e:
-                self.errorWrite(
-                    f"mkdir: cannot create directory `{f}': {e.strerror}\n"
-                )
-                self.exit_code = 1
+            if self.fs.exists(current):
+                if not self.fs.isdir(current):
+                    reason = "File exists" if last else "Not a directory"
+                    self.errorWrite(
+                        f"mkdir: cannot create directory `{shown}': {reason}\n"
+                    )
+                    self.exit_code = 1
+                    return
+                continue
+            if not self.make_directory(current, shown, mode if last else None, verbose):
+                return
 
 
 commands["/bin/mkdir"] = Command_mkdir
