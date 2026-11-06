@@ -949,8 +949,6 @@ commands["date"] = Command_date
 
 
 class Command_yes(HoneyPotCommand):
-    scheduled: Any
-
     def start(self) -> None:
         self.y()
 
@@ -959,11 +957,7 @@ class Command_yes(HoneyPotCommand):
             self.write(f"{' '.join(self.args)}\n")
         else:
             self.write("y\n")
-        self.scheduled = self.callLater(0.01, self.y)
-
-    def handle_CTRL_C(self) -> None:
-        self.scheduled.cancel()
-        self.exit()
+        self.callLater(0.01, self.y)
 
 
 commands["/usr/bin/yes"] = Command_yes

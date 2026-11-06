@@ -21,7 +21,6 @@ class Command_sleep(HoneyPotCommand):
     Sleep
     """
 
-    running: bool = False
     pattern = re.compile(r"^(\d+)[mhs]?$")
 
     def print_usage_error(self, error_msg: str = "") -> None:
@@ -56,10 +55,6 @@ There is NO WARRANTY, to the extent permitted by law.
 
 Written by Jim Meyering and Paul Eggert.
 """)
-
-    def done(self) -> None:
-        self.running = False
-        self.exit()
 
     def start(self) -> None:
         try:
@@ -108,15 +103,7 @@ Written by Jim Meyering and Paul Eggert.
             # Ignore time suffix (s/m/h) and accumulate value as seconds
             _time += int(m.group(1))
 
-        self.running = True
-        self.scheduled = self.callLater(_time, self.done)
-
-    def handle_CTRL_C(self) -> None:
-        if self.running:
-            self.scheduled.cancel()
-            self.write("^C\n")
-            self.running = False
-            self.exit()
+        self.callLater(_time, self.exit)
 
 
 commands["/bin/sleep"] = Command_sleep
