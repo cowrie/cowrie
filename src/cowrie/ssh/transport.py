@@ -3,6 +3,9 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+# ABOUTME: The honeypot's SSH transport layer: version exchange, key exchange
+# ABOUTME: and packet framing, with logging of what each client sends.
+
 """
 The lowest level SSH protocol. This handles the key negotiation, the
 encryption and the compression. The transport layer is described in
