@@ -48,4 +48,4 @@ When a new SSH connection is received in the frontend (serverTransport.py), the 
 
 We then request a backend via send_vm_request. If any of these operations fail, we disconnect the frontend. Else we have a function called when data is received from the pool, **received_pool_data**.
 
-When we receive a response to a VM request operation, we known we can start connecting to the backend, which we do. After that connection is established we can glue the two transports - frontend and backend - when the backendConnected variable is set to true in the backend.
+When we receive a response to a VM request operation, we known we can start connecting to the backend, which we do. After that connection is established we can glue the two transports - frontend and backend. Frontend packets are held in the frontend's `to_backend` queue until the proxy has logged in to the backend, and backend packets in `to_frontend` until the attacker has logged in to the proxy.

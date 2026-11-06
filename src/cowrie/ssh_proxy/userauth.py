@@ -4,6 +4,9 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+# ABOUTME: Logs the attacker in to the SSH proxy and records the password they
+# ABOUTME: tried, then starts the proxy's own login to the backend.
+
 from __future__ import annotations
 
 from twisted.conch.ssh.common import getNS
@@ -32,6 +35,8 @@ class ProxySSHAuthServer(userauth.HoneyPotSSHUserAuthServer):
         """
         self.transport.sendPacket(52, b"")
         self.transport.frontendAuthenticated = True
+        # send backend packets that were waiting for the attacker to log in
+        self.transport.to_frontend.release()
 
         # TODO store this somewhere else, and do not call from here
         if self.transport.sshParse.client:
