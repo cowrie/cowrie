@@ -3,6 +3,9 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+# ABOUTME: A fake ping: prints made-up replies once a second until the count
+# ABOUTME: is reached or Ctrl-C, then the statistics.
+
 from __future__ import annotations
 
 import getopt
