@@ -15,8 +15,6 @@ class BackendTelnetTransport(TelnetTransport, TimeoutMixin):
     _log = Logger()
 
     def __init__(self):
-        # self.delayedPacketsToFrontend = []
-        self.backendConnected = False
         self.telnetHandler = None
         super().__init__()
 
@@ -27,12 +25,7 @@ class BackendTelnetTransport(TelnetTransport, TimeoutMixin):
         self.telnetHandler = self.factory.server.telnetHandler
         self.telnetHandler.setClient(self)
 
-        self.backendConnected = True
         self.factory.server.client = self
-
-        for packet in self.factory.server.delayedPacketsToBackend:
-            self.transport.write(packet)
-        self.factory.server.delayedPacketsToBackend = []
 
         super(TelnetTransport, self).connectionMade()
         # TODO timeout if no backend available
@@ -63,13 +56,6 @@ class BackendTelnetTransport(TelnetTransport, TimeoutMixin):
 
     def write(self, data):
         self.transport.write(data)
-
-    def packet_buffer(self, payload):
-        """
-        We can only proceed if authentication has been performed between client and proxy.
-        Meanwhile we hold packets in here.
-        """
-        self.factory.server.transport.write(payload)
 
 
 class BackendTelnetFactory(protocol.ClientFactory):

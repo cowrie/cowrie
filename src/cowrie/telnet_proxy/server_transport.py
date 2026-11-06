@@ -51,12 +51,6 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
 
         self.pool_interface = None
         self.client = None
-        self.frontendAuthenticated = False
-        self.delayedPacketsToBackend = []
-
-        # this indicates whether the client effectively connected to the backend
-        # if they did we recycle the VM, else the VM can be considered "clean"
-        self.client_used_backend = False
 
         # only used when simple proxy (no pool) set
         self.backend_ip = None
@@ -239,20 +233,3 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
                 self.events.session_closed(duration_ms)
         if self.events is not None:
             self.events.close()
-
-    def packet_buffer(self, payload):
-        """
-        We have to wait until we have a connection to the backend ready. Meanwhile, we hold packets from client
-        to server in here.
-        """
-        if not self.client.backendConnected:
-            # wait till backend connects to send packets to them
-            self._log.info(
-                "Connection to backend not ready, buffering packet from frontend"
-            )
-            self.delayedPacketsToBackend.append(payload)
-        else:
-            if len(self.delayedPacketsToBackend) > 0:
-                self.delayedPacketsToBackend.append(payload)
-            else:
-                self.client.transport.write(payload)
