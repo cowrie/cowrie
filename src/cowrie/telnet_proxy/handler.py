@@ -199,6 +199,8 @@ class TelnetHandler:
     def addPacket(self, parent: str, data: bytes) -> None:
         self.currentData = data
         self.sendData = True
+        # The packet that completes the login is the password, not a command.
+        was_logged_in = self.authDone
 
         if self.spoofAuthenticationData and not self.authDone:
             if parent == "backend":
@@ -211,7 +213,7 @@ class TelnetHandler:
                     self.processUsernameInput()
 
         # log user commands
-        if parent == "frontend" and self.authDone:
+        if parent == "frontend" and was_logged_in:
             self.currentCommand += data.replace(b"\r\x00", b"").replace(b"\r\n", b"")
 
             # check if a command has terminated

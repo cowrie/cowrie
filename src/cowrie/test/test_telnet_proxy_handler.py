@@ -235,6 +235,12 @@ class LoginFlowTests(unittest.TestCase):
         self.assertEqual(self._from_backend(b"Linux\r\n"), b"Linux\r\n")
         self.assertIn("uname", self._commands())
 
+    def test_password_is_not_logged_as_a_command(self) -> None:
+        self._log_in(valid=True)
+        self._from_frontend(b"uname\r\n")
+
+        self.assertEqual(self._commands(), ["uname"])
+
     def test_tty_log_starts_at_the_first_prompt(self) -> None:
         self.h.addPacket("frontend", b"\xff\xfd\x01")
         self.assertFalse(self.h.authStarted)
