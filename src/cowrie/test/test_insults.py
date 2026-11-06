@@ -20,6 +20,7 @@ from twisted.python import log
 
 from cowrie.core import ttylog
 from cowrie.insults.insults import FREE_SPACE_CHECK_INTERVAL, LoggingServerProtocol
+from cowrie.test.eventcapture import capture_events
 
 
 class FakeTransport:
@@ -76,10 +77,7 @@ class TtylogRecordingTestCase(unittest.TestCase):
         lsp.bytesReceived = 0
         lsp.terminalProtocol = None
         lsp.redirFiles = set()
-        lsp.dispatched: list[dict] = []
-        lsp.events = SimpleNamespace(
-            dispatch=lambda eventid, fmt, **kw: lsp.dispatched.append(kw)
-        )
+        self.dispatched = capture_events(lsp)
         ttylog.ttylog_open(lsp.ttylogFile, 0.0)
         lsp.ttylogOpen = True
         lsp.ttylogRecording = True
@@ -161,7 +159,9 @@ class TtylogRecordingTestCase(unittest.TestCase):
         lsp = self.make_recording(limit=0)
         calls: list[bytes] = []
 
-        def refusing_write(logfile, length, direction, stamp, data) -> None:
+        def refusing_write(
+            logfile: str, length: int, direction: int, stamp: float, data: bytes
+        ) -> None:
             calls.append(data)
             raise OSError(errno.ENOSPC, "No space left on device")
 
@@ -180,21 +180,21 @@ class TtylogRecordingTestCase(unittest.TestCase):
         lsp = self.make_recording(limit=8)
         lsp.write(b"123456789")
         lsp.connectionLost()
-        self.assertEqual(len(lsp.dispatched), 1)
-        self.assertEqual(lsp.dispatched[0]["size"], 0)
-        self.assertTrue(os.path.exists(lsp.dispatched[0]["ttylog"]))
+        self.assertEqual(len(self.dispatched), 1)
+        self.assertEqual(self.dispatched[0]["size"], 0)
+        self.assertTrue(os.path.exists(self.dispatched[0]["ttylog"]))
 
     def test_close_failure_is_logged_and_not_raised(self) -> None:
         lsp = self.make_recording(limit=0)
         lsp.write(b"out")
 
-        def refusing_hash(logfile) -> str:
+        def refusing_hash(logfile: str) -> str:
             raise OSError(errno.ENOSPC, "No space left on device")
 
         with mock.patch.object(ttylog, "ttylog_inputhash", refusing_hash):
             lsp.connectionLost()
         self.assertFalse(lsp.ttylogOpen)
-        self.assertEqual(lsp.dispatched, [])
+        self.assertEqual(self.dispatched, [])
         self.assertTrue(
             any("Failed to close TTY log" in m for m in self.messages()),
             self.messages(),
