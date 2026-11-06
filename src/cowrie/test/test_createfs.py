@@ -68,9 +68,7 @@ class RecurseEmbedTests(unittest.TestCase):
         self._write("etc/shadow", b"SHADOW")
         self._write("etc/hostname", b"HOSTNAME")
 
-        with patch.object(
-            createfs, "EMBED_PATHS", {"/etc/passwd", "/etc/hostname"}
-        ):
+        with patch.object(createfs, "EMBED_PATHS", {"/etc/passwd", "/etc/hostname"}):
             tree = self._build_tree()
 
         etc = _find_child(tree, "etc")

@@ -41,7 +41,9 @@ class ShellRmdirCommandTests(unittest.TestCase):
     def test_rmdir_processes_all_arguments(self) -> None:
         """A failing argument does not stop the remaining ones."""
         self.proto.lineReceived(b"rmdir /tmp/afile /tmp/AAA")
-        self.assertIn(b"rmdir: failed to remove '/tmp/afile': Not a directory\n", self.tr.value())
+        self.assertIn(
+            b"rmdir: failed to remove '/tmp/afile': Not a directory\n", self.tr.value()
+        )
         self.tr.clear()
         self.proto.lineReceived(b"ls -d /tmp/AAA")
         self.assertIn(b"cannot access", self.tr.value())
@@ -84,7 +86,9 @@ class ShellTouchCommandTests(unittest.TestCase):
     def test_touch_processes_all_arguments_after_permission_denied(self) -> None:
         """touch /proc/x /tmp/ok1 still creates /tmp/ok1."""
         self.proto.lineReceived(b"touch /proc/x /tmp/ok1")
-        self.assertIn(b"touch: cannot touch `/proc/x`: Permission denied\n", self.tr.value())
+        self.assertIn(
+            b"touch: cannot touch `/proc/x`: Permission denied\n", self.tr.value()
+        )
         self.tr.clear()
         self.proto.lineReceived(b"ls -d /tmp/ok1")
         self.assertIn(b"/tmp/ok1", self.tr.value())

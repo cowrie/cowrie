@@ -79,9 +79,7 @@ class CowrieInitTests(unittest.TestCase):
         # Bytes match the bundled template.
         from cowrie.core.resources import read_data_bytes
 
-        self.assertEqual(
-            target.read_bytes(), read_data_bytes("etc", "cowrie.cfg.dist")
-        )
+        self.assertEqual(target.read_bytes(), read_data_bytes("etc", "cowrie.cfg.dist"))
 
     def test_satisfies_init_marker_after_running(self) -> None:
         with contextlib.redirect_stdout(io.StringIO()):
@@ -99,9 +97,7 @@ class CowrieInitTests(unittest.TestCase):
             "var/lib/cowrie/tty",
             "var/run",
         ):
-            self.assertTrue(
-                (Path(self.tmpdir) / sub).is_dir(), f"{sub} not created"
-            )
+            self.assertTrue((Path(self.tmpdir) / sub).is_dir(), f"{sub} not created")
 
     def test_refuses_to_overwrite_existing(self) -> None:
         (Path(self.tmpdir) / "etc").mkdir()

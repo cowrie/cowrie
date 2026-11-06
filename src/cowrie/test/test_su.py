@@ -37,7 +37,9 @@ class FakeNonRootAvatar(FakeAvatar):
         self.environ["LOGNAME"] = self.username
         self.environ["USER"] = self.username
         self.environ["HOME"] = self.home
-        self.environ["PATH"] = "/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
+        self.environ["PATH"] = (
+            "/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
+        )
 
 
 class SuCommandTests(unittest.TestCase):

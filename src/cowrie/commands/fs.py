@@ -715,9 +715,7 @@ class Command_mkdir(HoneyPotCommand):
                 )
                 self.exit_code = 1
             except OSError as e:
-                self.errorWrite(
-                    f"mkdir: cannot create directory `{f}': {e.strerror}\n"
-                )
+                self.errorWrite(f"mkdir: cannot create directory `{f}': {e.strerror}\n")
                 self.exit_code = 1
 
 

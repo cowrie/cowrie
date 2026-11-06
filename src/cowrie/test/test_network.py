@@ -140,9 +140,7 @@ class TestResolveAllowed(unittest.TestCase):
     validated is the same one the caller connects to (no DNS-rebinding
     window between validation and connect)."""
 
-    def _resolve(
-        self, records: dict[str, list[dns.RRHeader]], name: str
-    ) -> str | None:
+    def _resolve(self, records: dict[str, list[dns.RRHeader]], name: str) -> str | None:
         with mock.patch(
             "cowrie.core.network.client.lookupAddress",
             side_effect=_fake_lookup(records),

@@ -73,9 +73,7 @@ class Command_tee(HoneyPotCommand):
                 continue
 
             try:
-                self.fs.mkfile(
-                    pname, self.user["uid"], self.user["gid"], 0, 0o644
-                )
+                self.fs.mkfile(pname, self.user["uid"], self.user["gid"], 0, 0o644)
             except FileNotFound:
                 self.errorWrite(f"tee: {arg}: No such file or directory\n")
                 self.exit_code = 1

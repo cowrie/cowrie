@@ -73,11 +73,7 @@ class EmbedDirectoryTests(unittest.TestCase):
 
     def test_pickle_entries_without_files_keep_empty_contents(self) -> None:
         tree = _root(
-            [
-                _dir_entry(
-                    "etc", [_file_entry("passwd"), _file_entry("untouched")]
-                )
-            ]
+            [_dir_entry("etc", [_file_entry("passwd"), _file_entry("untouched")])]
         )
         self._write("etc/passwd", b"PASSWD")
 

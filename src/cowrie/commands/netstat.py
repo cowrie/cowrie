@@ -106,9 +106,7 @@ usage: netstat [-vWeenNcCF] [<Af>] -r         netstat {-V|--version|-h|--help}
         )
         rows = []
         if self.protocol.kippoIPv6:
-            net = ipaddress.IPv6Network(
-                f"{self.protocol.kippoIPv6}/64", strict=False
-            )
+            net = ipaddress.IPv6Network(f"{self.protocol.kippoIPv6}/64", strict=False)
             rows += [
                 (str(net), "::", "U", "100", "0", "0", "eth0"),
                 ("fe80::/64", "::", "U", "100", "0", "0", "eth0"),
@@ -118,13 +116,19 @@ usage: netstat [-vWeenNcCF] [<Af>] -r         netstat {-V|--version|-h|--help}
         ]
         if self.protocol.kippoIPv6:
             rows += [
-                ("::/0", "fe80::1", "UG", "100", "0", "0", "eth0"),  # NOSONAR - simulated honeypot routing table entry
+                (
+                    "::/0",
+                    "fe80::1",
+                    "UG",
+                    "100",
+                    "0",
+                    "0",
+                    "eth0",
+                ),  # NOSONAR - simulated honeypot routing table entry
                 ("ff00::/8", "::", "U", "256", "0", "0", "eth0"),
             ]
         for dest, nh, flag, met, ref, use, iface in rows:
-            self.write(
-                f"{dest:<31}{nh:<27}{flag:<5}{met:<4}{ref:<5}{use:<4}{iface}\n"
-            )
+            self.write(f"{dest:<31}{nh:<27}{flag:<5}{met:<4}{ref:<5}{use:<4}{iface}\n")
 
     def do_netstat_normal(self) -> None:
         self.write(
