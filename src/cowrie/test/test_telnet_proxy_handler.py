@@ -22,6 +22,7 @@ os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
 from cowrie.core import ttylog
 from cowrie.telnet_proxy import handler as telnet_handler
+from cowrie.telnet_proxy.handler import LoginPhase
 from cowrie.test.eventcapture import capture_eventlog, events_of
 
 
@@ -35,9 +36,6 @@ def _handler() -> Any:
     h.backendPassword = b"secret"
     h.usernameState = b""
     h.passwordState = b""
-    h.inputingLogin = True
-    h.inputingPassword = True
-    h.waitingLoginEcho = False
     h.prePasswordData = False
     h.spoofAuthenticationData = False
     h._log = MagicMock()
@@ -49,6 +47,7 @@ class TerminatingCharTests(unittest.TestCase):
 
     def _username(self, data: bytes) -> Any:
         h = _handler()
+        h.phase = LoginPhase.USERNAME
         h.currentData = data
         with patch.object(telnet_handler.TelnetHandler, "sendFrontend"):
             h.processUsernameInput()
@@ -60,6 +59,7 @@ class TerminatingCharTests(unittest.TestCase):
         which password is forwarded, and left to itself it reads the
         operator's etc/userdb.txt, which is not part of the repository."""
         h = _handler()
+        h.phase = LoginPhase.PASSWORD
         h.currentData = data
         checker = MagicMock()
         checker.return_value.checkUserPass.return_value = valid
@@ -71,7 +71,7 @@ class TerminatingCharTests(unittest.TestCase):
         h = self._username(b"admin\r\n")
 
         self.assertEqual(h.currentData, b"root\r\n")
-        self.assertFalse(h.inputingLogin)
+        self.assertIs(h.phase, LoginPhase.USERNAME_SENT)
 
     def test_username_with_cr_nul(self) -> None:
         h = self._username(b"admin\r\x00")
@@ -84,19 +84,19 @@ class TerminatingCharTests(unittest.TestCase):
         h = self._username(b"admin\r")
 
         self.assertEqual(h.currentData, b"root\r")
-        self.assertFalse(h.inputingLogin)
+        self.assertIs(h.phase, LoginPhase.USERNAME_SENT)
 
     def test_password_with_crlf(self) -> None:
         h = self._password(b"hunter2\r\n")
 
         self.assertEqual(h.currentData, b"secretfake\r\n")
-        self.assertFalse(h.inputingPassword)
+        self.assertIs(h.phase, LoginPhase.AWAITING_PROMPT)
 
     def test_password_with_bare_trailing_cr(self) -> None:
         h = self._password(b"hunter2\r")
 
         self.assertEqual(h.currentData, b"secretfake\r")
-        self.assertFalse(h.inputingPassword)
+        self.assertIs(h.phase, LoginPhase.AWAITING_PROMPT)
 
     def test_valid_password_forwards_the_backend_password(self) -> None:
         """Credentials the honeypot accepts send the backend its real
@@ -116,7 +116,7 @@ class BackendDeliveryTests(unittest.TestCase):
         self.addCleanup(tmp.cleanup)
         with patch.dict(os.environ, {"COWRIE_HONEYPOT_TTYLOG_PATH": tmp.name}):
             self.h = telnet_handler.TelnetHandler(MagicMock())
-        self.h.authStarted = True
+        self.h.phase = LoginPhase.LOGGED_IN
         self.backend = MagicMock()
         self.backend.transport = StringTransport()
 
@@ -171,12 +171,12 @@ class LoginFlowTests(unittest.TestCase):
     def _from_backend(self, data: bytes) -> bytes:
         self.frontend.clear()
         self.h.addPacket("backend", data)
-        return self.frontend.value()
+        return bytes(self.frontend.value())
 
     def _from_frontend(self, data: bytes) -> bytes:
         self.backend.transport.clear()
         self.h.addPacket("frontend", data)
-        return self.backend.transport.value()
+        return bytes(self.backend.transport.value())
 
     def _commands(self) -> list[str]:
         return [e["input"] for e in events_of(self.dispatched, "cowrie.command.input")]
