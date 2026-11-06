@@ -3,6 +3,9 @@
 # SPDX-FileCopyrightText: 2021-2025 Michel Oosterhof <michel@oosterhof.net>
 #
 # SPDX-License-Identifier: BSD-3-Clause
+
+# ABOUTME: The telnet proxy's side facing the attacker: connects to a backend
+# ABOUTME: and hands traffic both ways to the TelnetHandler.
 """
 Telnet Transport and Authentication for the Honeypot
 

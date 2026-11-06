@@ -3,6 +3,10 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+# ABOUTME: The telnet proxy's side facing the backend: passes backend traffic
+# ABOUTME: to the TelnetHandler and closes the attacker's side when it ends.
+
+
 from __future__ import annotations
 
 from twisted.conch.telnet import TelnetTransport
