@@ -189,6 +189,11 @@ class HoneyPotSSHTransport(KexMessageTransport, TimeoutMixin):
         while packet:
             messageNum = ord(packet[0:1])
             self.dispatchMessage(messageNum, packet[1:])
+            # loseConnection() only schedules the close. A packet that made us
+            # drop the connection must also be the last one we process, even
+            # when the client sent more packets in the same read.
+            if self.transport is None or self.transport.disconnecting:
+                return
             packet = self.getPacket()
 
     def dispatchMessage(self, messageNum: int, payload: bytes) -> None:
