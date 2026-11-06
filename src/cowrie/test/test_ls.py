@@ -35,8 +35,7 @@ class ShellLsCommandTests(unittest.TestCase):
         self.proto.lineReceived(b"ls NonExisting; echo $?\n")
         self.assertEqual(
             self.tr.value(),
-            b"ls: cannot access 'NonExisting': No such file or directory\n2\n"
-            + PROMPT,
+            b"ls: cannot access 'NonExisting': No such file or directory\n2\n" + PROMPT,
         )
 
     def test_ls_command_002(self) -> None:

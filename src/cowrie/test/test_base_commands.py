@@ -151,8 +151,8 @@ class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
         self.proto.lineReceived(b"chattr\n")
         self.assertEqual(
             self.tr.value(),
-            b"Usage: chattr [-RVf] [-+=AacDdeijsSu] [-v version] files...\n"
-            + PROMPT)
+            b"Usage: chattr [-RVf] [-+=AacDdeijsSu] [-v version] files...\n" + PROMPT,
+        )
 
     def test_set_command(self) -> None:
         self.proto.lineReceived(b"set\n")

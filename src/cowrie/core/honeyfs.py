@@ -31,9 +31,7 @@ T_FILE = 2
 _MAX_SYMLINK_DEPTH = 16
 
 
-def _find(
-    tree: list[Any], virtual_path: str, _depth: int = 0
-) -> list[Any] | None:
+def _find(tree: list[Any], virtual_path: str, _depth: int = 0) -> list[Any] | None:
     """Walk the cached tree to find the entry at virtual_path.
 
     Follows T_LINK entries (both intermediate and terminal) up to a

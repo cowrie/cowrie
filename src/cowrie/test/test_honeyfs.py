@@ -22,7 +22,18 @@ ENV_CONTENTS = "COWRIE_HONEYPOT_CONTENTS_PATH"
 def _file_entry(name: str, contents: bytes | list) -> list:
     """Build a T_FILE pickle entry: [name, T_FILE, uid, gid, size, mode, ctime,
     contents, target, realfile]."""
-    return [name, honeyfs.T_FILE, 0, 0, len(contents) if isinstance(contents, bytes) else 0, 0o644, 0, contents, None, None]
+    return [
+        name,
+        honeyfs.T_FILE,
+        0,
+        0,
+        len(contents) if isinstance(contents, bytes) else 0,
+        0o644,
+        0,
+        contents,
+        None,
+        None,
+    ]
 
 
 def _dir_entry(name: str, children: list) -> list:
@@ -56,9 +67,7 @@ class ReadFileTests(unittest.TestCase):
         self.assertEqual(honeyfs.read_file("/etc/issue.net"), b"HELLO\n")
 
     def test_raises_when_contents_is_empty_list(self) -> None:
-        self._patch_tree(
-            _root([_dir_entry("etc", [_file_entry("issue.net", [])])])
-        )
+        self._patch_tree(_root([_dir_entry("etc", [_file_entry("issue.net", [])])]))
 
         with self.assertRaises(FileNotFoundError):
             honeyfs.read_file("/etc/issue.net")
@@ -110,9 +119,7 @@ class ReadFileTests(unittest.TestCase):
 
     def test_raises_on_broken_symlink(self) -> None:
         self._patch_tree(
-            _root(
-                [_dir_entry("etc", [_link_entry("issue.net", "/nope/issue.net")])]
-            )
+            _root([_dir_entry("etc", [_link_entry("issue.net", "/nope/issue.net")])])
         )
 
         with self.assertRaises(FileNotFoundError):

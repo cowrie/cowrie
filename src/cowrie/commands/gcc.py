@@ -203,9 +203,7 @@ gcc version {version} (Debian {version}-5)"""
         outfile = self.fs.resolve_path(outfile, self.cwd)
 
         # Create file for the protocol
-        self.fs.mkfile(
-            outfile, self.user["uid"], self.user["gid"], len(data), 33188
-        )
+        self.fs.mkfile(outfile, self.user["uid"], self.user["gid"], len(data), 33188)
         self.fs.update_realfile(self.fs.getfile(outfile), safeoutfile)
 
         # Segfault command

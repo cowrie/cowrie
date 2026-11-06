@@ -251,9 +251,7 @@ class OCSFSSHActivityTests(unittest.TestCase):
         self._assert_ssh(out)
         self.assertEqual(out["activity_id"], 99)
         self.assertEqual(out["type_uid"], 400799)
-        self.assertEqual(
-            out["unmapped"]["client_version"], "SSH-2.0-OpenSSH_9.6p1"
-        )
+        self.assertEqual(out["unmapped"]["client_version"], "SSH-2.0-OpenSSH_9.6p1")
 
     def test_client_kex_hassh(self) -> None:
         out = formatOCSF(EVENTS["cowrie.client.kex"])
@@ -369,9 +367,7 @@ class OCSFFileSystemActivityTests(unittest.TestCase):
     def _assert_fs(self, out: dict) -> None:
         self.assertEqual(out["class_uid"], 1001)
         self.assertEqual(out["category_uid"], 1)
-        self.assertEqual(
-            out["actor"], {"process": {"name": "cowrie", "uid": "cowrie"}}
-        )
+        self.assertEqual(out["actor"], {"process": {"name": "cowrie", "uid": "cowrie"}})
         self.assertEqual(out["device"], {"hostname": "honeypot-01", "type_id": 1})
 
     def test_log_closed(self) -> None:
