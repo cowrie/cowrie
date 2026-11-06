@@ -3,6 +3,9 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+# ABOUTME: Relays telnet traffic between attacker and backend for the proxy,
+# ABOUTME: spotting the login exchange to log or replace the credentials.
+
 from __future__ import annotations
 
 import os
@@ -14,6 +17,7 @@ from twisted.logger import Logger
 from cowrie.core import ttylog
 from cowrie.core.checkers import HoneypotPasswordChecker
 from cowrie.core.config import CowrieConfig
+from cowrie.core.pending import PendingQueue
 
 
 def process_backspaces(s: bytes) -> bytes:
@@ -90,8 +94,8 @@ class TelnetHandler:
         # and the respective frontend response and send it before starting to intercept auth data
         self.prePasswordData = False
 
-        # buffer
-        self.backend_buffer = []
+        # frontend data held until the backend connects
+        self.to_backend: PendingQueue[bytes] = PendingQueue(self._write_backend)
 
         # tty logging
         self.startTime = time.time()
@@ -109,6 +113,7 @@ class TelnetHandler:
 
     def setClient(self, client):
         self.client = client
+        self.to_backend.release()
 
     def close(self):
         if self.ttylogEnabled:
@@ -142,33 +147,26 @@ class TelnetHandler:
                 )
 
     def sendBackend(self, data: bytes) -> None:
-        self.backend_buffer.append(data)
+        self.to_backend.put(data)
 
-        if not self.client:
-            return
+    def _write_backend(self, data: bytes) -> None:
+        self.client.transport.write(data)
+        # log raw packets if user sets so
+        if CowrieConfig.getboolean("proxy", "log_raw", fallback=False):
+            self._log.info("to_backend - {data}", data=data.decode("unicode-escape"))
 
-        for packet in self.backend_buffer:
-            self.client.transport.write(packet)
-            # log raw packets if user sets so
-            if CowrieConfig.getboolean("proxy", "log_raw", fallback=False):
-                self._log.info(
-                    "to_backend - {data}", data=data.decode("unicode-escape")
-                )
-
-            if self.ttylogEnabled and self.authStarted:
-                cleanData = data.replace(
-                    b"\x00", b"\n"
-                )  # some frontends send 0xFF instead of newline
-                ttylog.ttylog_write(
-                    self.ttylogFile,
-                    len(cleanData),
-                    ttylog.TYPE_INPUT,
-                    time.time(),
-                    cleanData,
-                )
-                self.ttylogSize += len(cleanData)
-
-            self.backend_buffer = self.backend_buffer[1:]
+        if self.ttylogEnabled and self.authStarted:
+            cleanData = data.replace(
+                b"\x00", b"\n"
+            )  # some frontends send 0xFF instead of newline
+            ttylog.ttylog_write(
+                self.ttylogFile,
+                len(cleanData),
+                ttylog.TYPE_INPUT,
+                time.time(),
+                cleanData,
+            )
+            self.ttylogSize += len(cleanData)
 
     def sendFrontend(self, data: bytes) -> None:
         self.server.transport.write(data)
