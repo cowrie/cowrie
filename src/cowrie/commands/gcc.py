@@ -3,17 +3,16 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+# ABOUTME: A fake gcc: takes a moment to "compile", then leaves an output file
+# ABOUTME: of real-looking binary data that segfaults when run.
+
 from __future__ import annotations
 
 import getopt
 import random
-from typing import TYPE_CHECKING
 
 from cowrie.core.artifact import temp_download_path
 from cowrie.shell.command import HoneyPotCommand
-
-if TYPE_CHECKING:
-    from twisted.internet.interfaces import IDelayedCall
 
 commands = {}
 
@@ -52,9 +51,7 @@ class Command_gcc(HoneyPotCommand):
         b"\x01\x00\x00\x00"
     )
 
-    scheduled: IDelayedCall
-
-    def call(self) -> None:
+    def start(self) -> None:
         """
         Parse as much as possible from a GCC syntax and generate the output
         that is requested. The file that is generated can be read (and will)
@@ -93,21 +90,26 @@ class Command_gcc(HoneyPotCommand):
             )
         except getopt.GetoptError:
             self.no_files()
+            self.exit()
             return
 
         # Parse options
         for o, a in opts:
             if o in ("-v"):
                 self.version(short=False)
+                self.exit()
                 return
             elif o in ("--version"):
                 self.version(short=True)
+                self.exit()
                 return
             elif o in ("-h"):
                 self.arg_missing("-h")
+                self.exit()
                 return
             elif o in ("--help"):
                 self.help()
+                self.exit()
                 return
             elif o in ("-o"):
                 if len(a) == 0:
@@ -133,19 +135,14 @@ class Command_gcc(HoneyPotCommand):
             timeout = 0.1 + random.random()
 
             # Schedule call to make it more time consuming and real
-            self.scheduled = self.callLater(
-                timeout, self.generate_file, (output_file if output_file else "a.out")
-            )
+            self.callLater(timeout, self.finish_compile, output_file or "a.out")
         else:
             self.no_files()
+            self.exit()
 
-    def handle_CTRL_C(self) -> None:
-        """
-        Make sure the scheduled call will be canceled
-        """
-
-        if getattr(self, "scheduled", False):
-            self.scheduled.cancel()
+    def finish_compile(self, outfile: str) -> None:
+        self.generate_file(outfile)
+        self.exit()
 
     def no_files(self) -> None:
         """
