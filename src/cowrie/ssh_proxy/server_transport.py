@@ -49,7 +49,6 @@ class FrontendSSHTransport(KexMessageTransport, TimeoutMixin):
         self.timeoutCount = 0
 
         self.sshParse = None
-        self.disconnected = False  # what was this used for
 
         self.peer_ip = None
         self.peer_port: int = 0
