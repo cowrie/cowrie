@@ -24,7 +24,9 @@ from twisted.conch.ssh.transport import (
     MSG_KEX_DH_GEX_REQUEST_OLD,
     MSG_SERVICE_REQUEST,
     MSG_UNIMPLEMENTED,
+    SSHCiphers,
 )
+from twisted.internet.testing import StringTransport
 
 from cowrie.ssh import transport as ssh_transport
 from cowrie.test.eventcapture import capture_events, events_of
@@ -114,6 +116,40 @@ class TestMalformedPacket(unittest.TestCase):
         assert event is not None
         self.assertEqual(event["messagenum"], MSG_SERVICE_REQUEST)
         self.assertEqual(event["datalen"], 3)
+
+
+def _plain_packet(message: bytes) -> bytes:
+    """Frame ``message`` as an unencrypted SSH binary packet (RFC 4253 6)."""
+    padding = 8 - (5 + len(message)) % 8
+    if padding < 4:
+        padding += 8
+    return (
+        struct.pack("!LB", 1 + len(message) + padding, padding)
+        + message
+        + b"\0" * padding
+    )
+
+
+class TestStopAfterDrop(unittest.TestCase):
+    """Once a packet makes the server drop the connection, the packets that
+    arrived with it in the same read must not be processed."""
+
+    def test_pipelined_packet_after_malformed_packet_is_ignored(self) -> None:
+        t = ssh_transport.HoneyPotSSHTransport()
+        t.transport = StringTransport()
+        t.buf = b""
+        t.gotVersion = True
+        t.currentEncryptions = SSHCiphers(b"none", b"none", b"none", b"none")
+        t.currentEncryptions.setKeys(b"", b"", b"", b"", b"", b"")
+        dispatched = capture_events(t)
+        truncated = bytes((MSG_SERVICE_REQUEST,)) + b"\x00\x00\x00"
+
+        t.dataReceived(_plain_packet(truncated) + _plain_packet(truncated))
+
+        self.assertTrue(t.transport.disconnecting)
+        self.assertEqual(
+            len(events_of(dispatched, "cowrie.client.malformed_packet")), 1
+        )
 
 
 class TestSendDisconnect(unittest.TestCase):

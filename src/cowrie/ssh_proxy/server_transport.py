@@ -10,6 +10,7 @@ import struct
 import time
 import uuid
 import zlib
+from typing import Any
 
 from twisted.conch.ssh import transport
 from twisted.conch.ssh.common import NS, getNS
@@ -39,6 +40,7 @@ class FrontendSSHTransport(KexMessageTransport, TimeoutMixin):
     buf: bytes
     ourVersionString: bytes
     gotVersion: bool
+    transport: Any
     # The session's event emitter, bound in connectionMade when the running
     # application provides a dispatcher.
     events: EventLog | None = None
@@ -271,6 +273,11 @@ class FrontendSSHTransport(KexMessageTransport, TimeoutMixin):
         while packet:
             messageNum = ord(packet[0:1])
             self.dispatchMessage(messageNum, packet[1:])
+            # loseConnection() only schedules the close. A packet that made us
+            # drop the connection must also be the last one we process, even
+            # when the client sent more packets in the same read.
+            if self.transport is None or self.transport.disconnecting:
+                return
             packet = self.getPacket()
 
     def dispatchMessage(self, messageNum, payload):
