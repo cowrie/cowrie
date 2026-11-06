@@ -10,8 +10,10 @@ from __future__ import annotations
 import os
 import unittest
 from typing import Any
+from unittest.mock import patch
 
 from twisted.internet import reactor
+from twisted.internet.task import Clock
 
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
@@ -122,3 +124,53 @@ class ConnectionLostTests(unittest.TestCase):
         reactor.runUntilCurrent()  # type: ignore[attr-defined]
         self.assertEqual(self.new_calls(), set())
         proto.connectionLost()
+
+    def test_ctrl_c_leaves_no_timers_and_returns_the_prompt(self) -> None:
+        for lines in (
+            ("ping 1.1.1.1",),
+            ("yes",),
+            ("sleep 100",),
+            ("adduser bob",),
+            ("apt-get install nano",),
+            ("yum install nano",),
+            ("ssh root@1.2.3.4", "yes", "secret"),
+            ("echo 'int main(){}' > /tmp/x.c", "gcc /tmp/x.c"),
+        ):
+            with self.subTest(command=lines[-1]):
+                proto = self.session(*lines)
+                self.assertTrue(self.new_calls(), "command scheduled nothing")
+                proto.terminal.clear()
+
+                proto.handle_CTRL_C()
+
+                self.assertEqual(self.new_calls(), set())
+                self.assertTrue(
+                    proto.terminal.value().endswith(b"# "),
+                    "no prompt after Ctrl-C",
+                )
+
+
+class SystemGoingDownTests(unittest.TestCase):
+    """Once shutdown or reboot has announced the system is going down, the
+    session ends; Ctrl-C does not stop it."""
+
+    def setUp(self) -> None:
+        self.clock = Clock()
+        patcher = patch("cowrie.shell.command.reactor", self.clock)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_ctrl_c_does_not_stop_the_session_ending(self) -> None:
+        for line in (b"shutdown -h now", b"shutdown -r now", b"reboot"):
+            with self.subTest(command=line):
+                proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+                proto.makeConnection(FakeTransport("", "31337"))
+                self.addCleanup(proto.connectionLost)
+                with patch.object(
+                    proto, "end_process", wraps=proto.end_process
+                ) as end_process:
+                    proto.lineReceived(line)
+                    proto.handle_CTRL_C()
+                    self.clock.advance(3)
+
+                end_process.assert_called_once_with(0)
