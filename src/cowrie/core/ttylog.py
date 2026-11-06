@@ -11,6 +11,7 @@ Should be compatible with user mode linux
 from __future__ import annotations
 
 import hashlib
+import os
 import struct
 
 OP_OPEN, OP_CLOSE, OP_WRITE, OP_EXEC = 1, 2, 3, 4
@@ -25,6 +26,9 @@ def ttylog_open(logfile: str, stamp: float) -> None:
     @param logfile: logfile name
     @param stamp: timestamp
     """
+    directory = os.path.dirname(logfile)
+    if directory:
+        os.makedirs(directory, exist_ok=True)
     with open(logfile, "ab") as f:
         sec, usec = int(stamp), int(1000000 * (stamp - int(stamp)))
         f.write(struct.pack(TTYSTRUCT, OP_OPEN, 0, 0, 0, sec, usec))
