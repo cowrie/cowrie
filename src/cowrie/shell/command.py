@@ -3,6 +3,9 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+# ABOUTME: Base class for emulated commands: stdio wiring, exit status, and
+# ABOUTME: timers that stop when the command exits or the session ends.
+
 """
 This module contains code to run a command
 """

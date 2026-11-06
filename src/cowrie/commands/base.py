@@ -3,6 +3,9 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+# ABOUTME: Small built-in commands (echo, yes, shutdown, reboot, history, ...)
+# ABOUTME: that do not need a module of their own.
+
 # coding=utf-8
 
 from __future__ import annotations

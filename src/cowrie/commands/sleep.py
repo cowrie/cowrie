@@ -2,6 +2,9 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+# ABOUTME: The sleep command: waits the given number of seconds, then exits;
+# ABOUTME: Ctrl-C stops it early.
+
 """
 This module contains the sleep command
 """
