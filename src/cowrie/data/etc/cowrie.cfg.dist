@@ -669,6 +669,17 @@ ssh_version = OpenSSH_7.9p1, OpenSSL 1.1.1a  20 Nov 2018
 # (default: 1048576)
 #max_heredoc_size = 1048576
 
+# Hybrid mode: when a plain command name is not one of the emulated commands,
+# ask the LLM configured in the [llm] section what it would print, instead of
+# answering "command not found". The model is told the hostname, the user, the
+# current directory and the files in it, and the earlier answers of this session.
+# Paths (./x, /tmp/x) are never sent. The [llm] rate limit applies. When the API
+# fails, is rate limited or gives no answer, the usual "command not found" is shown.
+# Off by default, because every unknown command is a metered API call and the
+# command text of the attacker is sent to the API.
+# (default: false)
+#llm_fallback = false
+
 # Length in characters of shell input that triggers a garbage-collection sweep after
 # parsing. Lark's Earley parser creates cyclic intermediate structures, which
 # normal reference counting cannot promptly reclaim. Set to 0 to collect after
