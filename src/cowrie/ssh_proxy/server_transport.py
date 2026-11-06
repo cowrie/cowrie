@@ -3,6 +3,9 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+# ABOUTME: The SSH proxy's side facing the attacker: logs them in, connects to
+# ABOUTME: a backend, and holds their packets until the backend is logged in.
+
 from __future__ import annotations
 
 import re
@@ -21,6 +24,7 @@ from twisted.python import failure, randbytes
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.events import EventLog, transport_events
+from cowrie.core.pending import PendingQueue
 from cowrie.core.utils import escape_nonprintable, hassh_client
 from cowrie.ssh.kex import KexMessageTransport
 from cowrie.ssh_proxy import client_transport
@@ -60,9 +64,16 @@ class FrontendSSHTransport(KexMessageTransport, TimeoutMixin):
         self.sessionno: str = ""
 
         self.pool_interface = None
-        self.backendConnected = False
         self.frontendAuthenticated = False
-        self.delayedPackets = []
+        # Packets held until the other side can take them: frontend packets
+        # until the proxy has logged in to the backend, backend packets until
+        # the attacker has logged in to the proxy.
+        self.to_backend: PendingQueue[tuple[int, bytes]] = PendingQueue(
+            self._forward_to_backend
+        )
+        self.to_frontend: PendingQueue[tuple[int, bytes]] = PendingQueue(
+            self._forward_to_frontend
+        )
 
         # only used when simple proxy (no pool) set
         self.backend_ip = None
@@ -467,24 +478,13 @@ class FrontendSSHTransport(KexMessageTransport, TimeoutMixin):
 
     def packet_buffer(self, messageNum: int, payload: bytes) -> None:
         """
-        We have to wait until we have a connection to the backend is ready. Meanwhile, we hold packets from client
-        to server in here.
+        Send a frontend packet to the backend, holding it until the proxy has
+        logged in to the backend.
         """
-        if not self.backendConnected:
-            # wait till backend connects to send packets to them
-            self._log.debug(
-                "Connection to backend not ready, buffering packet from frontend"
-            )
-            self.delayedPackets.append([messageNum, payload])
-        else:
-            if len(self.delayedPackets) > 0:
-                # Flush the queued packets in order, then this one; leaving them
-                # queued would strand a frontend request (e.g. the channel open
-                # that follows login) and hang the session. Mirrors the backend
-                # side in BackendSSHTransport.packet_buffer.
-                self.delayedPackets.append([messageNum, payload])
-                for packet in self.delayedPackets:
-                    self.sshParse.parse_num_packet("[SERVER]", packet[0], packet[1])
-                self.delayedPackets = []
-            else:
-                self.sshParse.parse_num_packet("[SERVER]", messageNum, payload)
+        self.to_backend.put((messageNum, payload))
+
+    def _forward_to_backend(self, packet: tuple[int, bytes]) -> None:
+        self.sshParse.parse_num_packet("[SERVER]", *packet)
+
+    def _forward_to_frontend(self, packet: tuple[int, bytes]) -> None:
+        self.sshParse.parse_num_packet("[CLIENT]", *packet)

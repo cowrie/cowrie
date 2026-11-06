@@ -3,6 +3,9 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+# ABOUTME: The SSH proxy's side facing the backend: logs in with the configured
+# ABOUTME: account and hands backend packets to the attacker's side.
+
 from __future__ import annotations
 
 from typing import Any
@@ -46,7 +49,6 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
     _log = Logger()
 
     def __init__(self, factory: BackendSSHFactory):
-        self.delayedPackets: list[tuple[int, bytes]] = []
         self.factory: BackendSSHFactory = factory
         self.canAuth: bool = False
         self.authDone: bool = False
@@ -107,14 +109,9 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
             + bin_string_to_hex(password.encode())
         )
         self.sendPacket(50, payload)
-        self.factory.server.backendConnected = True
 
         # send packets from the frontend that were waiting to go to the backend
-        for packet in self.factory.server.delayedPackets:
-            self.factory.server.sshParse.parse_num_packet(
-                "[SERVER]", packet[0], packet[1]
-            )
-        self.factory.server.delayedPackets = []
+        self.factory.server.to_backend.release()
 
         # backend auth is done, attackers will now be connected to the backend
         self.authDone = True
@@ -173,24 +170,7 @@ class BackendSSHTransport(transport.SSHClientTransport, TimeoutMixin):
 
     def packet_buffer(self, message_num: int, payload: bytes) -> None:
         """
-        We can only proceed if authentication has been performed between client and proxy. Meanwhile we hold packets
-        from the backend to the frontend in here.
+        Send a backend packet to the frontend, holding it until the attacker
+        has logged in to the proxy.
         """
-        if not self.factory.server.frontendAuthenticated:
-            # wait till frontend connects and authenticates to send packets to them
-            self._log.debug(
-                "Connection to client not ready, buffering packet from backend"
-            )
-            self.delayedPackets.append((message_num, payload))
-        else:
-            if len(self.delayedPackets) > 0:
-                self.delayedPackets.append((message_num, payload))
-                for packet in self.delayedPackets:
-                    self.factory.server.sshParse.parse_num_packet(
-                        "[CLIENT]", packet[0], packet[1]
-                    )
-                self.delayedPackets = []
-            else:
-                self.factory.server.sshParse.parse_num_packet(
-                    "[CLIENT]", message_num, payload
-                )
+        self.factory.server.to_frontend.put((message_num, payload))
