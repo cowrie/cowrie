@@ -241,6 +241,24 @@ class LoginFlowTests(unittest.TestCase):
 
         self.assertEqual(self._commands(), ["uname"])
 
+    def _password_prompt_with_will_echo(self) -> None:
+        self._from_backend(b"ubuntu login: ")
+        self._from_frontend(b"admin\r\n")
+        self._from_backend(b"root\r\n\xff\xfb\x01Password: ")
+
+    def test_password_is_not_forwarded_when_client_ignores_will_echo(self) -> None:
+        # Bots often skip telnet negotiation entirely.
+        self._password_prompt_with_will_echo()
+
+        self.assertEqual(self._from_frontend(b"hunter2\r\n"), b"secretfake\r\n")
+
+    def test_client_reply_to_will_echo_reaches_the_backend(self) -> None:
+        self._password_prompt_with_will_echo()
+
+        to_backend = self._from_frontend(b"\xff\xfd\x01hunter2\r\n")
+
+        self.assertEqual(to_backend, b"\xff\xfd\x01secretfake\r\n")
+
     def test_tty_log_starts_at_the_first_prompt(self) -> None:
         self.h.addPacket("frontend", b"\xff\xfd\x01")
         self.assertFalse(self.h.authStarted)

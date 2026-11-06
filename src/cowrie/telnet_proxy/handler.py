@@ -20,6 +20,10 @@ from cowrie.core.checkers import HoneypotPasswordChecker
 from cowrie.core.config import CowrieConfig
 from cowrie.core.pending import PendingQueue
 
+# Telnet replies to the backend's IAC WILL ECHO (RFC 857)
+IAC_DO_ECHO = b"\xff\xfd\x01"
+IAC_DONT_ECHO = b"\xff\xfe\x01"
+
 
 def process_backspaces(s: bytes) -> bytes:
     """
@@ -279,7 +283,11 @@ class TelnetHandler:
         self.sendData = False  # withold data until input is complete
 
         if self.prePasswordData:
-            self.sendBackend(self.currentData[:3])
+            # Pass on the client's answer to the backend's WILL ECHO. A client
+            # that skips negotiation sends none, and its first bytes are the
+            # password.
+            if self.currentData[:3] in (IAC_DO_ECHO, IAC_DONT_ECHO):
+                self.sendBackend(self.currentData[:3])
             self.prePasswordData = False
 
         # remove control characters
