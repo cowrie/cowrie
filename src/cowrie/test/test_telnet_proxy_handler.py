@@ -7,16 +7,20 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
 import tempfile
 import unittest
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+from twisted.internet.testing import StringTransport
+
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = tempfile.gettempdir()
 os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
+from cowrie.core import ttylog
 from cowrie.telnet_proxy import handler as telnet_handler
 
 
@@ -104,3 +108,35 @@ class TerminatingCharTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class BackendDeliveryTests(unittest.TestCase):
+    """Frontend data that arrives before the backend connects is held, then
+    sent and logged once per packet, in order."""
+
+    def setUp(self) -> None:
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        with patch.dict(os.environ, {"COWRIE_HONEYPOT_TTYLOG_PATH": tmp.name}):
+            self.h = telnet_handler.TelnetHandler(MagicMock())
+        self.h.authStarted = True
+        self.backend = MagicMock()
+        self.backend.transport = StringTransport()
+
+    def _logged_input(self) -> str:
+        return ttylog.ttylog_inputhash(self.h.ttylogFile)
+
+    def test_held_data_is_sent_when_backend_connects(self) -> None:
+        self.h.sendBackend(b"early")
+
+        self.h.setClient(self.backend)
+
+        self.assertEqual(self.backend.transport.value(), b"early")
+
+    def test_each_packet_is_logged_once_with_its_own_bytes(self) -> None:
+        self.h.sendBackend(b"one")
+        self.h.setClient(self.backend)
+        self.h.sendBackend(b"two")
+
+        self.assertEqual(self.backend.transport.value(), b"onetwo")
+        self.assertEqual(self._logged_input(), hashlib.sha256(b"onetwo").hexdigest())
