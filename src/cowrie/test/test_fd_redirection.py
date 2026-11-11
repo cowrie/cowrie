@@ -11,6 +11,7 @@ import os
 import tempfile
 import unittest
 
+from cowrie.shell import fs
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
@@ -425,3 +426,36 @@ class ShellFdRedirectionTests(unittest.TestCase):
                 self.tr.clear()
                 self.proto.lineReceived(line + b"; echo st=$?")
                 self.assertEqual(self.tr.value(), error + b"st=1\n" + PROMPT)
+
+    def test_dup_both_streams_to_file_size_matches_file(self) -> None:
+        # `> f 2>&1` routes both streams through one shared file record, so
+        # the size the filesystem reports must match the file's bytes.
+        self.proto.lineReceived(b"cat /etc/passwd nosuchfile > dupsize 2>&1")
+        node = self.proto.fs.getfile("/root/dupsize")
+        assert node is not None
+        size: int = node[fs.A_SIZE]
+        self.assertEqual(size, os.path.getsize(node[fs.A_REALFILE]))
+        self.assertEqual(len(self.proto.fs.file_contents("/root/dupsize")), size)
+
+    def test_separate_redirections_to_one_file_size_matches_file(self) -> None:
+        # `> f 2> f` gives each descriptor its own file record over one
+        # backing file, so the recorded size must follow the real file,
+        # not the last-writing descriptor's counter (issue #40349).
+        self.proto.lineReceived(b"cat /etc/passwd nosuchfile > sepsize 2> sepsize")
+        node = self.proto.fs.getfile("/root/sepsize")
+        assert node is not None
+        size: int = node[fs.A_SIZE]
+        self.assertEqual(size, os.path.getsize(node[fs.A_REALFILE]))
+        self.assertEqual(len(self.proto.fs.file_contents("/root/sepsize")), size)
+
+    def test_separate_append_redirections_to_one_file_size_matches_file(self) -> None:
+        # The append variant accumulates across commands as well: both
+        # descriptors' bytes must count into the reported size.
+        self.proto.lineReceived(b"echo first >> appsize 2>> appsize")
+        self.proto.lineReceived(b"cat /etc/passwd nosuchfile >> appsize 2>> appsize")
+        node = self.proto.fs.getfile("/root/appsize")
+        assert node is not None
+        self.assertEqual(node[fs.A_SIZE], os.path.getsize(node[fs.A_REALFILE]))
+        self.assertEqual(
+            len(self.proto.fs.file_contents("/root/appsize")), node[fs.A_SIZE]
+        )
