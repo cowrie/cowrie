@@ -212,11 +212,23 @@ class Command_ps(HoneyPotCommand):
         except (KeyError, ValueError):
             return 80
 
+    def selects_all_processes(self) -> bool:
+        """True when a dashed option asks for every process, as `-e` and `-A`
+        do in `ps -e`, `ps -ef` and `ps -elf`. Long options and the values
+        that follow an option are not looked at."""
+        return any(
+            arg.startswith("-")
+            and not arg.startswith("--")
+            and ("e" in arg[1:] or "A" in arg[1:])
+            for arg in self.args
+        )
+
     def call(self) -> None:
         user = str(self.user["username"])
         args = ""
         if self.args:
             args = self.args[0].strip()
+        select_all = self.selects_all_processes()
         (
             _user,
             _pid,
@@ -751,7 +763,7 @@ class Command_ps(HoneyPotCommand):
             ]
 
         for i in range(len(output_array)):
-            if i != 0:
+            if i != 0 and not select_all:
                 if "a" not in args and output_array[i][_user].strip() != user:
                     continue
                 elif (
