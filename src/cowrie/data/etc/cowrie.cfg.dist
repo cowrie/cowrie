@@ -95,6 +95,20 @@ ttylog = true
 # (default: ttylog_path = %(state_path)s/tty)
 ttylog_path = ${honeypot:state_path}/tty
 
+# Maximum size (in bytes) of one session's TTY log. A session that fills it
+# is disconnected, since a session producing this much terminal traffic is
+# flooding rather than being observed. A value of 0 means no limit.
+# (default: 10485760)
+#ttylog_limit_size = 10485760
+
+# Free space (in bytes) to keep on the filesystem holding ttylog_path. When
+# less is free, new sessions run without a TTY log and running ones stop
+# recording, so attackers cannot fill the disk through the logs. The space is
+# checked when a log opens and every MiB it grows. A value of 0 disables the
+# check.
+# (default: 0)
+#ttylog_min_free = 0
+
 # Idle timeout determines when logged in sessions are
 # terminated for being idle. In seconds.
 # (default: 180)

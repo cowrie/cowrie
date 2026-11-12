@@ -22,12 +22,13 @@ if TYPE_CHECKING:
 
 class CowrieServer:
     """
-    The simulated machine associated with an authenticated avatar.
+    The simulated machine shared by the sessions assigned to it.
 
-    The realm creates a new server for each avatar request. SSH channels
-    using the same avatar share its environment, including the filesystem.
-    Separate authenticated connections do not share a server based on
-    their source IP address.
+    Its lifetime is chosen by the realm. The stock HoneyPotRealm creates
+    an instance for each authenticated avatar; channels using that avatar
+    share its environment, including the filesystem. Other realms can
+    reuse an instance across connections, for example to group connections
+    from the same source IP address.
     """
 
     _log = Logger()

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import shutil
 import time
 from typing import TYPE_CHECKING, Any
 
@@ -25,6 +26,10 @@ if TYPE_CHECKING:
 
     from cowrie.core.events import EventLog
 
+# How many bytes a TTY log grows between checks of the free space left on
+# its filesystem.
+FREE_SPACE_CHECK_INTERVAL = 1 << 20
+
 
 class LoggingServerProtocol(insults.ServerProtocol):
     """
@@ -39,6 +44,10 @@ class LoggingServerProtocol(insults.ServerProtocol):
     bytesReceivedLimit: int = CowrieConfig.getint(
         "honeypot", "download_limit_size", fallback=0
     )
+    ttylogSizeLimit: int = CowrieConfig.getint(
+        "honeypot", "ttylog_limit_size", fallback=10485760
+    )
+    ttylogMinFree: int = CowrieConfig.getint("honeypot", "ttylog_min_free", fallback=0)
 
     def __init__(self, protocolFactory=None, *a, **kw):
         self.type: str
@@ -50,6 +59,10 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.redirlogOpen: bool = False  # it will be set at core/protocol.py
         self.stdinlogOpen: bool = False
         self.ttylogOpen: bool = False
+        # Data is still being recorded: the log is open, under its size limit
+        # and the disk has taken every write so far.
+        self.ttylogRecording: bool = False
+        self.ttylogWritten: int = 0
         self.terminalProtocol: Any
         self.transport: Any
         self.startTime: float
@@ -80,20 +93,15 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         if self.ttylogEnabled:
             self.ttylogFile = f"{self.ttylogPath}/{time.strftime('%Y%m%d-%H%M%S')}-{transportId}-{channelId}{self.type}.log"
-            ttylog.ttylog_open(self.ttylogFile, self.startTime)
-            self.ttylogOpen = True
-            self.ttylogSize = 0
+            self.ttylogStart()
 
         self.stdinlogFile = temp_download_path("stdin")
 
         if self.type == "e":
             self.stdinlogOpen = True
             # log the command into ttylog
-            if self.ttylogEnabled:
-                (_sess, cmd) = self.protocolArgs
-                ttylog.ttylog_write(
-                    self.ttylogFile, len(cmd), ttylog.TYPE_INTERACT, time.time(), cmd
-                )
+            (_sess, cmd) = self.protocolArgs
+            self.ttylogWrite(ttylog.TYPE_INTERACT, cmd)
         else:
             self.stdinlogOpen = False
 
@@ -102,13 +110,85 @@ class LoggingServerProtocol(insults.ServerProtocol):
         if self.type == "e":
             self.terminalProtocol.execcmd.encode("utf8")
 
+    def ttylogStart(self) -> None:
+        """Open the TTY log, unless its filesystem is short of space or
+        refuses the file; the session then runs unrecorded."""
+        if not self.ttylogSpaceAvailable():
+            self._log.error(
+                "Not recording TTY log {ttylog}: free space below ttylog_min_free",
+                ttylog=self.ttylogFile,
+            )
+            return
+        try:
+            ttylog.ttylog_open(self.ttylogFile, self.startTime)
+        except OSError as e:
+            self._log.error(
+                "Failed to open TTY log {ttylog}: {error}",
+                ttylog=self.ttylogFile,
+                error=e,
+            )
+            return
+        self.ttylogOpen = True
+        self.ttylogRecording = True
+        self.ttylogSize = 0
+        self.ttylogWritten = 0
+
+    def ttylogSpaceAvailable(self) -> bool:
+        """Whether the TTY log's filesystem has ttylog_min_free bytes free."""
+        if not self.ttylogMinFree:
+            return True
+        try:
+            return shutil.disk_usage(self.ttylogPath).free >= self.ttylogMinFree
+        except OSError:
+            return False
+
+    def ttylogWrite(self, direction: int, data: bytes) -> int:
+        """Record ``data`` in the TTY log and return how many bytes went in.
+
+        Recording stops for the rest of the session when the log reaches
+        ttylog_limit_size, which also ends the session, when the disk refuses
+        a write, or when free space drops below ttylog_min_free.
+        """
+        if not self.ttylogRecording:
+            return 0
+        written = self.ttylogWritten + len(data)
+        if self.ttylogSizeLimit and written > self.ttylogSizeLimit:
+            self.ttylogRecording = False
+            self._log.info(
+                "TTY log size limit reached, closing session {ttylog}",
+                ttylog=self.ttylogFile,
+            )
+            self.loseConnection()
+            return 0
+        if (
+            self.ttylogWritten // FREE_SPACE_CHECK_INTERVAL
+            != written // FREE_SPACE_CHECK_INTERVAL
+            and not self.ttylogSpaceAvailable()
+        ):
+            self.ttylogRecording = False
+            self._log.error(
+                "Stopped recording TTY log {ttylog}: free space below ttylog_min_free",
+                ttylog=self.ttylogFile,
+            )
+            return 0
+        try:
+            ttylog.ttylog_write(
+                self.ttylogFile, len(data), direction, time.time(), data
+            )
+        except OSError as e:
+            self.ttylogRecording = False
+            self._log.error(
+                "Failed to write TTY log {ttylog}: {error}",
+                ttylog=self.ttylogFile,
+                error=e,
+            )
+            return 0
+        self.ttylogWritten = written
+        return len(data)
+
     def write(self, data: bytes) -> None:
         self.bytesSent += len(data)
-        if self.ttylogEnabled and self.ttylogOpen:
-            ttylog.ttylog_write(
-                self.ttylogFile, len(data), ttylog.TYPE_OUTPUT, time.time(), data
-            )
-            self.ttylogSize += len(data)
+        self.ttylogSize += self.ttylogWrite(ttylog.TYPE_OUTPUT, data)
 
         if self.type == "e":
             # Exec channel: no PTY was allocated, so write raw bytes without
@@ -143,10 +223,8 @@ class LoggingServerProtocol(insults.ServerProtocol):
             self.terminalProtocol.resetTimeout()
             with open(self.stdinlogFile, "ab") as f:
                 f.write(data)
-        elif self.ttylogEnabled and self.ttylogOpen:
-            ttylog.ttylog_write(
-                self.ttylogFile, len(data), ttylog.TYPE_INPUT, time.time(), data
-            )
+        else:
+            self.ttylogWrite(ttylog.TYPE_INPUT, data)
 
         # Feed the parent one byte at a time so terminalProtocol can be
         # re-checked between bytes. ServerProtocol.dataReceived loops over the
@@ -243,9 +321,17 @@ class LoggingServerProtocol(insults.ServerProtocol):
                     pass
             self.redirFiles.clear()
 
-        if self.ttylogEnabled and self.ttylogOpen:
-            ttylog.ttylog_close(self.ttylogFile, time.time())
+        if self.ttylogOpen:
             self.ttylogOpen = False
+            self.ttylogRecording = False
+            self.ttylogClose()
+
+        insults.ServerProtocol.connectionLost(self, reason)
+
+    def ttylogClose(self) -> None:
+        """Finish the TTY log and store it under the hash of its input."""
+        try:
+            ttylog.ttylog_close(self.ttylogFile, time.time())
             shasum = ttylog.ttylog_inputhash(self.ttylogFile)
             shasumfile = os.path.join(self.ttylogPath, shasum)
 
@@ -258,18 +344,23 @@ class LoggingServerProtocol(insults.ServerProtocol):
                 umask = os.umask(0)
                 os.umask(umask)
                 os.chmod(shasumfile, 0o666 & ~umask)
-
-            self.events.dispatch(
-                "cowrie.log.closed",
-                "Closing TTY Log: %(ttylog)s after %(duration_ms)d milliseconds",
-                ttylog=shasumfile,
-                size=self.ttylogSize,
-                shasum=shasum,
-                duplicate=duplicate,
-                duration_ms=round((time.time() - self.startTime) * 1000),
+        except OSError as e:
+            self._log.error(
+                "Failed to close TTY log {ttylog}: {error}",
+                ttylog=self.ttylogFile,
+                error=e,
             )
+            return
 
-        insults.ServerProtocol.connectionLost(self, reason)
+        self.events.dispatch(
+            "cowrie.log.closed",
+            "Closing TTY Log: %(ttylog)s after %(duration_ms)d milliseconds",
+            ttylog=shasumfile,
+            size=self.ttylogSize,
+            shasum=shasum,
+            duplicate=duplicate,
+            duration_ms=round((time.time() - self.startTime) * 1000),
+        )
 
 
 class LoggingTelnetServerProtocol(LoggingServerProtocol):

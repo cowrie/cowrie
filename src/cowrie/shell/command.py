@@ -3,6 +3,9 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+# ABOUTME: Base class for emulated commands: stdio wiring, exit status, and
+# ABOUTME: timers that stop when the command exits or the session ends.
+
 """
 This module contains code to run a command
 """
@@ -45,8 +48,8 @@ class HoneyPotCommand:
     # late exit() is a no-op. Class-level so it holds even for instances
     # created without __init__ (tests).
     exited: bool = False
-    # Reactor calls scheduled through callLater(), cancelled when the session
-    # ends before they fire. The immutable default is never appended to, so
+    # Reactor calls scheduled through callLater(), cancelled when the command
+    # exits or the session ends before they fire. The immutable default is never appended to, so
     # instances do not share a list.
     _delayed_calls: Sequence[IDelayedCall] = ()
 
@@ -138,9 +141,10 @@ class HoneyPotCommand:
         """
         Schedule ``func`` on the reactor, as ``reactor.callLater`` does.
 
-        The call is cancelled if the client disconnects before it fires, so a
-        command that paces itself (ping's replies, a sleep, yes) stops with the
-        session instead of ticking on against a dead terminal.
+        The call is cancelled if the command exits or the client disconnects
+        before it fires, so a command that paces itself (ping's replies, a
+        sleep, yes) stops when it is interrupted or the session ends, instead
+        of ticking on against a dead terminal.
         """
         call = reactor.callLater(delay, func, *args)
         pending = [c for c in self._delayed_calls if c.active()]
@@ -152,6 +156,9 @@ class HoneyPotCommand:
         """
         The client is gone: stop whatever this command still has scheduled.
         """
+        self._cancel_delayed_calls()
+
+    def _cancel_delayed_calls(self) -> None:
         for call in self._delayed_calls:
             if call.active():
                 call.cancel()
@@ -179,6 +186,8 @@ class HoneyPotCommand:
         if self.exited:
             return
         self.exited = True
+        # Nothing this command scheduled may run once it has exited.
+        self._cancel_delayed_calls()
         if code is not None:
             self.exit_code = code
         # Register this command's own redirection backing files for hashing at
@@ -213,6 +222,7 @@ class HoneyPotCommand:
         status goes to the shell that ran this command. The wrappers that
         dispatch to a real command (busybox, sudo) use this."""
         self.exited = True
+        self._cancel_delayed_calls()
         if self in self.protocol.cmdstack:
             self.protocol.cmdstack.remove(self)
         self.protocol.call_command(pp, cmdclass, *args)

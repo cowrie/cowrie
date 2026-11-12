@@ -3,6 +3,9 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+# ABOUTME: The honeypot's SSH transport layer: version exchange, key exchange
+# ABOUTME: and packet framing, with logging of what each client sends.
+
 """
 The lowest level SSH protocol. This handles the key negotiation, the
 encryption and the compression. The transport layer is described in
@@ -189,6 +192,11 @@ class HoneyPotSSHTransport(KexMessageTransport, TimeoutMixin):
         while packet:
             messageNum = ord(packet[0:1])
             self.dispatchMessage(messageNum, packet[1:])
+            # loseConnection() only schedules the close. A packet that made us
+            # drop the connection must also be the last one we process, even
+            # when the client sent more packets in the same read.
+            if self.transport is None or self.transport.disconnecting:
+                return
             packet = self.getPacket()
 
     def dispatchMessage(self, messageNum: int, payload: bytes) -> None:

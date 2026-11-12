@@ -69,6 +69,43 @@ class StdinCaptureEventTests(unittest.TestCase):
             insults.LoggingServerProtocol.ttylogEnabled = old_enabled
             insults.LoggingServerProtocol.ttylogPath = old_path
 
+    def test_unwritable_ttylog_path_keeps_the_session(self) -> None:
+        """A TTY log that cannot be opened is skipped; the exec request still
+        runs instead of failing on the channel."""
+        old_enabled = insults.LoggingServerProtocol.ttylogEnabled
+        old_path = insults.LoggingServerProtocol.ttylogPath
+        insults.LoggingServerProtocol.ttylogEnabled = True
+        insults.LoggingServerProtocol.ttylogPath = os.path.join(_TTYLOG_DIR, "none")
+        try:
+            dispatched = self.run_exec(b"echo hi", b"")
+            self.assertEqual(events_of(dispatched, "cowrie.log.closed"), [])
+            self.assertEqual(
+                [e["input"] for e in events_of(dispatched, "cowrie.command.input")],
+                ["echo hi"],
+            )
+        finally:
+            insults.LoggingServerProtocol.ttylogEnabled = old_enabled
+            insults.LoggingServerProtocol.ttylogPath = old_path
+
+    def test_free_space_below_the_floor_skips_the_log(self) -> None:
+        old_enabled = insults.LoggingServerProtocol.ttylogEnabled
+        old_path = insults.LoggingServerProtocol.ttylogPath
+        old_floor = insults.LoggingServerProtocol.ttylogMinFree
+        insults.LoggingServerProtocol.ttylogEnabled = True
+        insults.LoggingServerProtocol.ttylogPath = _TTYLOG_DIR
+        insults.LoggingServerProtocol.ttylogMinFree = 1 << 62
+        try:
+            dispatched = self.run_exec(b"echo hi", b"")
+            self.assertEqual(events_of(dispatched, "cowrie.log.closed"), [])
+            self.assertEqual(
+                [e["input"] for e in events_of(dispatched, "cowrie.command.input")],
+                ["echo hi"],
+            )
+        finally:
+            insults.LoggingServerProtocol.ttylogEnabled = old_enabled
+            insults.LoggingServerProtocol.ttylogPath = old_path
+            insults.LoggingServerProtocol.ttylogMinFree = old_floor
+
 
 class TelnetInsultsEventLogTests(unittest.TestCase):
     """The telnet insults wrapper must find the EventLog on the telnet

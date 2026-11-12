@@ -7,14 +7,20 @@
 
 from __future__ import annotations
 
+import errno
 import os
+import shutil
+import struct
 import tempfile
 import unittest
+from types import SimpleNamespace
 from unittest import mock
 
 from twisted.python import log
 
-from cowrie.insults.insults import LoggingServerProtocol
+from cowrie.core import ttylog
+from cowrie.insults.insults import FREE_SPACE_CHECK_INTERVAL, LoggingServerProtocol
+from cowrie.test.eventcapture import capture_events
 
 
 class FakeTransport:
@@ -22,9 +28,13 @@ class FakeTransport:
 
     def __init__(self) -> None:
         self.written: bytes = b""
+        self.lost: bool = False
 
     def write(self, data: bytes) -> None:
         self.written += data
+
+    def loseConnection(self) -> None:
+        self.lost = True
 
 
 def make_protocol(channel_type: str) -> LoggingServerProtocol:
@@ -33,8 +43,162 @@ def make_protocol(channel_type: str) -> LoggingServerProtocol:
     lsp.bytesSent = 0
     lsp.ttylogEnabled = False
     lsp.ttylogOpen = False
+    lsp.ttylogRecording = False
+    lsp.ttylogSize = 0
     lsp.transport = FakeTransport()
     return lsp
+
+
+class TtylogRecordingTestCase(unittest.TestCase):
+    """The TTY log stops recording at its size limit or when the disk refuses
+    it; the session itself goes on either way."""
+
+    def setUp(self) -> None:
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmpdir.cleanup)
+        self.events: list[dict] = []
+        log.addObserver(self.events.append)
+        self.addCleanup(log.removeObserver, self.events.append)
+
+    def messages(self) -> list[str]:
+        return [log.textFromEventDict(e) or "" for e in self.events]
+
+    def make_recording(self, limit: int) -> LoggingServerProtocol:
+        lsp = make_protocol("e")
+        lsp.ttylogEnabled = True
+        lsp.ttylogPath = self.tmpdir.name
+        lsp.ttylogFile = os.path.join(self.tmpdir.name, "session.log")
+        lsp.ttylogSizeLimit = limit
+        lsp.ttylogMinFree = 0
+        lsp.ttylogSize = 0
+        lsp.startTime = 0.0
+        lsp.ttylogWritten = 0
+        lsp.stdinlogOpen = False
+        lsp.bytesReceived = 0
+        lsp.terminalProtocol = None
+        lsp.redirFiles = set()
+        self.dispatched = capture_events(lsp)
+        ttylog.ttylog_open(lsp.ttylogFile, 0.0)
+        lsp.ttylogOpen = True
+        lsp.ttylogRecording = True
+        return lsp
+
+    def recorded(self, lsp: LoggingServerProtocol) -> bytes:
+        """The data of every write record in the log, in order."""
+        data = b""
+        with open(lsp.ttylogFile, "rb") as f:
+            while header := f.read(struct.calcsize(ttylog.TTYSTRUCT)):
+                length = struct.unpack(ttylog.TTYSTRUCT, header)[2]
+                data += f.read(length)
+        return data
+
+    def test_output_past_the_size_limit_closes_the_session(self) -> None:
+        lsp = self.make_recording(limit=8)
+        lsp.write(b"12345")
+        self.assertFalse(lsp.transport.lost)
+        lsp.write(b"6789")
+        lsp.write(b"x")
+        self.assertTrue(lsp.transport.lost)
+        self.assertEqual(self.recorded(lsp), b"12345")
+        self.assertEqual(lsp.ttylogSize, 5)
+        self.assertFalse(lsp.ttylogRecording)
+        self.assertTrue(
+            any("TTY log size limit reached" in m for m in self.messages()),
+            self.messages(),
+        )
+
+    def test_input_counts_toward_the_size_limit(self) -> None:
+        lsp = self.make_recording(limit=8)
+        lsp.terminalProtocol = SimpleNamespace(keystrokeReceived=lambda ch, mod: None)
+        lsp.state = b"data"
+        lsp.dataReceived(b"typed")
+        lsp.write(b"echo")
+        self.assertEqual(self.recorded(lsp), b"typed")
+        self.assertEqual(lsp.transport.written, b"echo")
+        self.assertFalse(lsp.ttylogRecording)
+        self.assertTrue(lsp.transport.lost)
+
+    def test_no_limit_records_everything(self) -> None:
+        lsp = self.make_recording(limit=0)
+        lsp.write(b"1" * 100)
+        self.assertEqual(self.recorded(lsp), b"1" * 100)
+        self.assertTrue(lsp.ttylogRecording)
+
+    def test_free_space_below_the_floor_stops_recording(self) -> None:
+        """Free space is checked once per FREE_SPACE_CHECK_INTERVAL bytes of
+        log; below ttylog_min_free the session goes on unrecorded."""
+        lsp = self.make_recording(limit=0)
+        lsp.ttylogMinFree = 1000
+        usage = SimpleNamespace(total=10**9, used=10**9 - 500, free=500)
+        with mock.patch.object(shutil, "disk_usage", return_value=usage):
+            lsp.write(b"a" * (FREE_SPACE_CHECK_INTERVAL - 1))
+            lsp.write(b"bb")
+            lsp.write(b"c")
+        self.assertEqual(self.recorded(lsp), b"a" * (FREE_SPACE_CHECK_INTERVAL - 1))
+        self.assertFalse(lsp.ttylogRecording)
+        self.assertFalse(lsp.transport.lost)
+        self.assertEqual(
+            lsp.transport.written, b"a" * (FREE_SPACE_CHECK_INTERVAL - 1) + b"bbc"
+        )
+        self.assertTrue(
+            any("free space below ttylog_min_free" in m for m in self.messages()),
+            self.messages(),
+        )
+
+    def test_free_space_above_the_floor_keeps_recording(self) -> None:
+        lsp = self.make_recording(limit=0)
+        lsp.ttylogMinFree = 1000
+        usage = SimpleNamespace(total=10**9, used=0, free=10**9)
+        with mock.patch.object(shutil, "disk_usage", return_value=usage):
+            lsp.write(b"a" * FREE_SPACE_CHECK_INTERVAL)
+            lsp.write(b"b")
+        self.assertEqual(self.recorded(lsp), b"a" * FREE_SPACE_CHECK_INTERVAL + b"b")
+        self.assertTrue(lsp.ttylogRecording)
+
+    def test_write_failure_stops_recording_and_keeps_the_session(self) -> None:
+        lsp = self.make_recording(limit=0)
+        calls: list[bytes] = []
+
+        def refusing_write(
+            logfile: str, length: int, direction: int, stamp: float, data: bytes
+        ) -> None:
+            calls.append(data)
+            raise OSError(errno.ENOSPC, "No space left on device")
+
+        with mock.patch.object(ttylog, "ttylog_write", refusing_write):
+            lsp.write(b"first")
+            lsp.write(b"second")
+        self.assertEqual(lsp.transport.written, b"firstsecond")
+        self.assertEqual(calls, [b"first"])
+        self.assertFalse(lsp.ttylogRecording)
+        self.assertTrue(
+            any("Failed to write TTY log" in m for m in self.messages()),
+            self.messages(),
+        )
+
+    def test_log_that_stopped_recording_is_still_closed(self) -> None:
+        lsp = self.make_recording(limit=8)
+        lsp.write(b"123456789")
+        lsp.connectionLost()
+        self.assertEqual(len(self.dispatched), 1)
+        self.assertEqual(self.dispatched[0]["size"], 0)
+        self.assertTrue(os.path.exists(self.dispatched[0]["ttylog"]))
+
+    def test_close_failure_is_logged_and_not_raised(self) -> None:
+        lsp = self.make_recording(limit=0)
+        lsp.write(b"out")
+
+        def refusing_hash(logfile: str) -> str:
+            raise OSError(errno.ENOSPC, "No space left on device")
+
+        with mock.patch.object(ttylog, "ttylog_inputhash", refusing_hash):
+            lsp.connectionLost()
+        self.assertFalse(lsp.ttylogOpen)
+        self.assertEqual(self.dispatched, [])
+        self.assertTrue(
+            any("Failed to close TTY log" in m for m in self.messages()),
+            self.messages(),
+        )
 
 
 class WriteLineEndingTestCase(unittest.TestCase):

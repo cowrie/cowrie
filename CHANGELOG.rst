@@ -5,8 +5,163 @@
 Release Notes
 #############
 
-Release 3.1.0
-*************
+Unreleased
+**********
+
+**SECURITY AND HARDENING:**
+
+* ``printf`` caps the output one invocation builds in memory at 1 MiB.
+  Before, a short command such as ``printf '%*d' 700000000 1`` could
+  use up the process's memory and get Cowrie killed. A field width or
+  precision past the cap now fails the way bash fails one past the C
+  int range. Reported by Davide S. Rosa (@davide-s-rosa).
+* Each session's TTY log has a size limit, set by the new
+  ``[honeypot] ttylog_limit_size`` option. The default is 10 MiB. A
+  session that reaches the limit is disconnected. Set the option to 0
+  to turn the limit off. Reported by Davide S. Rosa (@davide-s-rosa).
+* A TTY log that cannot be opened, written or closed no longer breaks
+  the session. Cowrie logs the error once and the session continues
+  without a recording. Before, a full disk made every new exec request
+  fail until an operator freed space. Reported by Davide S. Rosa
+  (@davide-s-rosa).
+* The new ``[honeypot] ttylog_min_free`` option keeps a minimum of free
+  space on the filesystem that holds the TTY logs. Below it, sessions
+  run without a TTY log. The default is 0, which turns the check off.
+
+**BUG FIXES:**
+
+* SSH key exchange messages that do not match the negotiated algorithm,
+  or arrive before KEXINIT, are answered with SSH_MSG_UNIMPLEMENTED and
+  logged as ``cowrie.client.kex_unexpected`` instead of crashing the
+  connection.
+
+**DEPENDENCIES:**
+
+* txmongo 26.0.0 and mysql-connector-python 26.10.0 for the output
+  plugins.
+
+
+Release 3.1.5 (2026-10-31)
+**************************
+
+**NEW FEATURES:**
+
+* The shell evaluates ``$((...))`` arithmetic expansion.
+* The shell has a ``read`` builtin.
+
+**BUG FIXES:**
+
+* ``$$`` expands to the shell's process ID.
+* ``set`` sets the positional parameters from its operands.
+* A lost terminal is logged once per command, not once per write.
+* Backend pool: a guest that fails to boot is reported and retried,
+  instead of stopping the whole Cowrie process.
+* VirusTotal: an empty success response when adding to a collection is
+  accepted.
+
+**DEPENDENCIES:**
+
+* Twisted 26.10.0.
+
+
+Release 3.1.4 (2026-10-24)
+**************************
+
+**NEW FEATURES:**
+
+* The shell reads multi-line input like bash. An unfinished ``if``,
+  ``for``, ``while``, ``case``, ``{`` or ``(``, an open quote, ``$(`` or
+  backtick, and a line ending in ``\``, ``|``, ``&&`` or ``||`` continue
+  on the next line at a ``> `` prompt. ``bash -c``, scripts and exec
+  commands that end inside one report bash's unexpected end of file.
+* Here-documents (``<<EOF``, ``<<-EOF``, quoted delimiters) and
+  here-strings (``<<<word``) feed a command's stdin. An unquoted body is
+  expanded as usual. The new ``[shell] max_heredoc_size`` option caps a
+  body's size.
+* **New output plugin**: MalwareBazaar. It uploads downloaded and
+  uploaded files once per SHA-256 and reports each result as a
+  ``cowrie.malwarebazaar.submitted`` event.
+
+**BUG FIXES:**
+
+* ``curl`` accepts options after the URL.
+* ``$@``, ``$#`` and ``$1`` work in scripts and outside functions.
+* ``"$@"`` keeps each positional parameter a separate word.
+* Braced special parameters such as ``"${@}"`` are expanded.
+* ``grep -i`` is supported.
+
+**DEPENDENCIES:**
+
+* cryptography 50.0.2.
+
+
+Release 3.1.3 (2026-10-15)
+**************************
+
+**BUG FIXES:**
+
+* Running a file by path (``./file``) needs an execute bit, as on a
+  real system. Without one the shell reports "Permission denied" with
+  status 126. ``sh file`` still works.
+* A failed redirection skips the command and sets status 1, as in bash.
+* ``scp -d`` with no target directory no longer crashes.
+* ``mv`` of a symbolic link renames the link, not its target.
+* The ``csirtg`` and ``slack`` outputs read the event's ``protocol``
+  field. Before, they read a key that events do not carry.
+
+**INTERNAL:**
+
+* The ssh and telnet packages sit below the shell package, and modules
+  no longer read the configuration at import time.
+
+
+Release 3.1.2 (2026-10-12)
+**************************
+
+**BREAKING CHANGES - ACTION REQUIRED:**
+
+* **Output plugin dependencies**: the ``mongodb`` output needs
+  ``txmongo`` instead of ``pymongo``, and the ``redis`` output needs
+  ``txredisapi`` instead of ``redis``. Install them from
+  ``requirements-output.txt`` if you use these outputs.
+
+**BUG FIXES:**
+
+* The ``rmq``, ``rethinkdblog``, ``mongodb`` and ``redis`` outputs no
+  longer block the reactor. A slow or unreachable database froze every
+  session. They now use Twisted-native clients. The ``rmq`` output
+  imports again on current Twisted.
+* Unquoted expansions are split into words and empty ones vanish, as in
+  bash. Quoted or expanded words are never read as redirections.
+* ``cat``, ``cd``, ``rm``, ``rmdir``, ``mkdir``, ``touch``, ``cp``,
+  ``mv`` and other commands report failures through the exit status, as
+  GNU tools do, so ``||`` and ``&&`` take the right branch.
+* A bare ``sync`` succeeds silently.
+* A command's scheduled calls are cancelled when the client disconnects.
+* Every SSH disconnect reason is logged on one line.
+* A client that sends 4 KiB without an SSH identification line is
+  disconnected.
+
+**DEPENDENCIES:**
+
+* cryptography 50.0.1.
+
+
+Release 3.1.1 (2026-10-03)
+**************************
+
+**BUG FIXES:**
+
+* A session's process ends once, whatever ends it.
+* ``reboot`` and ``shutdown`` no longer crash after a disconnect.
+* ``chmod`` applies symbolic modes such as ``u+x`` and ``go-w``, and
+  applies to every file a ``*`` matches.
+* ``ls`` names a file argument the way it was typed, and reports a
+  missing argument the way GNU ``ls`` does.
+
+
+Release 3.1.0 (2026-10-02)
+**************************
 
 **BREAKING CHANGES - ACTION REQUIRED:**
 
@@ -15,15 +170,6 @@ Release 3.1.0
 **NEW FEATURES:**
 
 * **New shell commands**: ``sed`` and ``tr``.
-* The shell reads multi-line input like bash: an unfinished ``if`` /
-  ``for`` / ``while`` / ``case`` / ``{`` / ``(``, an open quote, ``$(`` or
-  backtick, and a line ending in ``\``, ``|``, ``&&`` or ``||`` continue
-  on the next line at a ``> `` prompt, and ``bash -c``, scripts and exec
-  commands that end inside one report bash's unexpected end of file.
-* Here-documents (``<<EOF``, ``<<-EOF``, quoted delimiters) and
-  here-strings (``<<<word``) feed a command's stdin, with the usual
-  expansion of an unquoted body. The new ``[shell] max_heredoc_size``
-  option caps a body's size.
 * The emulated machine now booted before Cowrie started. ``uptime``,
   ``/proc/uptime`` and ``last`` count from that boot, so a restarted
   honeypot no longer reports a few seconds of uptime. The new
@@ -32,13 +178,14 @@ Release 3.1.0
 
 **BUG FIXES:**
 
-* SSH key exchange messages that do not match the negotiated algorithm, or
-  arrive before KEXINIT, are answered with SSH_MSG_UNIMPLEMENTED and logged
-  as ``cowrie.client.kex_unexpected`` instead of crashing the connection.
 * Shell errors look more like bash: syntax errors and "command not
   found" go to stderr, carry the right prefix for interactive and
   script shells, and name the line number in scripts.
+* A stray closing word such as ``fi`` or ``done`` is a syntax error,
+  reported when execution reaches its line.
 * Scripts that cannot run exit 126, and missing interpreters exit 127.
+  The error names the script the way the attacker typed it.
+* The output of a shell that a command starts is captured.
 * ``printf`` implements its format conversions.
 * ``awk -F`` accepts patterns with spaces and prints real output.
 * ``head`` and ``tail`` accept the GNU option forms and read piped input.
@@ -50,48 +197,248 @@ Release 3.1.0
 * Idle LLM sessions time out after 300 seconds by default, the same as
   the shell.
 
-**DEPENDENCIES:**
 
-* Twisted bumped to 26.10.0.
-
-
-Releases 3.0.1 -- 3.0.15
-************************
+Release 3.0.15 (2026-09-19)
+***************************
 
 **BREAKING CHANGES - ACTION REQUIRED:**
 
-* **Event field rename**: ``cowrie.session.closed`` and
-  ``cowrie.log.closed`` report ``duration_ms`` as an integer number of
-  milliseconds. The ``duration`` field is gone. It was a string for
-  some transports and a float for others. Update dashboards and
-  index mappings that read ``duration``.
-* **Rate-limit options moved**: the ``wget``, ``curl`` and ``nc``
-  rate-limit options are read from ``[shell]``, not ``[honeypot]``.
-  Move them if you set them.
 * **VirusTotal collections**: ``[output_virustotal] collection`` is
   replaced by ``collection_id``. Copy the ID from the collection's URL
   in the VirusTotal web interface.
+
+**SECURITY AND HARDENING:**
+
+* The shell grammar is unambiguous, so crafted input can no longer make
+  the parser run for minutes. New ``[shell] parse_timeout_seconds`` and
+  ``gc_collect_threshold`` options limit what is left. Pipelines and
+  redirections are real.
+
+**BUG FIXES:**
+
+* An empty password in ``userdb.txt`` is accepted.
+* ``finger`` reads ``/etc/passwd`` line by line.
+* ``cut`` reports a malformed field list instead of crashing.
+* ``cp`` and ``mv`` report an empty destination instead of crashing.
+* Created directories get directory modes.
+* ``rmdir`` of a missing directory reports ENOENT.
+* Symbolic link checks look at the link, not its target.
+* Database outputs close their connection pool only when it runs.
+
+
+Release 3.0.14 (2026-09-07)
+***************************
+
+**SECURITY AND HARDENING:**
+
+* Attacker text is escaped in Telegram messages.
+
+**BUG FIXES:**
+
+* An exec command that is not valid UTF-8 still runs.
+* ``rmdir`` and ``touch`` process all their arguments.
+* ``ps`` separates COMMAND arguments with spaces.
+* The shell prompt is written as UTF-8.
+* Tab completion survives undecodable input and a missing window size.
+* ``curl`` handles an unknown content length.
+* ``grep -m`` sets a maximum match count.
+* ``printf`` survives a malformed escape.
+* The Prometheus output publishes and resets its source-IP windows.
+* More malformed LLM prompt templates are tolerated.
+* The ``cowrie.urlhaus.submitted`` event ID is registered.
+
+
+Release 3.0.13 (2026-08-23)
+***************************
+
+**NEW FEATURES:**
+
+* **New output plugin**: URLhaus.
+
+**SECURITY AND HARDENING:**
+
+* ``wget``, ``curl`` and ``ftpget`` validate every redirect hop and
+  connect to the address they validated.
+* IPv6 download targets are reported as unreachable.
+* CEF extension values are escaped.
+* A bad SSH packet length is no longer answered with "Packet corrupt",
+  which identified Cowrie.
+
+**BUG FIXES:**
+
+* Proxy mode: SFTP messages are reassembled by their length prefix,
+  message types above 127 are framed correctly, the frontend no longer
+  sends on a closed transport, and the backend address is logged as a
+  string.
+* SFTP reports the real size of an upload, and closes the file before
+  renaming it.
+* The ``sqlite`` output stores file uploads and session input, and holds
+  a single connection.
+* The ``jsonlog`` output appends to its logfile instead of truncating it.
+* The ``rethinkdblog`` output reads event timestamps as UTC.
+* VirusTotal submits URLs it has not seen before.
+* The MISP and DShield outputs release session state when the session
+  closes.
+* An output plugin that failed to start is not stopped.
+* ``curl`` and ``wget`` report a malformed URL port.
+* ``sh`` survives an empty ``-c`` argument and non-UTF-8 stdin.
+* ``grep`` reports an invalid pattern.
+* ``mkdir`` processes all its arguments.
+* ``ftpget`` keeps downloading after CTRL-C.
+* An empty ``$@`` or ``$*`` expands to no words.
+* ``dig`` prints real UTC time; ``base64`` encodes interactive input as
+  UTF-8; a non-numeric ``COLUMNS`` falls back to the default width.
+* ``createfs`` applies its ``-v`` and ``-p`` flags; ``fsctl`` rejects a
+  non-numeric uid or gid.
+* TTY logs that are not valid UTF-8 convert to asciinema.
+
+**INTERNAL:**
+
+* The Docker container uses a fixed uid.
+
+
+Release 3.0.12 (2026-08-04)
+***************************
+
+**SECURITY AND HARDENING:**
+
+* The new ``[shell] max_input_size`` option caps the size of shell input
+  fed to the parser.
+* The Docker image no longer ships pip, setuptools and wheel.
+
+**DEPENDENCIES:**
+
+* cryptography 50.0.0.
+
+
+Release 3.0.11 (2026-07-31)
+***************************
+
+**BREAKING CHANGES - ACTION REQUIRED:**
+
+* **Rate-limit options moved**: the ``wget``, ``curl`` and ``nc``
+  rate-limit options are read from ``[shell]``, not ``[honeypot]``.
+  Move them if you set them.
 * The ``crashreporter`` output plugin is removed, along with its
   ``[output_crashreporter]`` config section. It reported Python
   exceptions to api.cowrie.org and was disabled by default.
 
 **NEW FEATURES:**
 
-* **Shell scripting**: ``if``, ``while``, ``until``, ``for`` and
-  ``case``, the ``test`` / ``[`` builtin, real exit statuses, ``$?``,
-  ``&&`` and ``||``, ``exit N``, and the ``exec`` builtin. Uploaded
-  scripts run through the same parser. The exit status is reported to
-  the SSH client.
-* **Shell parser**: Lark is the only shell parser. It supports ``&>``
-  and ``&>>`` redirects, real pipelines, and command substitution that
-  waits for slow commands such as ``wget``.
-* **New shell commands**: ``su`` and ``chpasswd``.
-* ``grep`` reads stdin when no files are given and accepts ``-m``.
-* **New output plugins**: Kafka (``aiokafka``, needs the asyncio
-  reactor), Signal messenger, and URLhaus.
-* The ``textlog`` output can write OCSF records (``format = ocsf``).
 * **HAProxy PROXY protocol**: listen endpoints accept a ``haproxy:``
   prefix, so Cowrie logs the attacker's address behind a load balancer.
+* ``grep`` reads stdin when no files are given.
+* ``wget -O-`` and ``curl -o -`` write the download to stdout.
+* A Nix flake for building and developing Cowrie.
+
+**SECURITY AND HARDENING:**
+
+* Downloads that pass ``download_limit_size`` are aborted.
+* ``ftpget`` and ``tftp`` have a rate limit, the size limit and the
+  outbound bind address. ``tftp`` validates the address it contacts.
+* ``nc`` connects to the address it validated and no longer blocks the
+  reactor.
+* The outbound rate limiter treats host names case-insensitively.
+* scp upload parsing is hardened. ``[shell] scp_max_files_per_session``
+  caps uploads per session.
+* Attacker bytes that are not valid UTF-8, malformed telnet input, and
+  out-of-sequence keyboard-interactive responses no longer crash the
+  session.
+* SSH channel requests and window adjustments for unknown or closed
+  channels are ignored.
+* The LLM backend is hardened against attacker input and runaway API
+  use.
+* The Docker image has reproducible build metadata and a hardened
+  ``docker-compose.yml``.
+
+**BUG FIXES:**
+
+* Command substitution waits for slow commands such as ``wget`` and
+  carries their status into ``$?``.
+* Each shell has its own working directory and user identity.
+* Long pipelines no longer recurse per stage, and a stage that
+  finishes later is still fed.
+* A bare ``=`` is a command name, not an assignment.
+* An empty symbolic link target is a broken link.
+* ``AuthRandom`` lets returning attackers log in again.
+* The emulated filesystem uses ``/``-separated paths on every host, which
+  fixes SFTP directory listings and file operations on Windows.
+* Proxy mode flushes buffered frontend packets.
+* Output plugins handle failed HTTP requests, including GreyNoise.
+* Database outputs survive error-handler crashes and NULL string rows.
+* The CEF and Slack outputs match the event IDs Cowrie really emits.
+  Slack builds its client once and honors its ``timestamp`` option.
+* The ``reversedns`` output caches results.
+* scp stdin lines are logged as session input.
+
+**INTERNAL:**
+
+* Sessions share one copy-on-write honeyfs tree instead of a deep copy
+  each.
+
+
+Release 3.0.10 (2026-07-26)
+***************************
+
+**NEW FEATURES:**
+
+* **New output plugin**: Kafka, based on ``aiokafka``. It needs the
+  asyncio reactor. It reconnects, buffers events while disconnected,
+  and flushes them at shutdown.
+
+**BUG FIXES:**
+
+* Telnet logins work with bare-CR line endings, such as PuTTY's.
+* Malformed telnet IAC traffic no longer logs a traceback.
+
+
+Release 3.0.9 (2026-07-23)
+**************************
+
+**SECURITY AND HARDENING:**
+
+* Outbound downloads bind to ``[honeypot] out_addr``, so they do not
+  leak the server's own address.
+* IPv4-compatible IPv6 addresses are blocked as outbound targets.
+* ``tftp`` resolves the target host name before sending.
+
+**BUG FIXES:**
+
+* ``bash`` as the exec command reads the channel's stdin, and the shell
+  exits with the last command's status at EOF.
+* ``curl`` and ``wget`` handle a TCP connect timeout, and no longer
+  hang the session when the request fails at once.
+* Proxy mode drops OpenSSH host-key rotation requests.
+
+
+Release 3.0.8 (2026-07-20)
+**************************
+
+**SECURITY AND HARDENING:**
+
+* Outbound targets that are not globally routable are blocked,
+  including IPv4-mapped and embedded IPv4 IPv6 forms.
+
+
+Release 3.0.7 (2026-07-20)
+**************************
+
+**NEW FEATURES:**
+
+* The shell supports the ``exec`` builtin.
+
+**BUG FIXES:**
+
+* The PostgreSQL output works with restricted sequence permissions and
+  no longer fails with "no results to fetch".
+* A packet sent after the transport is gone no longer crashes.
+
+
+Release 3.0.6 (2026-07-11)
+**************************
+
+**NEW FEATURES:**
+
 * New ``[honeypot] log_level`` option sets the diagnostic verbosity of
   ``cowrie.log`` -- and of stdout in foreground/Docker mode -- (default
   ``info``), with per-subsystem overrides via ``log_level_<namespace>``
@@ -100,48 +447,28 @@ Releases 3.0.1 -- 3.0.15
   attacker-event lines (``cowrie.events``) keep an ``info`` floor unless
   explicitly overridden. Structured event output (cowrie.json,
   databases) is unaffected.
-* A Nix flake for building and developing Cowrie.
+* Lines typed while a command runs are parsed and logged as
+  ``cowrie.command.input``.
 
 **SECURITY AND HARDENING:**
 
-* Outbound fetches (``wget``, ``curl``, ``nc``, ``ftpget``, ``tftp``)
-  validate every redirect hop, connect to the address they validated,
-  and block addresses that are not globally routable, including
-  IPv4-mapped and IPv4-compatible IPv6 forms.
-* Outbound fetches bind to ``[honeypot] out_addr``, so they do not leak
-  the server's own address.
-* Every fetching command has its own rate limit, and ``download_limit_size``
-  applies to all of them. New ``[shell]`` options set the limits per
-  command.
-* Limits on shell input: ``[shell] max_input_size``,
-  ``parse_timeout_seconds`` and ``gc_collect_threshold`` stop large or
-  ambiguous input from stalling the reactor.
-* ``[shell] scp_max_files_per_session`` caps scp uploads per session.
-* Malformed SSH packets, telnet negotiation, non-UTF-8 attacker bytes,
-  and LLM prompt input no longer crash the session.
-* Untrusted bytes are escaped in logs, CEF output and Telegram
-  messages.
+* Malformed SSH packets are dropped and logged instead of crashing the
+  connection.
 
 **BUG FIXES:**
 
-* Many shell fixes: exit statuses of subshells and pipelines, variable
-  and ``$@`` expansion, redirects to bad file descriptors, directories
-  run as commands, and binary files passed to ``sh``.
-* Each shell has its own working directory and user identity.
-* Exec channels pass live stdin to the shell and deliver EOF correctly.
-* Telnet logins work with bare-CR line endings, such as PuTTY's.
-* Proxy mode: SFTP messages are reassembled correctly, buffered packets
-  are flushed, and host-key rotation requests are dropped.
-* SFTP and scp report the real upload size and store the file contents.
-* The ``jsonlog`` output appends instead of truncating, and survives log
-  rotation.
-* Database outputs: sqlite stores uploads and input; PostgreSQL
-  sequence permissions are fixed; error handlers no longer crash.
-* VirusTotal, MISP, DShield, Slack, GreyNoise and reversedns fixes:
-  correct event IDs, request-failure handling, and released session
-  state.
-* The emulated filesystem uses ``/``-separated paths on every host, which
-  fixes SFTP directory listings and file operations on Windows.
+* Async commands in scripts run one after another.
+* ``exit`` inside a command substitution keeps the session alive, and
+  late download callbacks after exit are harmless.
+* Exec channels reset the idle timeout on stdin, and ``cat`` redirects
+  capture exec stdin.
+* The ``jsonlog`` output writes each event in a single call, so it
+  survives log rotation.
+* Host names behind a CNAME and AAAA records resolve correctly.
+* EOF and CLOSE for already-closed SSH channels are ignored.
+* Captured logs are renamed correctly on Windows.
+* ``wget`` no longer divides by zero when computing speed, and logs
+  errors cleanly.
 
 **INTERNAL:**
 
@@ -156,11 +483,115 @@ Releases 3.0.1 -- 3.0.15
   markers and are plain diagnostics: pool bookkeeping is
   infrastructure, not attacker behavior, and never reached the output
   plugins.
-* Sessions share one copy-on-write honeyfs tree instead of a deep copy
-  each.
+
+**DEPENDENCIES:**
+
 * ``treq`` upgraded to 26.7.0; ``requests`` and ``urllib3`` dropped.
-* The Docker image pins its uid, has reproducible build metadata, and
-  drops pip, setuptools and wheel from the runtime venv.
+
+
+Release 3.0.5 (2026-06-27)
+**************************
+
+**NEW FEATURES:**
+
+* **Shell scripting**: ``if``, ``while``, ``until``, ``for`` and
+  ``case``, the ``test`` / ``[`` builtin, real exit statuses, ``$?``,
+  ``&&`` and ``||``, and ``exit N``. Uploaded scripts run through the
+  same parser. The exit status is reported to the SSH client.
+* **Shell parser**: Lark is the only shell parser. It supports ``&>``
+  and ``&>>`` redirects.
+* **New shell command**: ``su``.
+* The ``textlog`` output can write OCSF records (``format = ocsf``).
+
+**SECURITY AND HARDENING:**
+
+* Untrusted bytes are escaped when Cowrie logs SSH versions, KEXINIT
+  data, credentials and proxy commands.
+* A duplicate KEXINIT disconnects cleanly, and an invalid telnet IAC
+  byte no longer crashes the connection.
+
+**BUG FIXES:**
+
+* Many shell fixes: exit statuses of subshells and pipelines, unset
+  variable expansion, ``2>file`` against ``2 >file``, redirects with no
+  target or to bad file descriptors, directories run as commands, and
+  binary files passed to ``sh``.
+* Download commands exit non-zero on failure and remove empty
+  artifacts.
+* SFTP reports emulated-filesystem errors correctly.
+* VirusTotal comments on and collects uploads by file hash, and reuses
+  an existing collection.
+* A failed DNS lookup is logged at info level, and each telnet option
+  negotiation once per connection.
+* ``cowrie stop``, ``force-stop`` and ``status`` report a wrong
+  directory up front.
+
+**INTERNAL:**
+
+* The Docker image is published only from release tags.
+
+**DEPENDENCIES:**
+
+* cryptography 49.0.0.
+
+
+Release 3.0.4 (2026-06-22)
+**************************
+
+**BREAKING CHANGES - ACTION REQUIRED:**
+
+* **Event field rename**: ``cowrie.session.closed`` and
+  ``cowrie.log.closed`` report ``duration_ms`` as an integer number of
+  milliseconds. The ``duration`` field is gone. It was a string for
+  some transports and a float for others. Update dashboards and
+  index mappings that read ``duration``.
+
+**NEW FEATURES:**
+
+* **New shell command**: ``chpasswd``.
+* The DShield output records the last command of a session.
+
+**BUG FIXES:**
+
+* Exec channels deliver stdin EOF from the channel and send bare LF
+  without a PTY. Commands with no input see EOF.
+* Shell variables persist, and exported variables are kept apart.
+* An unset or empty ``PATH`` no longer breaks command dispatch.
+* A directory or a missing path run as a command reports EISDIR or
+  ENOENT.
+* scp uploads are stored as file content, not wire framing.
+* Telnet NAWS negotiation is restored, and negotiation retries no
+  longer crash at teardown.
+* Busybox applets honor output redirection.
+* An unknown ``auth_class`` falls back to ``UserDB``.
+* The MISP output looks up samples by MD5.
+* Failed ``wget`` and ``curl`` downloads leave no temp files.
+
+**DEPENDENCIES:**
+
+* cryptography 48.0.1.
+
+
+Release 3.0.3 (2026-06-08)
+**************************
+
+**NEW FEATURES:**
+
+* **New output plugin**: Signal messenger.
+
+
+Release 3.0.2 (2026-06-04)
+**************************
+
+* Dependency updates only.
+
+
+Release 3.0.1 (2026-05-31)
+**************************
+
+**BUG FIXES:**
+
+* Text commands honor ``txtcmds_path``.
 
 
 Release 3.0.0

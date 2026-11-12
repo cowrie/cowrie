@@ -3,6 +3,9 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+# ABOUTME: Small built-in commands (echo, yes, shutdown, reboot, history, ...)
+# ABOUTME: that do not need a module of their own.
+
 # coding=utf-8
 
 from __future__ import annotations
@@ -834,7 +837,19 @@ commands["/usr/bin/passwd"] = Command_passwd
 commands["passwd"] = Command_passwd
 
 
-class Command_shutdown(HoneyPotCommand):
+class SystemGoingDown(HoneyPotCommand):
+    """A command that announces the system is going down and, a moment
+    later, ends the session."""
+
+    def finish(self) -> None:
+        self.protocol.end_process(0)
+
+    def handle_CTRL_C(self) -> None:
+        # The shutdown is under way; Ctrl-C does not stop it.
+        pass
+
+
+class Command_shutdown(SystemGoingDown):
     def start(self) -> None:
         if self.args and self.args[0].strip().count("--help"):
             output = [
@@ -883,9 +898,6 @@ class Command_shutdown(HoneyPotCommand):
             self.write("Try `shutdown --help' for more information.\n")
             self.exit()
 
-    def finish(self) -> None:
-        self.protocol.end_process(0)
-
 
 commands["/sbin/shutdown"] = Command_shutdown
 commands["shutdown"] = Command_shutdown
@@ -895,7 +907,7 @@ commands["/sbin/halt"] = Command_shutdown
 commands["halt"] = Command_shutdown
 
 
-class Command_reboot(HoneyPotCommand):
+class Command_reboot(SystemGoingDown):
     def start(self) -> None:
         self.write("\n")
         self.write(
@@ -903,9 +915,6 @@ class Command_reboot(HoneyPotCommand):
         )
         self.write("The system is going down for reboot NOW!\n")
         self.callLater(3, self.finish)
-
-    def finish(self) -> None:
-        self.protocol.end_process(0)
 
 
 commands["/sbin/reboot"] = Command_reboot
@@ -943,8 +952,6 @@ commands["date"] = Command_date
 
 
 class Command_yes(HoneyPotCommand):
-    scheduled: Any
-
     def start(self) -> None:
         self.y()
 
@@ -953,11 +960,7 @@ class Command_yes(HoneyPotCommand):
             self.write(f"{' '.join(self.args)}\n")
         else:
             self.write("y\n")
-        self.scheduled = self.callLater(0.01, self.y)
-
-    def handle_CTRL_C(self) -> None:
-        self.scheduled.cancel()
-        self.exit()
+        self.callLater(0.01, self.y)
 
 
 commands["/usr/bin/yes"] = Command_yes

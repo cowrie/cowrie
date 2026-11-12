@@ -50,9 +50,7 @@ class AuthRandomReturningLoginTests(unittest.TestCase):
         self.tmp = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
         self._had = CowrieConfig.has_option("honeypot", "state_path")
-        self._old = (
-            CowrieConfig.get("honeypot", "state_path") if self._had else None
-        )
+        self._old = CowrieConfig.get("honeypot", "state_path") if self._had else None
         CowrieConfig.set("honeypot", "state_path", self.tmp)
         self.addCleanup(self._restore)
         self.auth = auth.AuthRandom()

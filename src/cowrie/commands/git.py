@@ -76,9 +76,7 @@ class Command_git(HoneyPotCommand):
                     f"Reinitialized existing Git repository in {path}/.git/\n"
                 )
             else:
-                self.fs.mkdir(
-                    pname, self.user["uid"], self.user["gid"], 4096, 16877
-                )
+                self.fs.mkdir(pname, self.user["uid"], self.user["gid"], 4096, 16877)
                 self.write(f"Initialized empty Git repository in {path}/.git/\n")
 
         elif subcommand == "status":

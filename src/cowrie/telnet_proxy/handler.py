@@ -3,17 +3,26 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+# ABOUTME: Relays telnet traffic between attacker and backend for the proxy,
+# ABOUTME: spotting the login exchange to log or replace the credentials.
+
 from __future__ import annotations
 
 import os
 import re
 import time
+from enum import Enum, auto
 
 from twisted.logger import Logger
 
 from cowrie.core import ttylog
 from cowrie.core.checkers import HoneypotPasswordChecker
 from cowrie.core.config import CowrieConfig
+from cowrie.core.pending import PendingQueue
+
+# Telnet replies to the backend's IAC WILL ECHO (RFC 857)
+IAC_DO_ECHO = b"\xff\xfd\x01"
+IAC_DONT_ECHO = b"\xff\xfe\x01"
 
 
 def process_backspaces(s: bytes) -> bytes:
@@ -39,6 +48,17 @@ def remove_all(original_string: bytes, remove_list: list[bytes]) -> bytes:
     for substring in remove_list:
         n = n.replace(substring, b"")
     return n
+
+
+class LoginPhase(Enum):
+    """Where the attacker is in the backend's login, as the proxy sees it."""
+
+    BEFORE_LOGIN = auto()  # no login or password prompt seen yet
+    USERNAME = auto()  # the attacker is typing a username
+    USERNAME_SENT = auto()  # the backend's echo of its own username is still to come
+    PASSWORD = auto()  # the attacker is typing a password
+    AWAITING_PROMPT = auto()  # an answer was sent; waiting for the next prompt
+    LOGGED_IN = auto()  # the honeypot accepted the credentials
 
 
 class TelnetHandler:
@@ -75,23 +95,16 @@ class TelnetHandler:
         self.currentCommand = b""
 
         # auth state
-        self.authStarted = False
-        self.authDone = False
-
+        self.phase = LoginPhase.BEFORE_LOGIN
         self.usernameState = b""  # TODO clear on end
-        self.inputingLogin = False
-
         self.passwordState = b""  # TODO clear on end
-        self.inputingPassword = False
-
-        self.waitingLoginEcho = False
 
         # some data is sent by the backend right before the password prompt, we want to capture that
         # and the respective frontend response and send it before starting to intercept auth data
         self.prePasswordData = False
 
-        # buffer
-        self.backend_buffer = []
+        # frontend data held until the backend connects
+        self.to_backend: PendingQueue[bytes] = PendingQueue(self._write_backend)
 
         # tty logging
         self.startTime = time.time()
@@ -107,8 +120,19 @@ class TelnetHandler:
             )
             ttylog.ttylog_open(self.ttylogFile, self.startTime)
 
+    @property
+    def authStarted(self) -> bool:
+        """Whether the backend has shown a login prompt yet."""
+        return self.phase is not LoginPhase.BEFORE_LOGIN
+
+    @property
+    def authDone(self) -> bool:
+        """Whether the attacker has logged in."""
+        return self.phase is LoginPhase.LOGGED_IN
+
     def setClient(self, client):
         self.client = client
+        self.to_backend.release()
 
     def close(self):
         if self.ttylogEnabled:
@@ -142,33 +166,26 @@ class TelnetHandler:
                 )
 
     def sendBackend(self, data: bytes) -> None:
-        self.backend_buffer.append(data)
+        self.to_backend.put(data)
 
-        if not self.client:
-            return
+    def _write_backend(self, data: bytes) -> None:
+        self.client.transport.write(data)
+        # log raw packets if user sets so
+        if CowrieConfig.getboolean("proxy", "log_raw", fallback=False):
+            self._log.info("to_backend - {data}", data=data.decode("unicode-escape"))
 
-        for packet in self.backend_buffer:
-            self.client.transport.write(packet)
-            # log raw packets if user sets so
-            if CowrieConfig.getboolean("proxy", "log_raw", fallback=False):
-                self._log.info(
-                    "to_backend - {data}", data=data.decode("unicode-escape")
-                )
-
-            if self.ttylogEnabled and self.authStarted:
-                cleanData = data.replace(
-                    b"\x00", b"\n"
-                )  # some frontends send 0xFF instead of newline
-                ttylog.ttylog_write(
-                    self.ttylogFile,
-                    len(cleanData),
-                    ttylog.TYPE_INPUT,
-                    time.time(),
-                    cleanData,
-                )
-                self.ttylogSize += len(cleanData)
-
-            self.backend_buffer = self.backend_buffer[1:]
+        if self.ttylogEnabled and self.authStarted:
+            cleanData = data.replace(
+                b"\x00", b"\n"
+            )  # some frontends send 0xFF instead of newline
+            ttylog.ttylog_write(
+                self.ttylogFile,
+                len(cleanData),
+                ttylog.TYPE_INPUT,
+                time.time(),
+                cleanData,
+            )
+            self.ttylogSize += len(cleanData)
 
     def sendFrontend(self, data: bytes) -> None:
         self.server.transport.write(data)
@@ -186,33 +203,21 @@ class TelnetHandler:
     def addPacket(self, parent: str, data: bytes) -> None:
         self.currentData = data
         self.sendData = True
+        # The packet that completes the login is the password, not a command.
+        was_logged_in = self.authDone
 
         if self.spoofAuthenticationData and not self.authDone:
-            # detect prompts from backend
             if parent == "backend":
                 self.setProcessingStateBackend()
-
-            # detect patterns from frontend
-            if parent == "frontend":
+            else:
                 self.setProcessingStateFrontend()
-
-            # save user inputs from frontend
-            if parent == "frontend":
-                if self.inputingPassword:
+                if self.phase is LoginPhase.PASSWORD:
                     self.processPasswordInput()
-
-                if self.inputingLogin:
+                elif self.phase is LoginPhase.USERNAME:
                     self.processUsernameInput()
 
-            # capture username echo from backend
-            if self.waitingLoginEcho and parent == "backend":
-                self.currentData = self.currentData.replace(
-                    self.backendLogin + b"\r\n", b""
-                )
-                self.waitingLoginEcho = False
-
         # log user commands
-        if parent == "frontend" and self.authDone:
+        if parent == "frontend" and was_logged_in:
             self.currentCommand += data.replace(b"\r\x00", b"").replace(b"\r\n", b"")
 
             # check if a command has terminated
@@ -267,20 +272,22 @@ class TelnetHandler:
                 "User input login: {username}",
                 username=self.usernameState.decode("unicode-escape"),
             )
-            self.inputingLogin = False
-
             # actually send to backend
             self.currentData = self.backendLogin + b"\r" + terminatingChar
             self.sendData = True
 
             # we now have to ignore the username echo from the backend in the next packet
-            self.waitingLoginEcho = True
+            self.phase = LoginPhase.USERNAME_SENT
 
     def processPasswordInput(self) -> None:
         self.sendData = False  # withold data until input is complete
 
         if self.prePasswordData:
-            self.sendBackend(self.currentData[:3])
+            # Pass on the client's answer to the backend's WILL ECHO. A client
+            # that skips negotiation sends none, and its first bytes are the
+            # password.
+            if self.currentData[:3] in (IAC_DO_ECHO, IAC_DONT_ECHO):
+                self.sendBackend(self.currentData[:3])
             self.prePasswordData = False
 
         # remove control characters
@@ -298,8 +305,6 @@ class TelnetHandler:
                 "User input password: {password}",
                 password=self.passwordState.decode("unicode-escape"),
             )
-            self.inputingPassword = False
-
             # having the password (and the username, either empy or set before), we can check the login
             # on the database, and if valid authenticate or else, if invalid send a fake password to get
             # the login failed prompt
@@ -308,13 +313,14 @@ class TelnetHandler:
                 self.usernameState, self.passwordState, src_ip, self.server.events
             ):
                 passwordToSend = self.backendPassword
-                self.authDone = True
+                self.phase = LoginPhase.LOGGED_IN
                 self.server.setTimeout(
                     CowrieConfig.getint("honeypot", "idle_timeout", fallback=300)
                 )
             else:
                 self._log.info("Sending invalid auth to backend")
                 passwordToSend = self.backendPassword + b"fake"
+                self.phase = LoginPhase.AWAITING_PROMPT
 
             # actually send to backend
             self.currentData = passwordToSend + b"\r" + terminatingChar
@@ -326,18 +332,23 @@ class TelnetHandler:
         It looks for authentication phases (password input and username input), as well as data that
         may need to be processed specially.
         """
+        if self.phase is LoginPhase.USERNAME_SENT:
+            # the first backend packet after the username echoes it back
+            self.currentData = self.currentData.replace(
+                self.backendLogin + b"\r\n", b""
+            )
+            self.phase = LoginPhase.AWAITING_PROMPT
+
         hasPassword = re.search(self.passwordPromptRegex, self.currentData)
         if hasPassword:
             self._log.info("Password prompt from backend")
-            self.authStarted = True
-            self.inputingPassword = True
+            self.phase = LoginPhase.PASSWORD
             self.passwordState = b""
 
         hasLogin = re.search(self.usernamePromptRegex, self.currentData)
         if hasLogin:
             self._log.info("Login prompt from backend")
-            self.authStarted = True
-            self.inputingLogin = True
+            self.phase = LoginPhase.USERNAME
             self.usernameState = b""
 
         self.prePasswordData = b"\xff\xfb\x01" in self.currentData

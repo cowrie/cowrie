@@ -33,6 +33,7 @@ OCSF_VERSION = "1.8.0"
 PRODUCT_NAME = "Cowrie Honeypot"
 VENDOR_NAME = "Cowrie"
 
+
 def _raw_data(logentry: dict[str, Any]) -> str:
     """
     Serialize the original Cowrie event to a compact JSON string for OCSF's

@@ -13,9 +13,11 @@ from unittest.mock import MagicMock, patch
 
 from twisted.conch.ssh import transport
 from twisted.conch.ssh.factory import SSHFactory
+from twisted.internet.testing import StringTransport
 
 from cowrie.ssh_proxy.server_transport import FrontendSSHTransport
 from cowrie.test.eventcapture import capture_events, events_of
+from cowrie.test.test_ssh_transport import _kexinit_payload, _plain_packet
 
 
 def _transport() -> tuple[FrontendSSHTransport, MagicMock]:
@@ -107,6 +109,27 @@ class TestVersionParsing(unittest.TestCase):
 
         connection.write.assert_called_once_with(b"Protocol mismatch.\n")
         self.assertFalse(t.gotVersion)
+
+
+class TestStopAfterDrop(unittest.TestCase):
+    """Once a packet makes the frontend drop the connection, the packets that
+    arrived with it in the same read must not be processed."""
+
+    def test_pipelined_packet_after_failed_kexinit_is_ignored(self) -> None:
+        t, _ = _transport()
+        t.transport = StringTransport()
+        t.buf = b""
+        t.gotVersion = True
+        t.currentEncryptions = transport.SSHCiphers(b"none", b"none", b"none", b"none")
+        t.currentEncryptions.setKeys(b"", b"", b"", b"", b"", b"")
+        unmatched = _plain_packet(
+            bytes((transport.MSG_KEXINIT,)) + _kexinit_payload([b"bogus-kex"])
+        )
+
+        with patch.object(t, "sendDisconnect", wraps=t.sendDisconnect) as disconnect:
+            t.dataReceived(unmatched + unmatched)
+
+        disconnect.assert_called_once()
 
 
 class TestVersionStringCap(unittest.TestCase):

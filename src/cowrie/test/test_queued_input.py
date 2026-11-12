@@ -36,9 +36,7 @@ class QueuedInputTests(unittest.TestCase):
 
     def _finish_sleep(self) -> None:
         """End the pending sleep command as if its timer fired."""
-        cmd = self.proto.cmdstack[-1]
-        cmd.scheduled.cancel()
-        cmd.done()
+        self.proto.cmdstack[-1].exit()
 
     def test_queued_line_runs_after_command_exits(self) -> None:
         self.proto.lineReceived(b"sleep 100\n")

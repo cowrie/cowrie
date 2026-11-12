@@ -177,6 +177,31 @@ class TextToolExitStatusTests(CommandExitStatusTestCase):
         )
 
 
+class InterruptedCommandExitStatusTests(unittest.TestCase):
+    """A command stopped with Ctrl-C prints ^C and exits 128 + SIGINT, as
+    bash reports for a GNU tool killed by the signal."""
+
+    def interrupt(self, line: str) -> bytes:
+        """Start ``line``, press Ctrl-C, and return what the terminal shows."""
+        proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        tr = FakeTransport("", "31337")
+        proto.makeConnection(tr)
+        tr.clear()
+        try:
+            proto.lineReceived(f"{line}; echo status=$?".encode())
+            proto.handle_CTRL_C()
+            out: bytes = tr.value()
+        finally:
+            proto.connectionLost()
+        return out
+
+    def test_sleep(self) -> None:
+        self.assertIn(b"^C\nstatus=130\n", self.interrupt("sleep 100"))
+
+    def test_yes(self) -> None:
+        self.assertIn(b"^C\nstatus=130\n", self.interrupt("yes"))
+
+
 class MiscCommandExitStatusTests(CommandExitStatusTestCase):
     def test_sleep(self) -> None:
         self.check([("sleep", 1), ("sleep abc", 1), ("sleep --bogus", 1)])

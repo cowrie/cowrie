@@ -117,7 +117,9 @@ class ShellGrepCommandTests(unittest.TestCase):
         self.assertEqual(self.tr.value(), b"hello\n" + PROMPT)
 
     def test_grep_m1_stops_after_first_match(self) -> None:
-        self.proto.lineReceived(b"echo hello > gtxt; echo hello >> gtxt; grep -m1 hello gtxt\n")
+        self.proto.lineReceived(
+            b"echo hello > gtxt; echo hello >> gtxt; grep -m1 hello gtxt\n"
+        )
         self.assertEqual(self.tr.value(), b"hello\n" + PROMPT)
 
     def test_grep_quiet_prints_nothing(self) -> None:

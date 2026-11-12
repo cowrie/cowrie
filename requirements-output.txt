@@ -59,4 +59,4 @@ pika==1.4.4
 prometheus_client==0.26.0
 
 # kafka
-aiokafka==0.14.0
+aiokafka==0.15.0

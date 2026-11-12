@@ -3,6 +3,9 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+# ABOUTME: A fake ping: prints made-up replies once a second until the count
+# ABOUTME: is reached or Ctrl-C, then the statistics.
+
 from __future__ import annotations
 
 import getopt
@@ -10,7 +13,6 @@ import hashlib
 import random
 import re
 import socket
-from typing import Any
 
 from cowrie.shell.command import HoneyPotCommand
 
@@ -26,8 +28,6 @@ class Command_ping(HoneyPotCommand):
     ip: str
     count: int
     max: int
-    running: bool
-    scheduled: Any
 
     def valid_ip(self, address: str) -> bool:
         try:
@@ -40,7 +40,6 @@ class Command_ping(HoneyPotCommand):
     def start(self) -> None:
         self.host = ""
         self.max = 0
-        self.running = False
 
         try:
             optlist, args = getopt.gnu_getopt(self.args, "ci:")
@@ -85,9 +84,8 @@ class Command_ping(HoneyPotCommand):
                 [str(int(x, 16)) for x in (s[0:2], s[2:4], s[4:6], s[6:8])]
             )
 
-        self.running = True
         self.write(f"PING {self.host} ({self.ip}) 56(84) bytes of data.\n")
-        self.scheduled = self.callLater(0.2, self.showreply)
+        self.callLater(0.2, self.showreply)
         self.count = 0
 
     def showreply(self) -> None:
@@ -97,13 +95,12 @@ class Command_ping(HoneyPotCommand):
         )
         self.count += 1
         if self.count == self.max:
-            self.running = False
             self.write("\n")
             self.printstatistics()
             self.exit()
             return
         else:
-            self.scheduled = self.callLater(1, self.showreply)
+            self.callLater(1, self.showreply)
 
     def printstatistics(self) -> None:
         self.write(f"--- {self.host} ping statistics ---\n")
@@ -113,13 +110,9 @@ class Command_ping(HoneyPotCommand):
         self.write("rtt min/avg/max/mdev = 48.264/50.352/52.441/2.100 ms\n")
 
     def handle_CTRL_C(self) -> None:
-        if self.running is False:
-            return HoneyPotCommand.handle_CTRL_C(self)
-        else:
-            self.write("^C\n")
-            self.scheduled.cancel()
-            self.printstatistics()
-            self.exit()
+        self.write("^C\n")
+        self.printstatistics()
+        self.exit()
 
 
 commands["/bin/ping"] = Command_ping

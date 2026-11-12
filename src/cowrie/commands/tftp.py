@@ -490,9 +490,7 @@ class Command_tftp(HoneyPotCommand):
             self.fs.update_realfile(
                 self.fs.getfile(self.fakeoutfile), self.artifactFile.shasumFilename
             )
-            self.fs.chown(
-                self.fakeoutfile, self.user["uid"], self.user["gid"]
-            )
+            self.fs.chown(self.fakeoutfile, self.user["uid"], self.user["gid"])
 
         self._safe_exit()
 

@@ -29,9 +29,7 @@ class ReadConfigFileTests(unittest.TestCase):
         )
 
     def test_user_file_overlays_bundled_default(self) -> None:
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".cfg", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".cfg", delete=False) as f:
             f.write("[honeypot]\nhostname = myoverride\n")
             user_cfg = f.name
         self.addCleanup(os.unlink, user_cfg)
