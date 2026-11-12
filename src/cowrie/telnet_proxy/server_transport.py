@@ -26,6 +26,7 @@ from twisted.protocols.policies import TimeoutMixin
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.events import EventLog, transport_events
+from cowrie.core.traffic import CountingTransport
 from cowrie.telnet_proxy import client_transport
 from cowrie.telnet_proxy.handler import TelnetHandler
 
@@ -35,6 +36,10 @@ if TYPE_CHECKING:
 
 # object is added for Python 2.7 compatibility (#1198) - as is super with args
 class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
+    # Bytes received from and sent to the client, for cowrie.session.closed.
+    bytes_in: int = 0
+    bytes_out: int = 0
+
     _log = Logger()
 
     # The session's event emitter, bound in connectionMade when the running
@@ -64,6 +69,8 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
         self.telnetHandler = TelnetHandler(self)
 
     def connectionMade(self):
+        # Before the first byte is written.
+        self.transport = CountingTransport(self.transport, self)
         self.transportId = uuid.uuid4().hex[:12]
         self.sessionno = f"T{self.transport.sessionno}"
 
@@ -177,6 +184,7 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
         d.addErrback(self.backend_connection_error)
 
     def dataReceived(self, data: bytes) -> None:
+        self.bytes_in += len(data)
         self.telnetHandler.addPacket("frontend", data)
 
     def write(self, data):
@@ -233,6 +241,8 @@ class FrontendTelnetTransport(TimeoutMixin, TelnetTransport):
         if self.startTime is not None:  # startTime is not set when auth fails
             duration_ms = round((time.time() - self.startTime) * 1000)
             if self.events is not None:
-                self.events.session_closed(duration_ms)
+                self.events.session_closed(
+                    duration_ms, bytes_in=self.bytes_in, bytes_out=self.bytes_out
+                )
         if self.events is not None:
             self.events.close()
