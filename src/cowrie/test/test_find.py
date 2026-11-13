@@ -8,6 +8,7 @@ from __future__ import annotations
 import os
 import tempfile
 import unittest
+from unittest import mock
 
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.fake_server import FakeAvatar, FakeServer
@@ -56,3 +57,18 @@ class ShellFindCommandTests(unittest.TestCase):
         # the default filesystem has links back to / under /proc
         self.proto.lineReceived(b"find / -name compose.yaml\n")
         self.assertEqual(self.tr.value(), PROMPT)
+
+    def test_find_resolves_paths_once_per_start_point(self) -> None:
+        # find runs in the reactor thread, so a walk that looks up every
+        # entry's path from / again stalls all sessions for over a second
+        with mock.patch.object(
+            self.proto.fs, "getfile", wraps=self.proto.fs.getfile
+        ) as getfile:
+            self.proto.lineReceived(b"find / -name compose.yaml\n")
+        self.assertEqual(self.tr.value(), PROMPT)
+        self.assertLess(getfile.call_count, 10)
+
+    def test_find_follows_symlink_given_as_start_path(self) -> None:
+        # /bin is a link to usr/bin
+        self.proto.lineReceived(b"find /bin -maxdepth 1 -name dash\n")
+        self.assertEqual(self.tr.value(), b"/bin/dash\n" + PROMPT)
