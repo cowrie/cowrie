@@ -13,6 +13,7 @@ import fnmatch
 import posixpath
 
 from cowrie.shell.command import HoneyPotCommand
+from cowrie.shell.fs import A_CONTENTS, A_NAME, A_TYPE, T_DIR, T_FILE, T_LINK, Node
 
 commands = {}
 
@@ -78,40 +79,49 @@ class Command_find(HoneyPotCommand):
 
             idx += 1
 
-        self.find_recursive(self.start_path, 0)
+        start = self.fs.getfile(self.start_path, follow_symlinks=False)
+        if start is not None:
+            self.find_recursive(self.start_path, start, 0)
         self.exit()
 
-    def find_recursive(self, path: str, depth: int) -> None:
+    def find_recursive(self, path: str, node: Node, depth: int) -> None:
+        """
+        Walk the tree from node, which is the filesystem entry at path.
+        Children are reached through the node itself, so the walk never
+        looks up a path from / again.
+        """
         if depth > self.maxdepth:
             return
         try:
-            if not self.fs.lexists(path):
-                return
-            if self._match(path):
+            if self._match(path, node):
                 self.write(f"{path}\n")
 
-            # Like GNU find's default -P, list symlinks below the start
-            # path but do not follow them.
-            if self.fs.isdir(path) and not (depth > 0 and self.fs.islink(path)):
-                for entry in self.fs.listdir(path):
-                    if entry in (".", ".."):
+            # A link given as the start path is followed. Like GNU find's
+            # default -P, links below it are listed but not followed.
+            if depth == 0 and node[A_TYPE] == T_LINK:
+                target = self.fs.getfile(path)
+                if target is None:
+                    return
+                node = target
+
+            if node[A_TYPE] == T_DIR:
+                for child in node[A_CONTENTS]:
+                    if child[A_NAME] in (".", ".."):
                         continue
-                    full_path = posixpath.join(path, entry)
-                    self.find_recursive(full_path, depth + 1)
+                    full_path = posixpath.join(path, child[A_NAME])
+                    self.find_recursive(full_path, child, depth + 1)
         except Exception as e:
             self.errorWrite(f"find: error accessing {path}: {e}\n")
 
-    def _match(self, path: str) -> bool:
+    def _match(self, path: str, node: Node) -> bool:
         basename = posixpath.basename(path)
 
         if self.name_pattern and not fnmatch.fnmatch(basename, self.name_pattern):
             return False
 
-        if self.type_filter and self.fs.islink(path):
+        if self.type_filter == "f" and node[A_TYPE] != T_FILE:
             return False
-        if self.type_filter == "f" and not self.fs.isfile(path):
-            return False
-        if self.type_filter == "d" and not self.fs.isdir(path):
+        if self.type_filter == "d" and node[A_TYPE] != T_DIR:
             return False
 
         return True
