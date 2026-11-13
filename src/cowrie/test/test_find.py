@@ -54,7 +54,7 @@ class ShellFindCommandTests(unittest.TestCase):
         self.assertEqual(self.tr.value(), PROMPT)
 
     def test_find_whole_filesystem_finishes(self) -> None:
-        # the default filesystem has links back to / under /proc
+        # following the relative links under /sys never finishes
         self.proto.lineReceived(b"find / -name compose.yaml\n")
         self.assertEqual(self.tr.value(), PROMPT)
 
