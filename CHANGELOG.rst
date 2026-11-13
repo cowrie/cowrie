@@ -10,6 +10,12 @@ Unreleased
 
 **SECURITY AND HARDENING:**
 
+* ``find`` lists symbolic links but no longer follows them, like GNU
+  ``find`` by default. Before, ``find / -name x`` followed the links
+  under ``/sys`` and never finished, and no other session got served
+  while it ran. ``-type f`` and ``-type d`` no longer match links, and
+  ``find`` now lists broken links. Reported by Tobi (@2Friendly4You)
+  in #40755.
 * ``printf`` caps the output one invocation builds in memory at 1 MiB.
   Before, a short command such as ``printf '%*d' 700000000 1`` could
   use up the process's memory and get Cowrie killed. A field width or
