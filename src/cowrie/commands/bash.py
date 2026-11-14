@@ -110,9 +110,9 @@ class Command_sh(HoneyPotCommand):
         if self.exec_channel_stdin():
             # The shell was exec'd as the SSH command (`ssh host bash`): its
             # stdin is the live channel, so keep reading command lines from it
-            # until EOF. A pty request (TERM set by getPty) makes the shell
-            # interactive, with a prompt.
-            interactive = "TERM" in self.protocol.environ
+            # until EOF. A pty request makes the shell interactive, with a
+            # prompt; TERM alone does not, as a client can send it without one.
+            interactive = self.protocol.terminal.has_pty
             reads_stdin = True
             self.protocol.stdin_line_mode = True
         elif not getattr(parentshell, "interactive", True):
