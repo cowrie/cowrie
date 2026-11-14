@@ -159,6 +159,29 @@ class StderrChannelTests(unittest.TestCase):
         self.assertEqual(bytes(channel.stdout), b"")
         self.assertEqual(bytes(channel.stderr), b"err\n")
 
+    def test_redirection_error_goes_to_stderr(self) -> None:
+        channel = self.run_exec(b"echo hi > /nonexistent/x")
+        self.assertEqual(bytes(channel.stdout), b"")
+        self.assertEqual(
+            bytes(channel.stderr),
+            b"bash: line 1: /nonexistent/x: No such file or directory\n",
+        )
+
+    def test_redirection_error_after_stderr_to_devnull(self) -> None:
+        """bash reports a failed redirection on fd 2 as the redirections
+        before it left it (checked against bash 5.3)."""
+        channel = self.run_exec(b"echo hi 2>/dev/null > /nonexistent/x")
+        self.assertEqual(bytes(channel.stdout), b"")
+        self.assertEqual(bytes(channel.stderr), b"")
+
+    def test_redirection_error_after_stderr_to_stdout(self) -> None:
+        channel = self.run_exec(b"echo hi 2>&1 > /nonexistent/x")
+        self.assertEqual(
+            bytes(channel.stdout),
+            b"bash: line 1: /nonexistent/x: No such file or directory\n",
+        )
+        self.assertEqual(bytes(channel.stderr), b"")
+
     def test_pty_merges_stderr_into_stdout(self) -> None:
         channel = self.run_exec(b"echo out; echo err >&2", pty=True)
         self.assertEqual(bytes(channel.stdout), b"out\nerr\n")

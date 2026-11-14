@@ -286,12 +286,10 @@ class PipeProtocol:
         return safeoutfile, start_size
 
     def _emit_redirection_error(self, message: str) -> None:
-        """Send a redirection-related error to the terminal and flag failure."""
+        """Report a failed redirection on stderr and flag failure. As in bash,
+        stderr is fd 2 as the redirections before the failed one left it."""
         self.redirection_error = True
-        try:
-            self.protocol.terminal.write(message.encode("utf8"))
-        except Exception:
-            self._log.info("{msg}", msg=message)
+        self._write_to_fd(2, message.encode("utf8"))
 
     def connectionMade(self) -> None:
         if self.input_data is None:
