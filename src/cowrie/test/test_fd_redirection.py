@@ -497,3 +497,63 @@ class ShellFunctionRedirectionTests(unittest.TestCase):
             self.tr.value(),
             b"-bash: /nonexistent/x: No such file or directory\nrc=1\n" + PROMPT,
         )
+
+
+class ShellExecRedirectionTests(unittest.TestCase):
+    """`exec` with only redirections changes the shell's own fds for the
+    rest of the session (checked against bash 5.3)."""
+
+    def setUp(self) -> None:
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("", "31337")
+        self.proto.makeConnection(self.tr)
+        self.tr.clear()
+
+    def tearDown(self) -> None:
+        self.proto.connectionLost()
+
+    def run_in_new_shell(self, line: bytes) -> bytes:
+        """Run ``line`` in a shell of its own, so fds one case set with exec
+        do not leak into the next."""
+        proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        tr = FakeTransport("", "31337")
+        proto.makeConnection(tr)
+        self.addCleanup(proto.connectionLost)
+        tr.clear()
+        proto.lineReceived(line)
+        output: bytes = tr.value()
+        return output
+
+    def test_exec_redirections_persist(self) -> None:
+        for line, expected in (
+            (b"exec 2>/dev/null; ls /nope; echo after", b"after\n"),
+            (b"exec 3>&1; echo hi >&3", b"hi\n"),
+            (
+                b"exec 3>&1; (echo sub >&3); bash -c 'echo child >&3'",
+                b"sub\nchild\n",
+            ),
+            (b"f() { exec 3>&1; }; f; echo hi >&3", b"hi\n"),
+            (b"exec >/tmp/ex; echo hi; exec >&2; cat /tmp/ex", b"hi\n"),
+        ):
+            with self.subTest(line=line):
+                self.assertEqual(self.run_in_new_shell(line), expected + PROMPT)
+
+    def test_exec_redirections_persist_across_lines(self) -> None:
+        self.proto.lineReceived(b"exec 2>/dev/null")
+        self.tr.clear()
+        self.proto.lineReceived(b"ls /nope; echo after")
+        self.assertEqual(self.tr.value(), b"after\n" + PROMPT)
+
+    def test_exec_in_a_subshell_stays_there(self) -> None:
+        self.proto.lineReceived(b"(exec 2>/dev/null; ls /nope1); ls /nope2")
+        self.assertEqual(
+            self.tr.value(),
+            b"ls: cannot access '/nope2': No such file or directory\n" + PROMPT,
+        )
+
+    def test_failed_exec_redirection_keeps_the_shell(self) -> None:
+        self.proto.lineReceived(b"exec 2>/nonexistent/x; echo after rc=$?")
+        self.assertEqual(
+            self.tr.value(),
+            b"-bash: /nonexistent/x: No such file or directory\nafter rc=1\n" + PROMPT,
+        )

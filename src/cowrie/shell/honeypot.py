@@ -1229,6 +1229,10 @@ class HoneyPotShell:
                 for real_path, virtual_path in pp.redirect_real_files:
                     self.protocol.terminal.redirFiles.add((real_path, virtual_path))
                 self.last_exit_code = 1 if pp.has_redirection_error else 0
+                if exec_seen and not pp.has_redirection_error:
+                    # `exec 2>/dev/null`, `exec 3>&1`: the redirections
+                    # change this shell's own output fds from here on.
+                    self.fds = pp.output_fds()
             self._advance()
             return
 
