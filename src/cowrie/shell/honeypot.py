@@ -153,14 +153,14 @@ class HoneyPotShell:
             self.environ["LINES"] = str(protocol.user.windowSize[0])
         self.parser = CommandParser()
         self.bashparser = BashParser(self)
-        # The shell's fd table for the commands it runs (stdout=1, stderr=2 and
-        # any higher fd a redirection opened on an enclosing group or on the
-        # command that started this shell), inherited by each command as a
-        # forked process inherits its parent's
-        # open files. A command applies its own redirections on top, and a
-        # redirection on a compound command (`{ ...; } > f`) swaps the shell's
-        # own entry for the group's duration. A top-level shell writes to the
-        # terminal; a capture child (see run_child) points fd 1 at a sink.
+        # The shell's fd table for the commands it runs: stdout=1, stderr=2 and
+        # any higher fd opened by exec, by a redirection on an enclosing group,
+        # or on the command that started this shell. Each command inherits it
+        # as a forked process inherits its parent's open files, and applies its
+        # own redirections on top. A redirection on a compound command
+        # (`{ ...; } > f`) changes the shell's own entries for the group's
+        # duration. A top-level shell writes to the terminal; a capture child
+        # (see run_child) points fd 1 at a sink.
         self.fds: dict[int, tuple[str, Any]] = {
             1: TERMINAL_STDOUT,
             2: TERMINAL_STDERR,
@@ -1128,9 +1128,11 @@ class HoneyPotShell:
         self, ops: list[dict[str, Any]]
     ) -> tuple[dict[int, tuple[str, Any]], bytes | None, bool]:
         """Apply redirection ops over this shell's fd table, opening any files
-        once for the whole group, and register their backing files. Returns the
-        new table, the stdin an input redirection among them supplies (or
-        None), and whether a redirection failed."""
+        once for the whole group (or for exec, the rest of the session), and
+        register their backing files so they are hashed/renamed or removed at
+        session close instead of being orphaned in the download directory.
+        Returns the new table, the stdin an input redirection among them
+        supplies (or None), and whether a redirection failed."""
         pp = self._make_pipe(None, [], None, ops)
         for real_path, virtual_path in pp.redirect_real_files:
             self.protocol.terminal.redirFiles.add((real_path, virtual_path))
@@ -1234,28 +1236,21 @@ class HoneyPotShell:
         # functions: it only runs files.
         if not exec_replace and args and args[0] in self.functions:
             name, call_args = args[0], args[1:]
-            if ops:
-                self._run_with_redirections(
-                    ops, lambda: self._call_function(name, call_args)
-                )
-            else:
-                self._call_function(name, call_args)
+            self._run_with_redirections(
+                ops, lambda: self._call_function(name, call_args)
+            )
             return
 
         if not args:
             if ops:
-                # Handle redirection without command (e.g. > file). This
-                # creates the backing files via _setup_redirections; register
-                # them so they are hashed/renamed or removed at session close
-                # instead of being orphaned in the download directory.
-                pp = self._make_pipe(None, [], None, ops)
-                for real_path, virtual_path in pp.redirect_real_files:
-                    self.protocol.terminal.redirFiles.add((real_path, virtual_path))
-                self.last_exit_code = 1 if pp.has_redirection_error else 0
-                if exec_seen and not pp.has_redirection_error:
+                # Redirections without a command (e.g. > file) still create
+                # their files.
+                fds, _stdin, error = self._open_redirection_fds(ops)
+                self.last_exit_code = 1 if error else 0
+                if exec_seen and not error:
                     # `exec 2>/dev/null`, `exec 3>&1`: the redirections
                     # change this shell's own output fds from here on.
-                    self.fds = pp.output_fds()
+                    self.fds = fds
             self._advance()
             return
 
