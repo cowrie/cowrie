@@ -167,6 +167,23 @@ class ShellGrepCommandTests(unittest.TestCase):
                 self.proto.lineReceived(line)
                 self.assertEqual(self.tr.value(), expected + PROMPT)
 
+    def test_grep_names_files_as_typed(self) -> None:
+        """Errors and -c prefixes show the file name as given, not the path
+        it resolves to."""
+        self.proto.lineReceived(b"echo ab > g1; echo x > g2\n")
+        for line, expected in (
+            (b"grep -c ab g1 g2", b"g1:1\ng2:0\n"),
+            (b"grep ab missing", b"grep: missing: No such file or directory\n"),
+            (
+                b"grep -c ab g1 missing",
+                b"g1:1\ngrep: missing: No such file or directory\n",
+            ),
+        ):
+            with self.subTest(line=line):
+                self.tr.clear()
+                self.proto.lineReceived(line)
+                self.assertEqual(self.tr.value(), expected + PROMPT)
+
     def test_grep_count_stdin_ctrl_d(self) -> None:
         self.proto.lineReceived(b"grep -c foo\n")
         self.proto.lineReceived(b"foobar\n")

@@ -48,15 +48,17 @@ class Command_grep(HoneyPotCommand):
     # Matches seen so far on interactive stdin, for -c at end of input.
     stdin_count: int = 0
 
-    def grep_get_contents(self, filename: str, match: str) -> None:
+    def grep_get_contents(self, path: str, name: str, match: str) -> None:
+        """Search the file at path; name is how the user wrote it, for
+        messages and -c prefixes."""
         try:
-            contents = self.fs.file_contents(filename)
+            contents = self.fs.file_contents(path)
         except Exception:
-            self.errorWrite(f"grep: {filename}: No such file or directory\n")
+            self.errorWrite(f"grep: {name}: No such file or directory\n")
             self.errored = True
             return
         count = self.grep_application(contents, match)
-        self.report_count(count, filename)
+        self.report_count(count, name)
 
     def report_count(self, count: int, filename: str | None = None) -> None:
         if not self.count_only or self.quiet:
@@ -174,8 +176,9 @@ class Command_grep(HoneyPotCommand):
             self.report_count(self.grep_application(self.input_data, self.match))
         elif files:
             self.show_names = len(files) > 1
-            for pname in self.check_arguments("grep", files):
-                self.grep_get_contents(pname, self.match)
+            for name in files:
+                for path in self.check_arguments("grep", [name]):
+                    self.grep_get_contents(path, name, self.match)
         else:
             # No file and no pipe: read stdin until EOF.
             self.interactive = True
