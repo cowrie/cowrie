@@ -83,11 +83,14 @@ class _Continuation:
     ``cmdpending`` so it can react to a condition's exit status or step a loop.
     ``is_loop_cont`` marks the continuation that closes one loop-body iteration,
     which is where a pending ``break`` / ``continue`` is consumed.
+    ``on_discard`` runs instead of ``fn`` when a ``break`` / ``continue``
+    drops this entry unreached, to undo state the entry would have restored.
     """
 
     fn: Callable[[], None]
     is_loop_cont: bool = False
     op: str | None = None
+    on_discard: Callable[[], None] | None = None
 
 
 class HoneyPotShell:
@@ -945,6 +948,8 @@ class HoneyPotShell:
                 if isinstance(node, _Continuation) and node.is_loop_cont:
                     break
                 self.cmdpending.pop(0)
+                if isinstance(node, _Continuation) and node.on_discard is not None:
+                    node.on_discard()
             if not self.cmdpending:
                 # break / continue with no enclosing loop body left: ignore it.
                 self._loop_signal = None
@@ -1084,8 +1089,16 @@ class HoneyPotShell:
         if stdin is not None:
             saved_stdin = (self.stdin,)
             self.stdin = stdin
+
+        def restore() -> None:
+            self._restore_fds(saved_fds, saved_stdin)
+
+        def restore_and_continue() -> None:
+            restore()
+            self._advance()
+
         self.cmdpending.insert(
-            0, _Continuation(lambda: self._restore_fds(saved_fds, saved_stdin))
+            0, _Continuation(restore_and_continue, on_discard=restore)
         )
         run_body()
 
@@ -1095,11 +1108,11 @@ class HoneyPotShell:
         saved_stdin: tuple[bytes | None] | None = None,
     ) -> None:
         """Restore the shell's fd table, and its stdin when the group
-        redirected that too, after a redirected group finishes."""
+        redirected that too, after a redirected group finishes or a break /
+        continue leaves it."""
         self.fds = saved
         if saved_stdin is not None:
             (self.stdin,) = saved_stdin
-        self._advance()
 
     def _open_redirection_fds(
         self, ops: list[dict[str, Any]]

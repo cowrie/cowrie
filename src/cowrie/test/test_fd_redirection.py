@@ -557,3 +557,45 @@ class ShellExecRedirectionTests(unittest.TestCase):
             self.tr.value(),
             b"-bash: /nonexistent/x: No such file or directory\nafter rc=1\n" + PROMPT,
         )
+
+
+class ShellRedirectionUnwindTests(unittest.TestCase):
+    """A break or continue that leaves a redirected group or function call
+    still undoes its redirections (checked against bash 5.3)."""
+
+    def setUp(self) -> None:
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("", "31337")
+        self.proto.makeConnection(self.tr)
+        self.tr.clear()
+
+    def tearDown(self) -> None:
+        self.proto.connectionLost()
+
+    def test_break_out_of_redirected_group(self) -> None:
+        self.proto.lineReceived(
+            b"for i in 1; do { break; } 2>/dev/null; done; ls /nope1"
+        )
+        self.assertEqual(
+            self.tr.value(),
+            b"ls: cannot access '/nope1': No such file or directory\n" + PROMPT,
+        )
+
+    def test_continue_out_of_redirected_group(self) -> None:
+        self.proto.lineReceived(
+            b"for i in 1 2; do { echo in $i; continue; } 2>/dev/null; done; ls /nope1"
+        )
+        self.assertEqual(
+            self.tr.value(),
+            b"in 1\nin 2\nls: cannot access '/nope1': No such file or directory\n"
+            + PROMPT,
+        )
+
+    def test_break_out_of_redirected_function_call(self) -> None:
+        self.proto.lineReceived(
+            b"for i in 1 2; do f() { break; }; f 2>/dev/null; done; ls /nope1"
+        )
+        self.assertEqual(
+            self.tr.value(),
+            b"ls: cannot access '/nope1': No such file or directory\n" + PROMPT,
+        )
