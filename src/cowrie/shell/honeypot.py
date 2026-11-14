@@ -1060,25 +1060,34 @@ class HoneyPotShell:
 
         def apply(tokens: list[str]) -> None:
             _, ops = self.parser.parse_redirections(tokens)
-            fds, stdin, error = self._open_redirection_fds(ops)
-            if error:
-                # bash reports the failure (already written) and skips the group.
-                self.last_exit_code = 1
-                self._advance()
-                return
-            saved_fds, self.fds = self.fds, fds
-            saved_stdin = None
-            if stdin is not None:
-                saved_stdin = (self.stdin,)
-                self.stdin = stdin
-            self.cmdpending.insert(
-                0, _Continuation(lambda: self._restore_fds(saved_fds, saved_stdin))
-            )
-            self._run_compound(command)
+            self._run_with_redirections(ops, lambda: self._run_compound(command))
 
         d = Deferred.fromCoroutine(self.bashparser.evaluate(redirections))
         d.addCallback(apply)
         d.addErrback(self._statement_failed)
+
+    def _run_with_redirections(
+        self, ops: list[dict[str, Any]], run_body: Callable[[], None]
+    ) -> None:
+        """Run a group's or a function's body with ``ops`` applied to the
+        shell's fd table, and to its stdin for an input redirection, then
+        restore both once the body drains: ``run_body`` queues the body after
+        the restore continuation queued here. A failed redirection is reported
+        (already written) and the body skipped with status 1, as in bash."""
+        fds, stdin, error = self._open_redirection_fds(ops)
+        if error:
+            self.last_exit_code = 1
+            self._advance()
+            return
+        saved_fds, self.fds = self.fds, fds
+        saved_stdin = None
+        if stdin is not None:
+            saved_stdin = (self.stdin,)
+            self.stdin = stdin
+        self.cmdpending.insert(
+            0, _Continuation(lambda: self._restore_fds(saved_fds, saved_stdin))
+        )
+        run_body()
 
     def _restore_fds(
         self,
@@ -1194,14 +1203,22 @@ class HoneyPotShell:
             self._advance()
             return
 
+        args, ops = self.parser.parse_redirections(cmd_tokens)
+
         # A call to a shell function defined earlier runs its body with the
-        # positional parameters bound to the call arguments. `exec` never
-        # sees functions: it only runs files.
-        if not exec_replace and cmd_tokens[0] in self.functions:
-            self._call_function(cmd_tokens[0], cmd_tokens[1:])
+        # positional parameters bound to the call arguments, and the call's
+        # redirections applied to the whole body. `exec` never sees
+        # functions: it only runs files.
+        if not exec_replace and args and args[0] in self.functions:
+            name, call_args = args[0], args[1:]
+            if ops:
+                self._run_with_redirections(
+                    ops, lambda: self._call_function(name, call_args)
+                )
+            else:
+                self._call_function(name, call_args)
             return
 
-        args, ops = self.parser.parse_redirections(cmd_tokens)
         if not args:
             if ops:
                 # Handle redirection without command (e.g. > file). This

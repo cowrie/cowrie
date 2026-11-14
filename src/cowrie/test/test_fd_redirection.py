@@ -463,3 +463,37 @@ class ShellHigherFdTests(unittest.TestCase):
     def test_fd_3_to_a_file(self) -> None:
         self.proto.lineReceived(b"{ echo a >&3; echo b >&3; } 3>/tmp/fd3; cat /tmp/fd3")
         self.assertEqual(self.tr.value(), b"a\nb\n" + PROMPT)
+
+
+class ShellFunctionRedirectionTests(unittest.TestCase):
+    """A redirection on a function call applies to the whole body, and is not
+    one of the function's arguments (checked against bash 5.3)."""
+
+    def setUp(self) -> None:
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("", "31337")
+        self.proto.makeConnection(self.tr)
+        self.tr.clear()
+
+    def tearDown(self) -> None:
+        self.proto.connectionLost()
+
+    def test_function_call_redirections(self) -> None:
+        for line, expected in (
+            (b"f() { echo hi; ls /nope; }; f 2>/dev/null", b"hi\n"),
+            (b"f() { echo hi; }; f > /tmp/fo; cat /tmp/fo", b"hi\n"),
+            (b"f() { echo hi >&3; }; f 3>&1", b"hi\n"),
+            (b'g() { echo "$1 $#"; }; g a 2>/dev/null', b"a 1\n"),
+            (b"f() { echo hi; }; f > /tmp/fo; f; echo end", b"hi\nend\n"),
+        ):
+            with self.subTest(line=line):
+                self.tr.clear()
+                self.proto.lineReceived(line)
+                self.assertEqual(self.tr.value(), expected + PROMPT)
+
+    def test_failed_redirection_skips_the_body(self) -> None:
+        self.proto.lineReceived(b"f() { echo ran; }; f > /nonexistent/x; echo rc=$?")
+        self.assertEqual(
+            self.tr.value(),
+            b"-bash: /nonexistent/x: No such file or directory\nrc=1\n" + PROMPT,
+        )
