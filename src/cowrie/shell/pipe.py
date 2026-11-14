@@ -27,6 +27,11 @@ FD_FILE = "file"
 FD_FILE_INPUT = "file_input"
 FD_DEVNULL = "devnull"
 
+# The terminal's output streams. A terminal target names the stream it writes
+# to, so a duplicated fd (2>&1) keeps writing to the stream it was copied from.
+TERMINAL_STDOUT = (FD_TERMINAL, 1)
+TERMINAL_STDERR = (FD_TERMINAL, 2)
+
 # Soft limit on open file descriptors (ulimit -n). A redirection naming an fd at
 # or above this is rejected by bash with "Bad file descriptor"; valid fds are
 # 0 .. MAX_OPEN_FILES - 1.
@@ -111,11 +116,11 @@ class PipeProtocol:
         # terminal; then apply this command's own redirections on top.
         self.targets[0] = (FD_STDIN, None)
         if self.base_targets is not None:
-            self.targets[1] = self.base_targets.get(1, (FD_TERMINAL, None))
-            self.targets[2] = self.base_targets.get(2, (FD_TERMINAL, None))
+            self.targets[1] = self.base_targets.get(1, TERMINAL_STDOUT)
+            self.targets[2] = self.base_targets.get(2, TERMINAL_STDERR)
         else:
-            self.targets[1] = (FD_TERMINAL, None)
-            self.targets[2] = (FD_TERMINAL, None)
+            self.targets[1] = TERMINAL_STDOUT
+            self.targets[2] = TERMINAL_STDERR
 
         # Defer reading stdin until all redirections are processed, so that
         # when an output redirection truncates the file also used for input
@@ -321,9 +326,12 @@ class PipeProtocol:
             status=reason.value.exitCode,
         )
 
-    def _write_to_terminal(self, data: bytes) -> None:
+    def _write_to_terminal(self, stream: int, data: bytes) -> None:
         if self.protocol is not None and self.protocol.terminal is not None:
-            self.protocol.terminal.write(data)
+            if stream == 2:
+                self.protocol.terminal.writeStderr(data)
+            else:
+                self.protocol.terminal.write(data)
         elif not self.terminal_lost:
             self.terminal_lost = True
             self._log.info("Connection was probably lost. Could not write to terminal")
@@ -343,7 +351,7 @@ class PipeProtocol:
         t_type, t_val = target
 
         if t_type == FD_TERMINAL:
-            self._write_to_terminal(data)
+            self._write_to_terminal(t_val, data)
         elif t_type == FD_CAPTURE:
             # The sink is a bytearray shared by every command writing to this
             # fd (a capture subshell, or a pipeline stage feeding the next).

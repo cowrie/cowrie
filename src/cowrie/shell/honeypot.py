@@ -45,7 +45,12 @@ from cowrie.shell.bashparse import (
     max_input_size,
 )
 from cowrie.shell.parser import CommandParser
-from cowrie.shell.pipe import FD_CAPTURE, FD_TERMINAL, PipeProtocol
+from cowrie.shell.pipe import (
+    FD_CAPTURE,
+    TERMINAL_STDERR,
+    TERMINAL_STDOUT,
+    PipeProtocol,
+)
 
 # Honeypot safety caps. A loop in an uploaded script must never hang or exhaust
 # the process: bound the number of iterations a single loop runs. Real malware
@@ -152,8 +157,8 @@ class HoneyPotShell:
         # own entry for the group's duration. A top-level shell writes to the
         # terminal; a capture child (see run_child) points fd 1 at a sink.
         self.fds: dict[int, tuple[str, Any]] = {
-            1: (FD_TERMINAL, None),
-            2: (FD_TERMINAL, None),
+            1: TERMINAL_STDOUT,
+            2: TERMINAL_STDERR,
         }
         # A shell a command starts (bash -c, a script, su -c) writes where that
         # command writes, so `$(bash -c ...)` or `sh x.sh > f` captures it.

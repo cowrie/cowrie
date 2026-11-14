@@ -48,6 +48,9 @@ class LoggingServerProtocol(insults.ServerProtocol):
         "honeypot", "ttylog_limit_size", fallback=10485760
     )
     ttylogMinFree: int = CowrieConfig.getint("honeypot", "ttylog_min_free", fallback=0)
+    # A pty merges stderr into stdout, as a terminal shows both. An SSH
+    # session without one sets this False and sends stderr on its own stream.
+    has_pty: bool = True
 
     def __init__(self, protocolFactory=None, *a, **kw):
         self.type: str
@@ -186,9 +189,22 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.ttylogWritten = written
         return len(data)
 
-    def write(self, data: bytes) -> None:
+    def recordOutput(self, data: bytes) -> None:
+        """Count output sent to the client and record it in the TTY log."""
         self.bytesSent += len(data)
         self.ttylogSize += self.ttylogWrite(ttylog.TYPE_OUTPUT, data)
+
+    def writeStderr(self, data: bytes) -> None:
+        """Send stderr output: merged into stdout on a pty, otherwise on the
+        SSH channel's stderr stream."""
+        if self.has_pty:
+            self.write(data)
+            return
+        self.recordOutput(data)
+        self.transport.errReceived(data)
+
+    def write(self, data: bytes) -> None:
+        self.recordOutput(data)
 
         if self.type == "e":
             # Exec channel: no PTY was allocated, so write raw bytes without
