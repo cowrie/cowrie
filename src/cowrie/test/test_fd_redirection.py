@@ -599,3 +599,27 @@ class ShellRedirectionUnwindTests(unittest.TestCase):
             self.tr.value(),
             b"ls: cannot access '/nope1': No such file or directory\n" + PROMPT,
         )
+
+
+class ShellExecInsideRedirectedGroupTests(unittest.TestCase):
+    """A redirected group restores only the fds it redirected, so an exec
+    inside it keeps its other changes (checked against bash 5.3)."""
+
+    def test_exec_inside_redirected_group(self) -> None:
+        for line, expected in (
+            (b"{ exec 2>/dev/null; } 3>&1; ls /nope3", b""),
+            (b"f() { exec 2>/dev/null; }; f 3>&1; ls /nope4", b""),
+            (b"{ exec 3>&1; } 2>/dev/null; echo hi >&3", b"hi\n"),
+            (
+                b"{ exec 2>/dev/null; } 2>/tmp/g; ls /nope5",
+                b"ls: cannot access '/nope5': No such file or directory\n",
+            ),
+        ):
+            with self.subTest(line=line):
+                proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+                tr = FakeTransport("", "31337")
+                proto.makeConnection(tr)
+                self.addCleanup(proto.connectionLost)
+                tr.clear()
+                proto.lineReceived(line)
+                self.assertEqual(tr.value(), expected + PROMPT)

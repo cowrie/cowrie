@@ -1084,7 +1084,11 @@ class HoneyPotShell:
             self.last_exit_code = 1
             self._advance()
             return
-        saved_fds, self.fds = self.fds, fds
+        # What each output fd the group redirects pointed at before (None:
+        # closed). Only these are restored, so an exec inside the body keeps
+        # its changes to other fds, as in bash. Stdin (fd 0) is saved below.
+        saved_fds = {op["fd"]: self.fds.get(op["fd"]) for op in ops if op["fd"] != 0}
+        self.fds = fds
         saved_stdin = None
         if stdin is not None:
             saved_stdin = (self.stdin,)
@@ -1104,13 +1108,19 @@ class HoneyPotShell:
 
     def _restore_fds(
         self,
-        saved: dict[int, tuple[str, Any]],
+        saved: dict[int, tuple[str, Any] | None],
         saved_stdin: tuple[bytes | None] | None = None,
     ) -> None:
-        """Restore the shell's fd table, and its stdin when the group
-        redirected that too, after a redirected group finishes or a break /
+        """Restore the fds a redirected group changed, and its stdin when the
+        group redirected that too, after the group finishes or a break /
         continue leaves it."""
-        self.fds = saved
+        fds = dict(self.fds)
+        for fd, target in saved.items():
+            if target is None:
+                fds.pop(fd, None)
+            else:
+                fds[fd] = target
+        self.fds = fds
         if saved_stdin is not None:
             (self.stdin,) = saved_stdin
 
