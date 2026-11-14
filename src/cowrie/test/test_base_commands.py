@@ -292,13 +292,13 @@ class ShellFileCommandsTests(unittest.TestCase):
         self.assertTrue(self.proto.fs.exists(path))
         self.assertTrue(self.proto.fs.isdir(path))
 
-    def test_mkdir_error_output(self) -> None:  # TODO: quotes?..
+    def test_mkdir_error_output(self) -> None:
         path = "/etc"
 
         self.proto.lineReceived(f"mkdir {path:s}\n".encode())
         self.assertEqual(
             self.tr.value(),
-            f"mkdir: cannot create directory `{path:s}': File exists\n".encode()
+            f"mkdir: cannot create directory '{path:s}': File exists\n".encode()
             + PROMPT,
         )
 
