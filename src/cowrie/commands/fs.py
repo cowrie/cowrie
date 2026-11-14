@@ -41,14 +41,32 @@ class Command_grep(HoneyPotCommand):
     max_count: int | None = None
     match_count: int = 0
     ignore_case: bool = False
+    # -c: print the number of matching lines instead of the lines.
+    count_only: bool = False
+    # Counts are prefixed with the file name when grep reads several files.
+    show_names: bool = False
+    # Matches seen so far on interactive stdin, for -c at end of input.
+    stdin_count: int = 0
 
-    def grep_get_contents(self, filename: str, match: str) -> None:
+    def grep_get_contents(self, path: str, name: str, match: str) -> None:
+        """Search the file at path; name is how the user wrote it, for
+        messages and -c prefixes."""
         try:
-            contents = self.fs.file_contents(filename)
-            self.grep_application(contents, match)
+            contents = self.fs.file_contents(path)
         except Exception:
-            self.errorWrite(f"grep: {filename}: No such file or directory\n")
+            self.errorWrite(f"grep: {name}: No such file or directory\n")
             self.errored = True
+            return
+        count = self.grep_application(contents, match)
+        self.report_count(count, name)
+
+    def report_count(self, count: int, filename: str | None = None) -> None:
+        if not self.count_only or self.quiet:
+            return
+        if self.show_names and filename is not None:
+            self.write(f"{filename}:{count}\n")
+        else:
+            self.write(f"{count}\n")
 
     def compile_match(self, match: str) -> re.Pattern[bytes]:
         bmatch = os.path.basename(match).replace('"', "").encode("utf8")
@@ -57,16 +75,24 @@ class Command_grep(HoneyPotCommand):
             flags = re.IGNORECASE
         return re.compile(bmatch, flags)
 
-    def grep_application(self, contents: bytes, match: str) -> None:
+    def grep_application(self, contents: bytes, match: str) -> int:
+        """Print the lines of contents that match; return how many matched."""
+        count = 0
         matcher = self.compile_match(match)
-        for line in contents.split(b"\n"):
+        lines = contents.split(b"\n")
+        if contents.endswith(b"\n"):
+            # The final newline ends the last line; it does not start a new one.
+            lines.pop()
+        for line in lines:
             if self.max_count is not None and self.match_count >= self.max_count:
                 break
             if matcher.search(line):
                 self.matched = True
                 self.match_count += 1
-                if not self.quiet:
+                count += 1
+                if not self.quiet and not self.count_only:
                     self.writeBytes(line + b"\n")
+        return count
 
     def help(self) -> None:
         self.writeBytes(
@@ -113,6 +139,8 @@ class Command_grep(HoneyPotCommand):
                 self.help()
             elif opt in ("-q", "--quiet", "--silent"):
                 self.quiet = True
+            elif opt == "-c":
+                self.count_only = True
             elif opt == "-m":
                 try:
                     n = int(arg)
@@ -145,10 +173,12 @@ class Command_grep(HoneyPotCommand):
         files = args[1:]
 
         if self.input_data is not None:
-            self.grep_application(self.input_data, self.match)
+            self.report_count(self.grep_application(self.input_data, self.match))
         elif files:
-            for pname in self.check_arguments("grep", files):
-                self.grep_get_contents(pname, self.match)
+            self.show_names = len(files) > 1
+            for name in files:
+                for path in self.check_arguments("grep", [name]):
+                    self.grep_get_contents(path, name, self.match)
         else:
             # No file and no pipe: read stdin until EOF.
             self.interactive = True
@@ -173,7 +203,7 @@ class Command_grep(HoneyPotCommand):
             input=line,
         )
         if self.interactive:
-            self.grep_application(line.encode("utf8"), self.match)
+            self.stdin_count += self.grep_application(line.encode("utf8"), self.match)
 
     def eofReceived(self) -> None:
         if self.interactive:
@@ -187,7 +217,8 @@ class Command_grep(HoneyPotCommand):
                 # exec): the bytes were streamed to the stdin log rather than
                 # arriving via lineReceived, so match against them now.
                 with open(terminal.stdinlogFile, "rb") as f:
-                    self.grep_application(f.read(), self.match)
+                    self.stdin_count += self.grep_application(f.read(), self.match)
+            self.report_count(self.stdin_count)
         self.exit(self._status())
 
 
