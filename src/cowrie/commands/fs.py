@@ -59,7 +59,11 @@ class Command_grep(HoneyPotCommand):
 
     def grep_application(self, contents: bytes, match: str) -> None:
         matcher = self.compile_match(match)
-        for line in contents.split(b"\n"):
+        lines = contents.split(b"\n")
+        if contents.endswith(b"\n"):
+            # The final newline ends the last line; it does not start a new one.
+            lines.pop()
+        for line in lines:
             if self.max_count is not None and self.match_count >= self.max_count:
                 break
             if matcher.search(line):

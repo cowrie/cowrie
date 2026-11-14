@@ -138,6 +138,12 @@ class ShellGrepCommandTests(unittest.TestCase):
                 self.proto.lineReceived(line)
                 self.assertEqual(self.tr.value(), expected + PROMPT)
 
+    def test_grep_final_newline_is_not_an_empty_line(self) -> None:
+        """The newline that ends a file's last line does not start another,
+        empty line that a pattern could match."""
+        self.proto.lineReceived(b"echo a > g1; echo b >> g1; grep '' g1\n")
+        self.assertEqual(self.tr.value(), b"a\nb\n" + PROMPT)
+
 
 if __name__ == "__main__":
     unittest.main()
