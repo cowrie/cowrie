@@ -139,6 +139,11 @@ class StderrChannelTests(unittest.TestCase):
             b"LS: CANNOT ACCESS '/NONEXISTENT': NO SUCH FILE OR DIRECTORY\n",
         )
 
+    def test_fd_3_copied_from_stderr_keeps_the_stream(self) -> None:
+        channel = self.run_exec(b"{ echo hi >&3; } 3>&2")
+        self.assertEqual(bytes(channel.stdout), b"")
+        self.assertEqual(bytes(channel.stderr), b"hi\n")
+
     def test_stderr_to_devnull(self) -> None:
         channel = self.run_exec(b"ls /nonexistent 2>/dev/null")
         self.assertEqual(bytes(channel.stdout), b"")

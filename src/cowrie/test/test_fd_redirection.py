@@ -425,3 +425,41 @@ class ShellFdRedirectionTests(unittest.TestCase):
                 self.tr.clear()
                 self.proto.lineReceived(line + b"; echo st=$?")
                 self.assertEqual(self.tr.value(), error + b"st=1\n" + PROMPT)
+
+
+class ShellHigherFdTests(unittest.TestCase):
+    """Fds above 2 opened on a group, subshell, loop or child shell are
+    inherited by the commands inside it, as in bash 5.3."""
+
+    def setUp(self) -> None:
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("", "31337")
+        self.proto.makeConnection(self.tr)
+        self.tr.clear()
+
+    def tearDown(self) -> None:
+        self.proto.connectionLost()
+
+    def test_fd_3_is_inherited(self) -> None:
+        for line, expected in (
+            (b"{ echo hi >&3; } 3>&1", b"hi\n"),
+            (b"(echo hi >&3) 3>&1", b"hi\n"),
+            (b"{ echo hi >&3; } 3>/dev/null", b""),
+            (b"bash -c 'echo hi >&3' 3>&1", b"hi\n"),
+            (b"x=$( { echo hi >&3; } 3>&1 ); echo got=$x", b"got=hi\n"),
+            (b"{ echo hi >&3; } 3>&1 | tr a-z A-Z", b"HI\n"),
+            (b"for i in 1 2; do echo $i >&3; done 3>&1", b"1\n2\n"),
+            (b"{ { echo hi >&4; } 4>&3; } 3>&1", b"hi\n"),
+        ):
+            with self.subTest(line=line):
+                self.tr.clear()
+                self.proto.lineReceived(line)
+                self.assertEqual(self.tr.value(), expected + PROMPT)
+
+    def test_fd_3_is_closed_after_the_group(self) -> None:
+        self.proto.lineReceived(b"{ :; } 3>&1; echo hi >&3")
+        self.assertEqual(self.tr.value(), b"-bash: 3: Bad file descriptor\n" + PROMPT)
+
+    def test_fd_3_to_a_file(self) -> None:
+        self.proto.lineReceived(b"{ echo a >&3; echo b >&3; } 3>/tmp/fd3; cat /tmp/fd3")
+        self.assertEqual(self.tr.value(), b"a\nb\n" + PROMPT)

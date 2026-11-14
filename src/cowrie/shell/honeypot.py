@@ -150,8 +150,10 @@ class HoneyPotShell:
             self.environ["LINES"] = str(protocol.user.windowSize[0])
         self.parser = CommandParser()
         self.bashparser = BashParser(self)
-        # The shell's fd table for the commands it runs (stdout=1, stderr=2),
-        # inherited by each command as a forked process inherits its parent's
+        # The shell's fd table for the commands it runs (stdout=1, stderr=2 and
+        # any higher fd a redirection opened on an enclosing group or on the
+        # command that started this shell), inherited by each command as a
+        # forked process inherits its parent's
         # open files. A command applies its own redirections on top, and a
         # redirection on a compound command (`{ ...; } > f`) swaps the shell's
         # own entry for the group's duration. A top-level shell writes to the
@@ -165,7 +167,7 @@ class HoneyPotShell:
         launcher = protocol.cmdstack[-1] if protocol.cmdstack else None
         launcher_pp = getattr(launcher, "pp", None)
         if launcher_pp is not None and getattr(launcher_pp, "targets", None):
-            self.fds = {1: launcher_pp.targets[1], 2: launcher_pp.targets[2]}
+            self.fds = launcher_pp.output_fds()
         # How this shell names itself in the errors it reports, as bash does
         # from $0: "-bash" for the login shell, the name as typed for bash -c
         # or a script (the launching command sets it). A non-interactive shell
@@ -301,11 +303,11 @@ class HoneyPotShell:
         )
 
     def _capture_fds(self) -> tuple[dict[int, tuple[str, Any]], bytearray]:
-        """An fd table whose stdout is a fresh capture sink; stderr is
-        inherited from this shell, so a substitution's or stage's errors reach
-        the terminal (or the enclosing capture) as bash does."""
+        """An fd table whose stdout is a fresh capture sink; stderr and higher
+        fds are inherited from this shell, so a substitution's or stage's
+        errors reach the terminal (or the enclosing capture) as bash does."""
         buf = bytearray()
-        return {1: (FD_CAPTURE, buf), 2: self.fds[2]}, buf
+        return {**self.fds, 1: (FD_CAPTURE, buf)}, buf
 
     def run_child(
         self,
@@ -321,7 +323,7 @@ class HoneyPotShell:
         ``last_exit_code`` and, when ``capture_buf`` is its stdout sink, its
         output in ``captured``.
 
-        ``fds`` is the child's stdout/stderr table. ``stdin`` is the pipe
+        ``fds`` is the child's output fd table. ``stdin`` is the pipe
         buffer the child reads; without one, an ``inherits_stdin`` child reads
         whatever this shell reads (a pipeline's first stage, a "(...)" group)
         and any other child sees EOF. The child starts with copies of this
@@ -1101,7 +1103,7 @@ class HoneyPotShell:
         for real_path, virtual_path in pp.redirect_real_files:
             self.protocol.terminal.redirFiles.add((real_path, virtual_path))
         return (
-            {1: pp.targets[1], 2: pp.targets[2]},
+            pp.output_fds(),
             pp.input_data,
             pp.has_redirection_error,
         )

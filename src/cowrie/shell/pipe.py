@@ -75,10 +75,10 @@ class PipeProtocol:
         # will ever feed it.
         self.stdin_from_pipe: bool = False
         self.protocol = protocol
-        # The command inherits its shell's fd table for stdout/stderr (fds 1
-        # and 2), as a forked process inherits its parent's open files, then
-        # applies its own redirections on top. Without one it writes to the
-        # terminal.
+        # The command inherits its shell's output fds (1, 2 and any higher
+        # ones open), as a forked process inherits its parent's open files,
+        # then applies its own redirections on top. Without them it writes to
+        # the terminal.
         self.base_targets = base_targets
         self.redirections = redirections or []
 
@@ -93,6 +93,11 @@ class PipeProtocol:
         self.terminal_lost = False
         self._setup_redirections()
         self.has_redirection_error = self.redirection_error
+
+    def output_fds(self) -> dict[int, tuple[str, Any]]:
+        """The fd table without stdin: what a shell this command starts, or a
+        group these redirections apply to, writes through."""
+        return {fd: target for fd, target in self.targets.items() if fd != 0}
 
     def _out_of_range_fd(self, op: dict[str, Any]) -> int | None:
         """Return the first file descriptor in ``op`` that exceeds the open-file
@@ -112,15 +117,13 @@ class PipeProtocol:
 
     def _setup_redirections(self) -> None:
         """Process redirection operations to build the FD table."""
-        # Inherit the shell's stdout/stderr (fds 1 and 2), or default to the
-        # terminal; then apply this command's own redirections on top.
+        # Inherit the shell's output fds, with stdout and stderr defaulting to
+        # the terminal; then apply this command's own redirections on top.
         self.targets[0] = (FD_STDIN, None)
+        self.targets[1] = TERMINAL_STDOUT
+        self.targets[2] = TERMINAL_STDERR
         if self.base_targets is not None:
-            self.targets[1] = self.base_targets.get(1, TERMINAL_STDOUT)
-            self.targets[2] = self.base_targets.get(2, TERMINAL_STDERR)
-        else:
-            self.targets[1] = TERMINAL_STDOUT
-            self.targets[2] = TERMINAL_STDERR
+            self.targets.update(self.base_targets)
 
         # Defer reading stdin until all redirections are processed, so that
         # when an output redirection truncates the file also used for input
