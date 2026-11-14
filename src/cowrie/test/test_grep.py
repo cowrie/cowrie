@@ -144,6 +144,37 @@ class ShellGrepCommandTests(unittest.TestCase):
         self.proto.lineReceived(b"echo a > g1; echo b >> g1; grep '' g1\n")
         self.assertEqual(self.tr.value(), b"a\nb\n" + PROMPT)
 
+    def test_grep_count(self) -> None:
+        """-c prints the number of matching lines instead of the lines.
+        Expected output is from GNU grep 3.12."""
+        self.proto.lineReceived(b"printf 'ab\\nc\\nab\\n' > g1; echo x > g2\n")
+        for line, expected in (
+            (b"grep -c processor /proc/cpuinfo", b"2\n"),
+            (b"grep -c ab g1; echo $?", b"2\n0\n"),
+            (b"grep -c zzz g1; echo $?", b"0\n1\n"),
+            (b"grep -c '' g1", b"3\n"),
+            (b"grep -c ab /root/g1 /root/g2", b"/root/g1:2\n/root/g2:0\n"),
+            (b"grep -c -m1 ab g1", b"1\n"),
+            (b"grep -cq ab g1; echo $?", b"0\n"),
+            (b"printf 'a\\nb\\na\\n' | grep -c a", b"2\n"),
+            (
+                b"grep -c ab /root/g1 /missing; echo $?",
+                b"/root/g1:2\ngrep: /missing: No such file or directory\n2\n",
+            ),
+        ):
+            with self.subTest(line=line):
+                self.tr.clear()
+                self.proto.lineReceived(line)
+                self.assertEqual(self.tr.value(), expected + PROMPT)
+
+    def test_grep_count_stdin_ctrl_d(self) -> None:
+        self.proto.lineReceived(b"grep -c foo\n")
+        self.proto.lineReceived(b"foobar\n")
+        self.proto.lineReceived(b"baz\n")
+        self.proto.lineReceived(b"foo\n")
+        self.proto.handle_CTRL_D()
+        self.assertEqual(self.tr.value(), b"2\n" + PROMPT)
+
 
 if __name__ == "__main__":
     unittest.main()
