@@ -1245,12 +1245,14 @@ class HoneyPotShell:
             if ops:
                 # Redirections without a command (e.g. > file) still create
                 # their files.
-                fds, _stdin, error = self._open_redirection_fds(ops)
+                fds, stdin, error = self._open_redirection_fds(ops)
                 self.last_exit_code = 1 if error else 0
                 if exec_seen and not error:
-                    # `exec 2>/dev/null`, `exec 3>&1`: the redirections
-                    # change this shell's own output fds from here on.
+                    # `exec 2>/dev/null`, `exec 3>&1`, `exec < f`: the
+                    # redirections change this shell's own fds from here on.
                     self.fds = fds
+                    if stdin is not None:
+                        self.stdin = stdin
             self._advance()
             return
 

@@ -646,3 +646,29 @@ class ShellCloseFdTests(unittest.TestCase):
                 tr.clear()
                 proto.lineReceived(line)
                 self.assertEqual(tr.value(), expected + PROMPT)
+
+
+class ShellExecStdinTests(unittest.TestCase):
+    """`exec < file` makes the file the shell's stdin for the commands after
+    it (checked against bash 5.3)."""
+
+    def setUp(self) -> None:
+        self.proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+        self.tr = FakeTransport("", "31337")
+        self.proto.makeConnection(self.tr)
+        self.proto.lineReceived(b"printf 'hello\\nworld\\n' > /tmp/in")
+        self.tr.clear()
+
+    def tearDown(self) -> None:
+        self.proto.connectionLost()
+
+    def test_exec_stdin_feeds_later_commands(self) -> None:
+        self.proto.lineReceived(b"exec < /tmp/in; read x; echo got=$x; cat")
+        self.assertEqual(self.tr.value(), b"got=hello\nworld\n" + PROMPT)
+
+    def test_exec_stdin_missing_file(self) -> None:
+        self.proto.lineReceived(b"exec < /nonexistent; echo rc=$?")
+        self.assertEqual(
+            self.tr.value(),
+            b"-bash: /nonexistent: No such file or directory\nrc=1\n" + PROMPT,
+        )
