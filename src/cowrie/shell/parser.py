@@ -190,9 +190,8 @@ class CommandParser:
             source_fd = 1 if fd is None else fd
 
             if target == "-":
-                # Close FD
-                # Not fully supported yet, but we can parse it
-                pass
+                # FD close: source_fd is no longer open
+                ops.append({"type": "close", "fd": source_fd})
             elif target.isdigit():
                 # FD duplication: source_fd = target_fd
                 ops.append({"type": "dup", "fd": source_fd, "target": int(target)})

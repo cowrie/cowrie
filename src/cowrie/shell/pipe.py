@@ -117,12 +117,14 @@ class PipeProtocol:
 
     def _setup_redirections(self) -> None:
         """Process redirection operations to build the FD table."""
-        # Inherit the shell's output fds, with stdout and stderr defaulting to
-        # the terminal; then apply this command's own redirections on top.
+        # Inherit the shell's output fds as they are, including a closed
+        # stdout or stderr, or without them write to the terminal; then apply
+        # this command's own redirections on top.
         self.targets[0] = (FD_STDIN, None)
-        self.targets[1] = TERMINAL_STDOUT
-        self.targets[2] = TERMINAL_STDERR
-        if self.base_targets is not None:
+        if self.base_targets is None:
+            self.targets[1] = TERMINAL_STDOUT
+            self.targets[2] = TERMINAL_STDERR
+        else:
             self.targets.update(self.base_targets)
 
         # Defer reading stdin until all redirections are processed, so that
@@ -177,6 +179,9 @@ class PipeProtocol:
             elif op["type"] == "dup":
                 fd = op["fd"]
                 self.targets[fd] = self.targets[op["target"]]
+
+            elif op["type"] == "close":
+                self.targets.pop(op["fd"], None)
 
         if isinstance(pending_stdin, str):
             self.input_data = self.protocol.fs.file_contents(pending_stdin)

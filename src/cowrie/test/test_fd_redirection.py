@@ -623,3 +623,26 @@ class ShellExecInsideRedirectedGroupTests(unittest.TestCase):
                 tr.clear()
                 proto.lineReceived(line)
                 self.assertEqual(tr.value(), expected + PROMPT)
+
+
+class ShellCloseFdTests(unittest.TestCase):
+    """`N>&-` closes fd N (checked against bash 5.3)."""
+
+    def test_close_fd(self) -> None:
+        bad_fd = b"-bash: 3: Bad file descriptor\n"
+        for line, expected in (
+            (b"exec 3>&1; exec 3>&-; echo hi >&3; echo rc=$?", bad_fd + b"rc=1\n"),
+            (b"echo hi 3>&1 3>&- >&3; echo rc=$?", bad_fd + b"rc=1\n"),
+            (b"ls /nope 2>&-; echo rc=$?", b"rc=2\n"),
+            (b"exec 2>&-; ls /nope; echo after", b"after\n"),
+            (b"{ echo hi >&3; } 3>&1 3>&-; echo rc=$?", bad_fd + b"rc=1\n"),
+            (b"exec 3>&1; { echo in >&3; } 3>&-; echo out >&3", bad_fd + b"out\n"),
+        ):
+            with self.subTest(line=line):
+                proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+                tr = FakeTransport("", "31337")
+                proto.makeConnection(tr)
+                self.addCleanup(proto.connectionLost)
+                tr.clear()
+                proto.lineReceived(line)
+                self.assertEqual(tr.value(), expected + PROMPT)
