@@ -1421,7 +1421,7 @@ class HoneyPotShell:
         self.protocol.lineBufferIndex = 0
         # At the `> ` prompt CTRL-C abandons the construct being written.
         self._discard_pending()
-        self.protocol.terminal.write(b"\n")
+        self.protocol.terminal.write(b"^C\n")
         self.showPrompt()
 
     def handle_TAB(self) -> None:

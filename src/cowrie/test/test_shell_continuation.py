@@ -118,8 +118,13 @@ class ShellContinuationTests(unittest.TestCase):
         self.assert_continues(b"if true", b"then echo dropped")
         self.tr.clear()
         self.proto.handle_CTRL_C()
-        self.assertEqual(self.tr.value(), b"\n" + PROMPT)
+        self.assertEqual(self.tr.value(), b"^C\n" + PROMPT)
         self.assertEqual(self.line(b"echo after"), b"after\n" + PROMPT)
+
+    def test_ctrl_c_at_the_prompt_shows_it(self) -> None:
+        """bash 5.3 shows ^C, then a fresh prompt."""
+        self.proto.handle_CTRL_C()
+        self.assertEqual(self.tr.value(), b"^C\n" + PROMPT)
 
     def test_ctrl_d_reports_unexpected_eof_and_keeps_the_session(self) -> None:
         self.assert_continues(b"if true")
