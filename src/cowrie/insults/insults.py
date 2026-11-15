@@ -73,6 +73,10 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         insults.ServerProtocol.__init__(self, protocolFactory, *a, **kw)
 
+        # Only an exec command is logged as one: its command goes into the
+        # TTY log and its stdin into the stdin log. A shell without a pty
+        # (a subclass) reads command lines as a terminal session does, so
+        # it is logged as interactive.
         if protocolFactory is protocol.HoneyPotExecProtocol:
             self.type = "e"  # Execcmd
         else:

@@ -416,6 +416,11 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
 
     def connectionMade(self) -> None:
         HoneyPotBaseProtocol.connectionMade(self)
+        self.start_shell()
+
+    def start_shell(self) -> None:
+        """Run the exec command in a non-interactive shell, within the exec
+        channel's fixed time limit."""
         self.setTimeout(60)
         self.cmdstack = [honeypot.HoneyPotShell(self, interactive=False)]
         # The parser treats newlines as statement separators, so a multi-line
@@ -490,13 +495,13 @@ class HoneyPotStdinShellProtocol(HoneyPotExecProtocol):
     editing."""
 
     def __init__(self, avatar):
+        # There is no exec command: the commands come from stdin.
         HoneyPotExecProtocol.__init__(self, avatar, b"")
         self.stdin_line_mode = True
 
-    def connectionMade(self) -> None:
+    def start_shell(self) -> None:
         # The base protocol's idle timeout applies, reset by each input line,
         # rather than the exec channel's fixed limit.
-        HoneyPotBaseProtocol.connectionMade(self)
         shell = honeypot.HoneyPotShell(self, interactive=False, reads_stdin=True)
         # A login shell reading stdin names itself "-bash" in its errors.
         shell.name = "-bash"
