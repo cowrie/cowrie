@@ -31,11 +31,13 @@ insults.LoggingServerProtocol.downloadPath = _DOWNLOAD_DIR
 
 class FakeChannel:
     """The SSH session channel: records what the server sends on the
-    channel's data stream and on its stderr (extended data) stream."""
+    channel's data stream, on its stderr (extended data) stream, and as
+    channel requests (exit-status)."""
 
     def __init__(self) -> None:
         self.stdout = bytearray()
         self.stderr = bytearray()
+        self.requests: list[tuple[bytes, bytes]] = []
         self.id = "chan0"
         self.buf = None
         events = _capture_pipeline(
@@ -51,7 +53,7 @@ class FakeChannel:
         )
         self.conn = SimpleNamespace(
             transport=conn_transport,
-            sendRequest=lambda *args: None,
+            sendRequest=lambda session, name, data: self.requests.append((name, data)),
             sendEOF=lambda session: None,
         )
 
@@ -66,23 +68,29 @@ class FakeChannel:
         pass
 
 
+def open_ssh_session(pty: bool) -> tuple[SSHSessionForCowrieUser, FakeChannel]:
+    """An SSH session for root on a fake channel, with a pty if ``pty``."""
+    channel = FakeChannel()
+    avatar = SimpleNamespace(
+        server=FakeServer(),
+        uid=0,
+        gid=0,
+        username="root",
+        home="/root",
+        temporary=False,
+        conn=channel.conn,
+    )
+    session = SSHSessionForCowrieUser(avatar)
+    if pty:
+        session.getPty(b"xterm", (25, 80, 0, 0), b"")
+    return session, channel
+
+
 class StderrChannelTests(unittest.TestCase):
     """An SSH session sends stderr on its own stream unless a pty merges it."""
 
     def open_session(self, pty: bool) -> tuple[SSHSessionForCowrieUser, FakeChannel]:
-        channel = FakeChannel()
-        avatar = SimpleNamespace(
-            server=FakeServer(),
-            uid=0,
-            gid=0,
-            username="root",
-            home="/root",
-            temporary=False,
-            conn=channel.conn,
-        )
-        session = SSHSessionForCowrieUser(avatar)
-        if pty:
-            session.getPty(b"xterm", (25, 80, 0, 0), b"")
+        session, channel = open_ssh_session(pty)
         self.channel = channel
         self.session = session
         return session, channel

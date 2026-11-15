@@ -88,9 +88,14 @@ class SSHSessionForCowrieUser:
             )
 
     def openShell(self, processprotocol):
-        self.protocol = insults.LoggingServerProtocol(
-            protocol.HoneyPotInteractiveProtocol, self
+        # Without a pty the shell reads commands from the channel, as a
+        # non-interactive shell, the way real sshd runs it.
+        shell_protocol = (
+            protocol.HoneyPotInteractiveProtocol
+            if self.has_pty
+            else protocol.HoneyPotStdinShellProtocol
         )
+        self.protocol = insults.LoggingServerProtocol(shell_protocol, self)
         self.protocol.has_pty = self.has_pty
         self.protocol.makeConnection(processprotocol)
         processprotocol.makeConnection(ProtocolTransport(self.protocol))

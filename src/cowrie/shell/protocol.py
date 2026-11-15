@@ -483,6 +483,31 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         HoneyPotBaseProtocol.eofReceived(self)
 
 
+class HoneyPotStdinShellProtocol(HoneyPotExecProtocol):
+    """A shell session without a pty (`ssh -T host`). Real sshd then runs the
+    login shell with the channel as its stdin, so it is not interactive: it
+    reads command lines until EOF and shows no motd, prompt, echo or line
+    editing."""
+
+    def __init__(self, avatar):
+        HoneyPotExecProtocol.__init__(self, avatar, b"")
+        self.stdin_line_mode = True
+
+    def connectionMade(self) -> None:
+        # The base protocol's idle timeout applies, reset by each input line,
+        # rather than the exec channel's fixed limit.
+        HoneyPotBaseProtocol.connectionMade(self)
+        shell = honeypot.HoneyPotShell(self, interactive=False, reads_stdin=True)
+        # A login shell reading stdin names itself "-bash" in its errors.
+        shell.name = "-bash"
+        shell.syntax_label = None
+        self.cmdstack = [shell]
+
+    def keystrokeReceived(self, keyID, modifier):
+        self.resetTimeout()
+        HoneyPotExecProtocol.keystrokeReceived(self, keyID, modifier)
+
+
 class HoneyPotInteractiveProtocol(HoneyPotBaseProtocol, recvline.HistoricRecvLine):
     def __init__(self, avatar):
         recvline.HistoricRecvLine.__init__(self)
