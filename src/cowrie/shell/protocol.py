@@ -442,19 +442,32 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
             return
         # Control bytes are handled as a tty would, which is only strictly
         # right when the client requested a pty; in a plain pipe they are
-        # rare enough that the difference does not matter.
+        # rare enough that the difference does not matter. With a pty the
+        # input is also echoed, as bash 5.3 shows it.
+        pty = self.terminal.has_pty
         if keyID in (b"\r", b"\n"):
+            if pty:
+                self.terminal.write(b"\n")
             self._dispatch_stdin_line()
         elif keyID == b"\x04" and not self._stdin_line:
             # CTRL-D on an empty line is EOF for the shell reading stdin.
             HoneyPotBaseProtocol.eofReceived(self)
         elif keyID in (b"\x08", b"\x7f"):
-            # Backspace / delete: drop the last byte of the pending line.
+            # Backspace / delete: drop the last byte of the pending line. On
+            # a pty, step back and clear to the end of the line, or ring the
+            # bell when there is nothing to delete.
+            if pty:
+                self.terminal.write(b"\x08\x1b[K" if self._stdin_line else b"\x07")
             del self._stdin_line[-1:]
         elif keyID == b"\x03":
-            # CTRL-C: discard the pending line.
+            # CTRL-C: discard the pending line. On a pty it is an interrupt:
+            # the command reading stdin, or else the shell, handles it.
             self._stdin_line.clear()
+            if pty and self.cmdstack:
+                self.cmdstack[-1].handle_CTRL_C()
         elif len(self._stdin_line) < self.STDIN_LINE_MAX:
+            if pty:
+                self.terminal.write(keyID)
             self._stdin_line += keyID
 
     def _dispatch_stdin_line(self) -> None:
