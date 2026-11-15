@@ -23,6 +23,9 @@ class SSHSessionForCowrieUser:
             requests. Uses the default reactor if None.
         """
         self.protocol = None
+        # The client requested a pty, which merges stderr into stdout and
+        # ends lines with \r\n.
+        self.has_pty = False
         self.avatar = avatar
         self.server = avatar.server
         self.username = avatar.username
@@ -32,10 +35,12 @@ class SSHSessionForCowrieUser:
         self.protocol = insults.LoggingServerProtocol(
             protocol.HoneyPotInteractiveProtocol, self
         )
+        self.protocol.has_pty = self.has_pty
         self.protocol.makeConnection(processprotocol)
         processprotocol.makeConnection(session.wrapProtocol(self.protocol))
 
     def getPty(self, terminal, windowSize, attrs):
+        self.has_pty = True
         # The terminal type is attacker input from the pty request and need
         # not be valid UTF-8.
         self.environ["TERM"] = terminal.decode("utf-8", errors="replace")
@@ -51,6 +56,7 @@ class SSHSessionForCowrieUser:
         self.protocol = insults.LoggingServerProtocol(
             protocol.HoneyPotExecProtocol, self, cmd
         )
+        self.protocol.has_pty = self.has_pty
         self.protocol.makeConnection(processprotocol)
         processprotocol.makeConnection(session.wrapProtocol(self.protocol))
 
