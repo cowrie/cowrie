@@ -95,10 +95,7 @@ class SSHSessionForCowrieUser:
             if self.has_pty
             else protocol.HoneyPotStdinShellProtocol
         )
-        self.protocol = insults.LoggingServerProtocol(shell_protocol, self)
-        self.protocol.has_pty = self.has_pty
-        self.protocol.makeConnection(processprotocol)
-        processprotocol.makeConnection(ProtocolTransport(self.protocol))
+        self._start_terminal(processprotocol, shell_protocol)
 
     def getPty(self, terminal, windowSize, attrs):
         self.has_pty = True
@@ -114,9 +111,13 @@ class SSHSessionForCowrieUser:
         self.windowSize = windowSize
 
     def execCommand(self, processprotocol, cmd):
-        self.protocol = insults.LoggingServerProtocol(
-            protocol.HoneyPotExecProtocol, self, cmd
-        )
+        self._start_terminal(processprotocol, protocol.HoneyPotExecProtocol, cmd)
+
+    def _start_terminal(self, processprotocol, terminal_protocol, *args):
+        """Connect the SSH channel to a logging terminal that runs
+        ``terminal_protocol`` for this session, with ``args`` after the
+        session in its constructor."""
+        self.protocol = insults.LoggingServerProtocol(terminal_protocol, self, *args)
         self.protocol.has_pty = self.has_pty
         self.protocol.makeConnection(processprotocol)
         processprotocol.makeConnection(ProtocolTransport(self.protocol))
