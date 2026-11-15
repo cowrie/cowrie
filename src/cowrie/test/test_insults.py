@@ -204,11 +204,18 @@ class TtylogRecordingTestCase(unittest.TestCase):
 class WriteLineEndingTestCase(unittest.TestCase):
     """Tests for LoggingServerProtocol.write() line-ending handling."""
 
-    def test_exec_channel_keeps_bare_newline(self) -> None:
-        """Exec channels have no PTY, so \\n must not be rewritten to \\r\\n."""
+    def test_no_pty_keeps_bare_newline(self) -> None:
+        """Without a pty, \\n must not be rewritten to \\r\\n."""
         lsp = make_protocol("e")
+        lsp.has_pty = False
         lsp.write(b"Linux server01 5.10.0 armv7l\n")
         self.assertEqual(lsp.transport.written, b"Linux server01 5.10.0 armv7l\n")
+
+    def test_pty_translates_newline(self) -> None:
+        """A pty rewrites \\n to \\r\\n, for exec and interactive sessions."""
+        lsp = make_protocol("e")
+        lsp.write(b"Linux server01 5.10.0 armv7l\n")
+        self.assertEqual(lsp.transport.written, b"Linux server01 5.10.0 armv7l\r\n")
 
     def test_interactive_channel_translates_newline(self) -> None:
         """Interactive PTY sessions still rewrite \\n to \\r\\n."""

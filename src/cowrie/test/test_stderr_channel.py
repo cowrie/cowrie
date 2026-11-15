@@ -197,8 +197,18 @@ class StderrChannelTests(unittest.TestCase):
 
     def test_pty_merges_stderr_into_stdout(self) -> None:
         channel = self.run_exec(b"echo out; echo err >&2", pty=True)
-        self.assertEqual(bytes(channel.stdout), b"out\nerr\n")
+        self.assertEqual(bytes(channel.stdout), b"out\r\nerr\r\n")
         self.assertEqual(bytes(channel.stderr), b"")
+
+    def test_exec_with_pty_ends_lines_with_crlf(self) -> None:
+        """`ssh -t host cmd`: the pty turns each \\n into \\r\\n, as a real
+        pty does with onlcr set."""
+        channel = self.run_exec(b"printf 'a\\nb\\n'", pty=True)
+        self.assertEqual(bytes(channel.stdout), b"a\r\nb\r\n")
+
+    def test_exec_without_pty_keeps_bare_newlines(self) -> None:
+        channel = self.run_exec(b"printf 'a\\nb\\n'")
+        self.assertEqual(bytes(channel.stdout), b"a\nb\n")
 
     def test_shell_without_pty_separates_stderr(self) -> None:
         """`ssh -T host` opens a shell with no pty: stderr has its own stream

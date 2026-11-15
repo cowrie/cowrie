@@ -120,7 +120,7 @@ class ExecShellStdinTests(unittest.TestCase):
         self.assertEqual(bytes(out), PROMPT)
         out.clear()
         lsp.dataReceived(b"echo hi\r")
-        self.assertEqual(bytes(out), b"hi\n" + PROMPT)
+        self.assertEqual(bytes(out), b"hi\r\n" + PROMPT)
 
     def test_term_without_pty_has_no_prompt(self) -> None:
         """A client can send TERM with an env request and no pty
@@ -185,13 +185,13 @@ class ExecShellStdinTests(unittest.TestCase):
         lsp, out, _ended = self.drive(b"bash", term="xterm")
         out.clear()
         lsp.dataReceived(b"echo hix\x7f\r")
-        self.assertEqual(bytes(out), b"hi\n" + PROMPT)
+        self.assertEqual(bytes(out), b"hi\r\n" + PROMPT)
 
     def test_ctrl_c_discards_pending_line(self) -> None:
         lsp, out, _ended = self.drive(b"bash", term="xterm")
         out.clear()
         lsp.dataReceived(b"echo dropped\x03echo kept\r")
-        self.assertEqual(bytes(out), b"kept\n" + PROMPT)
+        self.assertEqual(bytes(out), b"kept\r\n" + PROMPT)
 
     def test_overlong_line_is_capped(self) -> None:
         # The stdin buffer caps at STDIN_LINE_MAX so an endless unterminated
@@ -247,7 +247,7 @@ class ExecShellStdinTests(unittest.TestCase):
         self.assertEqual(bytes(out), b"> ")
         out.clear()
         lsp.dataReceived(b"then echo yes; fi\r")
-        self.assertEqual(bytes(out), b"yes\n" + PROMPT)
+        self.assertEqual(bytes(out), b"yes\r\n" + PROMPT)
 
     def test_eof_while_a_command_runs_still_runs_the_typed_ahead_lines(self) -> None:
         # The lines arrive while `sleep` holds the channel, so the EOF goes

@@ -206,10 +206,9 @@ class LoggingServerProtocol(insults.ServerProtocol):
     def write(self, data: bytes) -> None:
         self.recordOutput(data)
 
-        if self.type == "e" or not self.has_pty:
-            # Exec channel, or a shell without a pty: write raw bytes without
-            # the \n -> \r\n translation that insults.ServerProtocol.write()
-            # performs (which is only appropriate for PTY sessions).
+        if not self.has_pty:
+            # No pty: write raw bytes without the \n -> \r\n translation that
+            # insults.ServerProtocol.write() performs, as a real pty does.
             self.transport.write(data)
         else:
             insults.ServerProtocol.write(self, data)
