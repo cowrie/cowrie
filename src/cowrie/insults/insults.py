@@ -256,7 +256,12 @@ class LoggingServerProtocol(insults.ServerProtocol):
         for ch in iterbytes(data):
             if self.terminalProtocol is None:
                 break
-            insults.ServerProtocol.dataReceived(self, ch)
+            if self.has_pty:
+                insults.ServerProtocol.dataReceived(self, ch)
+            else:
+                # Without a pty the channel is a plain pipe: escape sequences
+                # are data, not keys, so every byte reaches the command as is.
+                self.terminalProtocol.keystrokeReceived(ch, None)
 
     def eofReceived(self) -> None:
         """
