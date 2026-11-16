@@ -237,6 +237,19 @@ class HoneyPotShell:
         """Look up a shell variable for the Lark word evaluator."""
         return self.environ.get(name)
 
+    @property
+    def is_login_shell(self) -> bool:
+        """A login shell names itself with a leading "-", as "-bash"."""
+        return self.name.startswith("-")
+
+    def exit_notice(self) -> str:
+        """What bash writes to stderr as this shell ends: "logout" for an
+        interactive login shell, "exit" for another interactive shell,
+        nothing otherwise."""
+        if not self.interactive:
+            return ""
+        return "logout\n" if self.is_login_shell else "exit\n"
+
     def error_prefix(self) -> str:
         """The prefix bash puts on an error it reports: its name and, for a
         non-interactive shell, the line being run."""
@@ -1419,6 +1432,8 @@ class HoneyPotShell:
             self._advance()
             return
         self._log.info("received eof, logging out")
+        if notice := self.exit_notice():
+            self._write_shell_error(notice.encode())
         self.protocol.end_process(self.last_exit_code)
 
     def handle_CTRL_C(self) -> None:

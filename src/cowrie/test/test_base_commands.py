@@ -39,13 +39,18 @@ class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
         self.proto.lineReceived(b"users \n")
         self.assertEqual(self.tr.value(), b"root\n" + PROMPT)
 
+    # An interactive login shell says "logout" as it ends (bash 5.3).
     def test_exit_command(self) -> None:
         self.proto.lineReceived(b"exit\n")
-        self.assertEqual(self.tr.value(), b"")
+        self.assertEqual(self.tr.value(), b"logout\n")
 
     def test_logout_command(self) -> None:
         self.proto.lineReceived(b"logout\n")
-        self.assertEqual(self.tr.value(), b"")
+        self.assertEqual(self.tr.value(), b"logout\n")
+
+    def test_ctrl_d_logs_out(self) -> None:
+        self.proto.handle_CTRL_D()
+        self.assertEqual(self.tr.value(), b"logout\n")
 
     def test_directory_as_command_reports_is_a_directory(self) -> None:
         # Typing a directory path as a command must report "Is a directory"

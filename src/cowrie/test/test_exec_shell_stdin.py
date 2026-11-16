@@ -106,9 +106,44 @@ class ExecShellStdinTests(unittest.TestCase):
         self.assertEqual(ended.get("code"), 0)
 
     def test_exit_reports_status(self) -> None:
-        lsp, _out, ended = self.drive(b"bash")
+        lsp, out, ended = self.drive(b"bash")
         lsp.dataReceived(b"exit 3\n")
         self.assertEqual(ended.get("code"), 3)
+        # A non-interactive shell ends without a word.
+        self.assertEqual(bytes(out), b"")
+
+    # An interactive shell that is not a login shell says "exit" as it
+    # ends, and refuses `logout` (bash 5.3).
+    def test_exit_with_pty_says_exit(self) -> None:
+        lsp, out, ended = self.drive(b"bash", term="xterm")
+        out.clear()
+        lsp.dataReceived(b"exit 3\r")
+        self.assertEqual(bytes(out), b"exit 3\r\nexit\r\n")
+        self.assertEqual(ended.get("code"), 3)
+
+    def test_ctrl_d_with_pty_says_exit(self) -> None:
+        lsp, out, ended = self.drive(b"bash", term="xterm")
+        out.clear()
+        lsp.dataReceived(b"\x04")
+        self.assertEqual(bytes(out), b"exit\r\n")
+        self.assertEqual(ended.get("code"), 0)
+
+    def test_logout_in_a_shell_that_is_not_a_login_shell(self) -> None:
+        lsp, out, ended = self.drive(b"bash", term="xterm")
+        out.clear()
+        lsp.dataReceived(b"logout\r")
+        self.assertEqual(
+            bytes(out),
+            b"logout\r\nbash: logout: not login shell: use `exit'\r\n" + PROMPT,
+        )
+        self.assertNotIn("code", ended)
+
+    def test_logout_as_the_exec_command(self) -> None:
+        _lsp, out, ended = self.drive(b"logout")
+        self.assertEqual(
+            bytes(out), b"bash: line 1: logout: not login shell: use `exit'\n"
+        )
+        self.assertEqual(ended.get("code"), 1)
 
     def test_cr_and_crlf_line_endings(self) -> None:
         lsp, out, _ended = self.drive(b"bash")
