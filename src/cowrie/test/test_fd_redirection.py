@@ -591,13 +591,15 @@ class ShellRedirectionUnwindTests(unittest.TestCase):
             + PROMPT,
         )
 
-    def test_break_out_of_redirected_function_call(self) -> None:
+    def test_break_in_redirected_function_call(self) -> None:
+        """break cannot leave the function, so its error goes to the call's
+        stderr, the loop goes on and the redirection is undone after it."""
         self.proto.lineReceived(
-            b"for i in 1 2; do f() { break; }; f 2>/dev/null; done; ls /nope1"
+            b"f() { break; }; for i in 1 2; do f 2>/dev/null; echo $i; done; ls /nope1"
         )
         self.assertEqual(
             self.tr.value(),
-            b"ls: cannot access '/nope1': No such file or directory\n" + PROMPT,
+            b"1\n2\nls: cannot access '/nope1': No such file or directory\n" + PROMPT,
         )
 
 
@@ -637,6 +639,53 @@ class ShellCloseFdTests(unittest.TestCase):
             (b"exec 2>&-; ls /nope; echo after", b"after\n"),
             (b"{ echo hi >&3; } 3>&1 3>&-; echo rc=$?", bad_fd + b"rc=1\n"),
             (b"exec 3>&1; { echo in >&3; } 3>&-; echo out >&3", bad_fd + b"out\n"),
+        ):
+            with self.subTest(line=line):
+                proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))
+                tr = FakeTransport("", "31337")
+                proto.makeConnection(tr)
+                self.addCleanup(proto.connectionLost)
+                tr.clear()
+                proto.lineReceived(line)
+                self.assertEqual(tr.value(), expected + PROMPT)
+
+    def test_write_to_closed_stdout(self) -> None:
+        """A command that writes to a closed stdout fails: a builtin with the
+        shell's prefix and status 1, an external command as coreutils
+        reports it (checked against bash 5.3 and coreutils 9.11)."""
+        builtin_err = b"-bash: %s: write error: Bad file descriptor\n"
+        for line, expected in (
+            (b"echo hi >&-; echo rc=$?", builtin_err % b"echo" + b"rc=1\n"),
+            (b"printf hi >&-; echo rc=$?", builtin_err % b"printf" + b"rc=1\n"),
+            (b"pwd >&-; echo rc=$?", builtin_err % b"pwd" + b"rc=1\n"),
+            (
+                b"{ echo a; echo b; } >&-; echo rc=$?",
+                builtin_err % b"echo" + builtin_err % b"echo" + b"rc=1\n",
+            ),
+            (
+                b"exec >&-; echo hi; echo rc=$? >&2",
+                builtin_err % b"echo" + b"rc=1\n",
+            ),
+            (
+                b"echo hi >&- | cat; echo rc=$?",
+                builtin_err % b"echo" + b"rc=0\n",
+            ),
+            # Nothing written, nothing fails.
+            (b"true >&-; echo rc=$?", b"rc=0\n"),
+            (b"echo -n '' >&-; echo rc=$?", b"rc=0\n"),
+            (
+                b"uname >&-; echo rc=$?",
+                b"uname: write error: Bad file descriptor\nrc=1\n",
+            ),
+            (
+                b"/bin/echo hi >&-; echo rc=$?",
+                b"/bin/echo: write error: Bad file descriptor\nrc=1\n",
+            ),
+            (b"ls / >&-; echo rc=$?", b"ls: write error: Bad file descriptor\nrc=2\n"),
+            (
+                b"cat /etc/passwd >&-; echo rc=$?",
+                b"cat: standard output: Bad file descriptor\nrc=1\n",
+            ),
         ):
             with self.subTest(line=line):
                 proto = HoneyPotInteractiveProtocol(FakeAvatar(FakeServer()))

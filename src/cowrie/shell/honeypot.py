@@ -218,9 +218,10 @@ class HoneyPotShell:
         # Exit status of the most recent command in this shell, for $? and the
         # && / || short-circuit logic.
         self.last_exit_code: int = 0
-        # Flow-control state: how many loops are currently running (so break /
-        # continue only act inside a loop) and a pending loop signal consumed by
-        # the innermost loop continuation.
+        # Flow-control state: how many loops are currently running in the
+        # current function call (so break / continue only act inside a loop)
+        # and a pending loop signal consumed by the innermost loop
+        # continuation.
         self._loop_depth: int = 0
         self._loop_signal: LoopSignal | None = None
         # Trampoline state for _advance (see its docstring).
@@ -235,6 +236,19 @@ class HoneyPotShell:
     def get_variable(self, name: str) -> str | None:
         """Look up a shell variable for the Lark word evaluator."""
         return self.environ.get(name)
+
+    @property
+    def is_login_shell(self) -> bool:
+        """A login shell names itself with a leading "-", as "-bash"."""
+        return self.name.startswith("-")
+
+    def exit_notice(self) -> str:
+        """What bash writes to stderr as this shell ends: "logout" for an
+        interactive login shell, "exit" for another interactive shell,
+        nothing otherwise."""
+        if not self.interactive:
+            return ""
+        return "logout\n" if self.is_login_shell else "exit\n"
 
     def error_prefix(self) -> str:
         """The prefix bash puts on an error it reports: its name and, for a
@@ -884,32 +898,36 @@ class HoneyPotShell:
         self.environ["@"] = " ".join(args)
         self.environ["*"] = " ".join(args)
 
+    def _positional_params(self) -> dict[str, str]:
+        """The current $1.. , $#, $@ and $* entries."""
+        return {
+            key: value
+            for key, value in self.environ.items()
+            if key.isdigit() or key in ("#", "@", "*")
+        }
+
     def replace_positional_params(self, args: list[str]) -> None:
         """Make ``args`` the only positional parameters, dropping any higher
         ones left from an earlier binding."""
-        for key in [k for k in self.environ if k.isdigit() or k in ("#", "@", "*")]:
+        for key in self._positional_params():
             del self.environ[key]
         self.set_positional_params(args)
 
     def _call_function(self, name: str, args: list[str]) -> None:
-        """Run a function body with $1.. , $#, $@ and $* bound to ``args``.
-
-        Only the positional parameters for this call ($1..$len(args)) are saved
-        and restored. bash also unsets any higher-numbered parameters on entry,
-        so a function called with fewer arguments than its caller would still
-        see the caller's $2.. here; emulating that needs per-call param scoping.
-        """
+        """Run a function body with $1.. , $#, $@ and $* bound to ``args``
+        alone, as bash does, and give the caller its own back afterwards."""
         body = self.functions[name]
-        params = [str(i) for i in range(1, len(args) + 1)] + ["#", "@", "*"]
-        saved = {key: self.environ.get(key) for key in params}
-        self.set_positional_params(args)
+        saved = self._positional_params()
+        self.replace_positional_params(args)
+        # The caller's loops are not the body's: break / continue in the
+        # body only see loops the body itself runs.
+        saved_loop_depth, self._loop_depth = self._loop_depth, 0
 
         def restore() -> None:
-            for key, value in saved.items():
-                if value is None:
-                    self.environ.pop(key, None)
-                else:
-                    self.environ[key] = value
+            for key in self._positional_params():
+                del self.environ[key]
+            self.environ.update(saved)
+            self._loop_depth = saved_loop_depth
             self._advance()
 
         self.cmdpending[0:0] = [*body, _Continuation(restore)]
@@ -1414,6 +1432,8 @@ class HoneyPotShell:
             self._advance()
             return
         self._log.info("received eof, logging out")
+        if notice := self.exit_notice():
+            self._write_shell_error(notice.encode())
         self.protocol.end_process(self.last_exit_code)
 
     def handle_CTRL_C(self) -> None:

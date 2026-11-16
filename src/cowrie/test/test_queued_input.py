@@ -81,4 +81,4 @@ class QueuedInputTests(unittest.TestCase):
         self.proto.lineReceived(b"echo bye\n")
         self.proto.lineReceived(b"exit\n")
         self._finish_sleep()
-        self.assertEqual(self.tr.value(), b"bye\n")
+        self.assertEqual(self.tr.value(), b"bye\nlogout\n")

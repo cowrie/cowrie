@@ -42,9 +42,20 @@ class ShellLsCommandTests(unittest.TestCase):
         self.proto.lineReceived(b"ls /\n")
         self.assertEqual(
             self.tr.value(),
-            b"bin   boot  dev   etc   home  lib   lib64 media mnt   opt   proc  root  run   \nsbin  srv   sys   tmp   usr   var   \n"
-            + PROMPT,
+            b"bin   boot  dev   etc   home  lib   lib64 media mnt   opt   proc  root  run\n"
+            b"sbin  srv   sys   tmp   usr   var\n" + PROMPT,
         )
+
+    def test_ls_lines_end_without_padding(self) -> None:
+        """GNU ls pads between columns only, never after the last name."""
+        for line, expected in (
+            (b"ls -d /tmp\n", b"/tmp\n"),
+            (b"ls .bashrc\n", b".bashrc\n"),
+        ):
+            with self.subTest(line=line):
+                self.tr.clear()
+                self.proto.lineReceived(line)
+                self.assertEqual(self.tr.value(), expected + PROMPT)
 
     def test_ls_command_003(self) -> None:
         self.proto.lineReceived(b"ls -l /\n")

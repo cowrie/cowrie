@@ -70,7 +70,9 @@ class ShellCatCommandTests(unittest.TestCase):
         self.proto.lineReceived(b"echo 1 | cat\n")
         self.proto.lineReceived(b"echo 2\n")
         self.proto.handle_CTRL_D()
-        self.assertEqual(self.tr.value(), b"1\n" + PROMPT + b"2\n" + PROMPT)
+        self.assertEqual(
+            self.tr.value(), b"1\n" + PROMPT + b"2\n" + PROMPT + b"logout\n"
+        )
 
     def test_cat_command_004(self) -> None:
         self.proto.lineReceived(b"cat\n")

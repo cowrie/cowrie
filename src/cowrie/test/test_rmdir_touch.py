@@ -76,7 +76,7 @@ class ShellTouchCommandTests(unittest.TestCase):
         """touch /nonexistent/f1 f2 still creates f2."""
         self.proto.lineReceived(b"touch /nonexistent/f1 f2")
         self.assertIn(
-            b"touch: cannot touch `/nonexistent/f1`: No such file or directory\n",
+            b"touch: cannot touch '/nonexistent/f1': No such file or directory\n",
             self.tr.value(),
         )
         self.tr.clear()
@@ -87,7 +87,7 @@ class ShellTouchCommandTests(unittest.TestCase):
         """touch /proc/x /tmp/ok1 still creates /tmp/ok1."""
         self.proto.lineReceived(b"touch /proc/x /tmp/ok1")
         self.assertIn(
-            b"touch: cannot touch `/proc/x`: Permission denied\n", self.tr.value()
+            b"touch: cannot touch '/proc/x': Permission denied\n", self.tr.value()
         )
         self.tr.clear()
         self.proto.lineReceived(b"ls -d /tmp/ok1")

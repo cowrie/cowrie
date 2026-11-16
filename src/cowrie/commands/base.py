@@ -1177,23 +1177,22 @@ commands["/bin/false"] = Command_false
 class Command_break(HoneyPotCommand):
     """``break`` -- stop the innermost enclosing for/while/until loop.
 
-    Signals the nearest shell that is currently running a loop; the loop's
-    executor consumes the signal at the end of the current body. Outside any
-    loop it is a no-op, matching how the honeypot tolerates stray builtins.
-
-    Loop state is tracked per shell, not per function call, so a ``break`` in a
-    function body still targets an enclosing loop in the same shell. Real bash
-    ignores a ``break`` that is not lexically inside a loop in the running
-    function; emulating that would need a per-function loop scope.
+    Signals the shell running it; the loop's executor consumes the signal at
+    the end of the current body. Only loops of that shell in the running
+    function count: a function call, a subshell and a child shell start with
+    none. Without a loop, bash reports the misuse and carries on with status 0.
     """
 
     signal = LoopSignal.BREAK
 
     def call(self) -> None:
-        for item in reversed(self.protocol.cmdstack):
-            if getattr(item, "_loop_depth", 0) > 0:
-                item._loop_signal = self.signal
-                return
+        if self.shell._loop_depth > 0:
+            self.shell._loop_signal = self.signal
+            return
+        self.errorWrite(
+            f"{self.shell.error_prefix()}{self.signal.value}: "
+            "only meaningful in a `for', `while', or `until' loop\n"
+        )
 
 
 class Command_continue(Command_break):

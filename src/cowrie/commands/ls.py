@@ -18,6 +18,9 @@ commands = {}
 
 
 class Command_ls(HoneyPotCommand):
+    # GNU ls treats a failed write as serious trouble.
+    closed_stdout_status = 2
+
     def uid2name(self, uid: int) -> str:
         try:
             name: str = Passwd().getpwuid(uid)["pw_name"]
@@ -109,7 +112,6 @@ class Command_ls(HoneyPotCommand):
         line = [x[fs.A_NAME] for x in files]
         if not line:
             return
-        count = 0
         maxlen = max(len(x) for x in line)
 
         try:
@@ -117,14 +119,12 @@ class Command_ls(HoneyPotCommand):
         except AttributeError:
             wincols = 80
 
-        perline = int(wincols / (maxlen + 1))
-        for f in line:
-            if count == perline:
-                count = 0
-                self.write("\n")
-            self.write(f.ljust(maxlen + 1))
-            count += 1
-        self.write("\n")
+        # Names are padded to the column width only when another name follows
+        # on the same line, so no line ends in spaces.
+        perline = max(1, wincols // (maxlen + 1))
+        for start in range(0, len(line), perline):
+            row = line[start : start + perline]
+            self.write("".join(f.ljust(maxlen + 1) for f in row[:-1]) + row[-1] + "\n")
 
     def do_ls_l(self, path: str, name: str) -> None:
         """

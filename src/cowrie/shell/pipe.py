@@ -32,6 +32,18 @@ FD_DEVNULL = "devnull"
 TERMINAL_STDOUT = (FD_TERMINAL, 1)
 TERMINAL_STDERR = (FD_TERMINAL, 2)
 
+# bash 5.3's builtins (`compgen -b`). An error a builtin reports carries the
+# shell's prefix ("-bash: echo: ..."); an external command reports under the
+# name it was run by ("uname: ...").
+BASH_BUILTINS = frozenset(
+    ". : [ alias bg bind break builtin caller cd command compgen complete "
+    "compopt continue declare dirs disown echo enable eval exec exit export "
+    "false fc fg getopts hash help history jobs kill let local logout mapfile "
+    "popd printf pushd pwd read readarray readonly return set shift shopt "
+    "source suspend test times trap true type typeset ulimit umask unalias "
+    "unset wait".split()
+)
+
 # Soft limit on open file descriptors (ulimit -n). A redirection naming an fd at
 # or above this is rejected by bash with "Bad file descriptor"; valid fds are
 # 0 .. MAX_OPEN_FILES - 1.
@@ -91,6 +103,9 @@ class PipeProtocol:
         # Set once a write finds the client gone, so a command that keeps
         # writing (a download's progress meter) logs the loss only once
         self.terminal_lost = False
+        # Set once the command wrote to a closed stdout; the write failed and
+        # was reported, and the command ends with a failure status.
+        self.stdout_write_failed = False
         self._setup_redirections()
         self.has_redirection_error = self.redirection_error
 
@@ -351,7 +366,10 @@ class PipeProtocol:
     def _write_to_fd(self, fd: int, data: bytes) -> None:
         target = self.targets.get(fd)
         if not target:
-            # Fallback or closed
+            # A closed fd: the write fails. Only a failed write to stdout is
+            # reported, as a real command checks that one.
+            if fd == 1 and data:
+                self._report_closed_stdout()
             return
 
         t_type, t_val = target
@@ -366,6 +384,17 @@ class PipeProtocol:
             self._write_to_file(t_val, data)
         elif t_type == FD_DEVNULL:
             pass
+
+    def _report_closed_stdout(self) -> None:
+        """Report, once, that the command wrote to a closed stdout, the way
+        the command itself would (see HoneyPotCommand.closed_stdout_error)."""
+        if self.stdout_write_failed:
+            return
+        self.stdout_write_failed = True
+        name = self.argv0 or ""
+        prefix = self.error_prefix if name in BASH_BUILTINS else ""
+        message = self.cmd.closed_stdout_error
+        self._write_to_fd(2, f"{prefix}{name}: {message}\n".encode())
 
     def _write_to_file(self, file_info: dict[str, Any], data: bytes) -> None:
         real_path = file_info["real"]

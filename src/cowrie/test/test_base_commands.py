@@ -39,13 +39,18 @@ class ShellBaseCommandsTests(unittest.TestCase):  # TODO: ps, history
         self.proto.lineReceived(b"users \n")
         self.assertEqual(self.tr.value(), b"root\n" + PROMPT)
 
+    # An interactive login shell says "logout" as it ends (bash 5.3).
     def test_exit_command(self) -> None:
         self.proto.lineReceived(b"exit\n")
-        self.assertEqual(self.tr.value(), b"")
+        self.assertEqual(self.tr.value(), b"logout\n")
 
     def test_logout_command(self) -> None:
         self.proto.lineReceived(b"logout\n")
-        self.assertEqual(self.tr.value(), b"")
+        self.assertEqual(self.tr.value(), b"logout\n")
+
+    def test_ctrl_d_logs_out(self) -> None:
+        self.proto.handle_CTRL_D()
+        self.assertEqual(self.tr.value(), b"logout\n")
 
     def test_directory_as_command_reports_is_a_directory(self) -> None:
         # Typing a directory path as a command must report "Is a directory"
@@ -252,11 +257,11 @@ class ShellFileCommandsTests(unittest.TestCase):
         self.proto.lineReceived(b"rm /usr/bin/sed\n")
         self.assertEqual(self.tr.value(), PROMPT)
 
-    def test_rm_error_output(self) -> None:  # TODO: quotes?..
+    def test_rm_error_output(self) -> None:
         self.proto.lineReceived(f"rm {NONEXISTEN_FILE:s}\n".encode())
         self.assertEqual(
             self.tr.value(),
-            f"rm: cannot remove `{NONEXISTEN_FILE:s}': No such file or directory\n".encode()
+            f"rm: cannot remove '{NONEXISTEN_FILE:s}': No such file or directory\n".encode()
             + PROMPT,
         )
 
@@ -264,11 +269,11 @@ class ShellFileCommandsTests(unittest.TestCase):
         self.proto.lineReceived(b"cp /usr/bin/sed /tmp\n")
         self.assertEqual(self.tr.value(), PROMPT)
 
-    def test_cp_error_output(self) -> None:  # TODO: quotes?..
+    def test_cp_error_output(self) -> None:
         self.proto.lineReceived(f"cp {NONEXISTEN_FILE:s} /tmp\n".encode())
         self.assertEqual(
             self.tr.value(),
-            f"cp: cannot stat `{NONEXISTEN_FILE:s}': No such file or directory\n".encode()
+            f"cp: cannot stat '{NONEXISTEN_FILE:s}': No such file or directory\n".encode()
             + PROMPT,
         )
 
@@ -276,13 +281,65 @@ class ShellFileCommandsTests(unittest.TestCase):
         self.proto.lineReceived(b"mv /usr/bin/awk /tmp\n")
         self.assertEqual(self.tr.value(), PROMPT)
 
-    def test_mv_error_output(self) -> None:  # TODO: quotes?..
+    def test_mv_error_output(self) -> None:
         self.proto.lineReceived(f"mv {NONEXISTEN_FILE:s} /tmp\n".encode())
         self.assertEqual(
             self.tr.value(),
-            f"mv: cannot stat `{NONEXISTEN_FILE:s}': No such file or directory\n".encode()
+            f"mv: cannot stat '{NONEXISTEN_FILE:s}': No such file or directory\n".encode()
             + PROMPT,
         )
+
+    def test_cp_mv_errors_match_coreutils(self) -> None:
+        """Wording and quoting from coreutils 9.1 (Debian 12), C locale."""
+        for line, expected in (
+            (
+                b"cp",
+                b"cp: missing file operand\nTry 'cp --help' for more information.\n",
+            ),
+            (
+                b"cp /etc/passwd",
+                b"cp: missing destination file operand after '/etc/passwd'\n"
+                b"Try 'cp --help' for more information.\n",
+            ),
+            (
+                b"cp /etc/passwd /etc/group /etc/hostname",
+                b"cp: target '/etc/hostname': Not a directory\n",
+            ),
+            (
+                b"cp /etc/passwd /etc/group /nodir",
+                b"cp: target '/nodir': No such file or directory\n",
+            ),
+            (
+                b"cp /etc/passwd /nodir/x",
+                b"cp: cannot create regular file '/nodir/x': No such file or directory\n",
+            ),
+            (b"cp /etc /tmp", b"cp: -r not specified; omitting directory '/etc'\n"),
+            (
+                b"mv",
+                b"mv: missing file operand\nTry 'mv --help' for more information.\n",
+            ),
+            (
+                b"mv /etc/passwd /etc/group /etc/hostname",
+                b"mv: target '/etc/hostname': Not a directory\n",
+            ),
+            (
+                b"mv /etc/passwd /nodir/x",
+                b"mv: cannot move '/etc/passwd' to '/nodir/x': No such file or directory\n",
+            ),
+            (
+                b"touch",
+                b"touch: missing file operand\nTry 'touch --help' for more information.\n",
+            ),
+            (
+                b"touch nodir/x",
+                b"touch: cannot touch 'nodir/x': No such file or directory\n",
+            ),
+            (b"rm /tmp", b"rm: cannot remove '/tmp': Is a directory\n"),
+        ):
+            with self.subTest(line=line):
+                self.tr.clear()
+                self.proto.lineReceived(line)
+                self.assertEqual(self.tr.value(), expected + PROMPT)
 
     def test_mkdir_output(self) -> None:
         path = "/tmp/hello"
@@ -311,11 +368,11 @@ class ShellFileCommandsTests(unittest.TestCase):
         self.assertEqual(self.tr.value(), PROMPT)
         self.assertFalse(self.proto.fs.exists(path))
 
-    def test_rmdir_error_output(self) -> None:  # TODO: quotes?..
+    def test_rmdir_error_output(self) -> None:
         self.proto.lineReceived(f"rmdir {NONEXISTEN_FILE:s}\n".encode())
         self.assertEqual(
             self.tr.value(),
-            f"rmdir: failed to remove `{NONEXISTEN_FILE:s}': No such file or directory\n".encode()
+            f"rmdir: failed to remove '{NONEXISTEN_FILE:s}': No such file or directory\n".encode()
             + PROMPT,
         )
 

@@ -148,6 +148,56 @@ class FlowControlTests(unittest.TestCase):
             b"1a\n2a\n",
         )
 
+    # bash 5.3 reports a break / continue with no loop in the running function
+    # or shell, then carries on with status 0.
+    NO_LOOP = "break: only meaningful in a `for', `while', or `until' loop\n"
+
+    def test_break_outside_a_loop_is_reported(self) -> None:
+        self.assertEqual(
+            self._run("break; echo rc=$?"),
+            f"-bash: {self.NO_LOOP}rc=0\n".encode(),
+        )
+
+    def test_break_in_a_function_does_not_end_the_callers_loop(self) -> None:
+        err = f"-bash: {self.NO_LOOP}"
+        self.assertEqual(
+            self._run(
+                "f() { break; echo inf; }; "
+                "for i in 1 2; do echo $i; f; echo after; done"
+            ),
+            f"1\n{err}inf\nafter\n2\n{err}inf\nafter\n".encode(),
+        )
+
+    def test_continue_in_a_function_does_not_skip_the_callers_body(self) -> None:
+        err = "-bash: " + self.NO_LOOP.replace("break", "continue")
+        self.assertEqual(
+            self._run("f() { continue; }; for i in 1 2; do f; echo $i; done"),
+            f"{err}1\n{err}2\n".encode(),
+        )
+
+    def test_loop_inside_a_function_still_breaks(self) -> None:
+        self.assertEqual(
+            self._run(
+                "f() { for j in a b; do break; done; echo inner; }; "
+                "for i in 1; do f; echo $i; done"
+            ),
+            b"inner\n1\n",
+        )
+
+    def test_break_in_a_subshell_does_not_end_the_loop(self) -> None:
+        err = f"-bash: {self.NO_LOOP}"
+        self.assertEqual(
+            self._run("for i in 1 2; do (break; echo sub); echo $i; done"),
+            f"{err}sub\n1\n{err}sub\n2\n".encode(),
+        )
+
+    def test_break_in_a_child_shell_does_not_end_the_loop(self) -> None:
+        err = f"bash: line 1: {self.NO_LOOP}"
+        self.assertEqual(
+            self._run("for i in 1 2; do bash -c 'break; echo child'; echo $i; done"),
+            f"{err}child\n1\n{err}child\n2\n".encode(),
+        )
+
     # -- case ---------------------------------------------------------------
 
     def test_case_glob_match(self) -> None:
@@ -190,6 +240,24 @@ class FlowControlTests(unittest.TestCase):
         self.assertEqual(
             self._run("count() { echo $#; }; count a b c"),
             b"3\n",
+        )
+
+    def test_function_sees_only_its_own_arguments(self) -> None:
+        """A call with fewer arguments than the caller has leaves the higher
+        ones unset in the body, and the caller gets its own back after
+        (checked against bash 5.3)."""
+        self.assertEqual(
+            self._run(
+                'f() { echo "[$1][$2][$3] $#"; }; '
+                'g() { f a; echo "[$1][$2][$3] $#"; }; g x y z'
+            ),
+            b"[a][][] 1\n[x][y][z] 3\n",
+        )
+
+    def test_function_without_arguments_hides_the_callers(self) -> None:
+        self.assertEqual(
+            self._run('f() { echo "[$1] $# [$@]"; }; g() { f; echo "[$1] $#"; }; g x'),
+            b"[] 0 []\n[x] 1\n",
         )
 
     def test_function_keyword_form(self) -> None:

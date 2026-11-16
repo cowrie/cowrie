@@ -63,6 +63,11 @@ class HoneyPotCommand:
     # does not read stdin (cd, echo, sleep ...) leaves the data for the next.
     consumes_stdin: bool = False
 
+    # How the command reports a write to a closed stdout (`echo hi >&-`), and
+    # the status it then exits with. GNU coreutils and bash builtins say this.
+    closed_stdout_error: str = "write error: Bad file descriptor"
+    closed_stdout_status: int = 1
+
     def __init__(self, protocol, *args):
         self.protocol = protocol
         self.args = list(args)
@@ -190,6 +195,8 @@ class HoneyPotCommand:
         self._cancel_delayed_calls()
         if code is not None:
             self.exit_code = code
+        if self.exit_code == 0 and getattr(self.pp, "stdout_write_failed", False):
+            self.exit_code = self.closed_stdout_status
         # Register this command's own redirection backing files for hashing at
         # session close. Read from self.pp, not the protocol's current pipe: a
         # command that finishes after a later one started would otherwise

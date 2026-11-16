@@ -153,6 +153,7 @@ class Command_exit(HoneyPotCommand):
     def call(self) -> None:
         # `exit [N]` exits with N, or the last command's status ($?) by default.
         shell = self.protocol.cmdstack[-2]
+        self.errorWrite(shell.exit_notice())
         code = getattr(shell, "last_exit_code", 0)
         if self.args:
             try:
@@ -172,5 +173,18 @@ class Command_exit(HoneyPotCommand):
         # (top-level shell), ends the session with this exit_code.
 
 
+class Command_logout(Command_exit):
+    """``logout``: `exit` for a login shell; any other shell refuses it."""
+
+    def call(self) -> None:
+        if not self.shell.is_login_shell:
+            self.errorWrite(
+                f"{self.shell.error_prefix()}logout: not login shell: use `exit'\n"
+            )
+            self.exit_code = 1
+            return
+        super().call()
+
+
 commands["exit"] = Command_exit
-commands["logout"] = Command_exit
+commands["logout"] = Command_logout
