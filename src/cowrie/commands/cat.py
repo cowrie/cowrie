@@ -11,7 +11,6 @@ cat command
 from __future__ import annotations
 
 import getopt
-import os
 
 from cowrie.shell.command import HoneyPotCommand
 from cowrie.shell.fs import FileNotFound
@@ -109,20 +108,13 @@ class Command_cat(HoneyPotCommand):
         """
         ctrl-d is end-of-file, time to terminate
         """
-        terminal = self.protocol.terminal
-        if (
-            self.input_data is None
-            and getattr(terminal, "stdinlogOpen", False)
-            and getattr(terminal, "stdinlogFile", "")
-            and os.path.exists(terminal.stdinlogFile)
-        ):
+        data = self.stdin_log_contents() if self.input_data is None else None
+        if data is not None:
             # Live exec-channel stdin (e.g. `cat > file`): the bytes were
             # streamed to the stdin log rather than buffered as input_data, so
             # start() left us parked for EOF. Emit them now, verbatim unless
             # line numbering was requested, so a redirect target is not left
             # empty.
-            with open(terminal.stdinlogFile, "rb") as f:
-                data = f.read()
             if self.number:
                 self.output(data)
             else:
