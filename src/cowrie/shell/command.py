@@ -12,6 +12,7 @@ This module contains code to run a command
 
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
@@ -139,6 +140,24 @@ class HoneyPotCommand:
 
     def set_input_data(self, data: bytes) -> None:
         self.input_data = data
+
+    def stdin_log_contents(self) -> bytes | None:
+        """
+        The exec channel's live stdin, read at EOF, or None if there is none.
+
+        Live exec-channel stdin (`ssh host cat > file`) is streamed to the
+        stdin log rather than buffered as input_data, so a command that reads
+        stdin to EOF finds it there.
+        """
+        terminal = self.protocol.terminal
+        if not (
+            getattr(terminal, "stdinlogOpen", False)
+            and getattr(terminal, "stdinlogFile", "")
+            and os.path.exists(terminal.stdinlogFile)
+        ):
+            return None
+        with open(terminal.stdinlogFile, "rb") as f:
+            return f.read()
 
     def callLater(
         self, delay: float, func: Callable[..., Any], *args: Any
