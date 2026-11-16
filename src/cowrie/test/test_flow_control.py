@@ -242,6 +242,24 @@ class FlowControlTests(unittest.TestCase):
             b"3\n",
         )
 
+    def test_function_sees_only_its_own_arguments(self) -> None:
+        """A call with fewer arguments than the caller has leaves the higher
+        ones unset in the body, and the caller gets its own back after
+        (checked against bash 5.3)."""
+        self.assertEqual(
+            self._run(
+                'f() { echo "[$1][$2][$3] $#"; }; '
+                'g() { f a; echo "[$1][$2][$3] $#"; }; g x y z'
+            ),
+            b"[a][][] 1\n[x][y][z] 3\n",
+        )
+
+    def test_function_without_arguments_hides_the_callers(self) -> None:
+        self.assertEqual(
+            self._run('f() { echo "[$1] $# [$@]"; }; g() { f; echo "[$1] $#"; }; g x'),
+            b"[] 0 []\n[x] 1\n",
+        )
+
     def test_function_keyword_form(self) -> None:
         self.assertEqual(
             self._run("function f { echo from_f; }; f"),

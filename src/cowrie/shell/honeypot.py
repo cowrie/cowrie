@@ -898,35 +898,35 @@ class HoneyPotShell:
         self.environ["@"] = " ".join(args)
         self.environ["*"] = " ".join(args)
 
+    def _positional_params(self) -> dict[str, str]:
+        """The current $1.. , $#, $@ and $* entries."""
+        return {
+            key: value
+            for key, value in self.environ.items()
+            if key.isdigit() or key in ("#", "@", "*")
+        }
+
     def replace_positional_params(self, args: list[str]) -> None:
         """Make ``args`` the only positional parameters, dropping any higher
         ones left from an earlier binding."""
-        for key in [k for k in self.environ if k.isdigit() or k in ("#", "@", "*")]:
+        for key in self._positional_params():
             del self.environ[key]
         self.set_positional_params(args)
 
     def _call_function(self, name: str, args: list[str]) -> None:
-        """Run a function body with $1.. , $#, $@ and $* bound to ``args``.
-
-        Only the positional parameters for this call ($1..$len(args)) are saved
-        and restored. bash also unsets any higher-numbered parameters on entry,
-        so a function called with fewer arguments than its caller would still
-        see the caller's $2.. here; emulating that needs per-call param scoping.
-        """
+        """Run a function body with $1.. , $#, $@ and $* bound to ``args``
+        alone, as bash does, and give the caller its own back afterwards."""
         body = self.functions[name]
-        params = [str(i) for i in range(1, len(args) + 1)] + ["#", "@", "*"]
-        saved = {key: self.environ.get(key) for key in params}
-        self.set_positional_params(args)
+        saved = self._positional_params()
+        self.replace_positional_params(args)
         # The caller's loops are not the body's: break / continue in the
         # body only see loops the body itself runs.
         saved_loop_depth, self._loop_depth = self._loop_depth, 0
 
         def restore() -> None:
-            for key, value in saved.items():
-                if value is None:
-                    self.environ.pop(key, None)
-                else:
-                    self.environ[key] = value
+            for key in self._positional_params():
+                del self.environ[key]
+            self.environ.update(saved)
             self._loop_depth = saved_loop_depth
             self._advance()
 
