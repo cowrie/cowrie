@@ -26,13 +26,17 @@ PROMPT = b"root@unitTest:~# "
 
 
 def run_exec(cmd: bytes) -> bytes:
-    """Run ``cmd`` as an SSH exec command and return the channel output."""
+    """Run ``cmd`` as an SSH exec command and return the channel output,
+    stdout and stderr together in the order written."""
     out = bytearray()
     transport = make_exec_transport(CaptureSink())
     transport.write = out.extend
+    transport.errReceived = out.extend
     lsp = insults.LoggingServerProtocol(
         protocol.HoneyPotExecProtocol, FakeAvatar(FakeServer()), cmd
     )
+    # sshd runs `ssh host cmd` without a pty.
+    lsp.has_pty = False
     lsp.makeConnection(transport)
     return bytes(out)
 

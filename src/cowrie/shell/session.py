@@ -55,6 +55,8 @@ class SSHSessionForCowrieUser:
             requests. Uses the default reactor if None.
         """
         self.protocol = None
+        # The client requested a pty, which merges stderr into stdout.
+        self.has_pty = False
         self.avatar = avatar
         self.server = avatar.server
         self.uid = avatar.uid
@@ -86,13 +88,17 @@ class SSHSessionForCowrieUser:
             )
 
     def openShell(self, processprotocol):
-        self.protocol = insults.LoggingServerProtocol(
-            protocol.HoneyPotInteractiveProtocol, self
+        # Without a pty the shell reads commands from the channel, as a
+        # non-interactive shell, the way real sshd runs it.
+        shell_protocol = (
+            protocol.HoneyPotInteractiveProtocol
+            if self.has_pty
+            else protocol.HoneyPotStdinShellProtocol
         )
-        self.protocol.makeConnection(processprotocol)
-        processprotocol.makeConnection(ProtocolTransport(self.protocol))
+        self._start_terminal(processprotocol, shell_protocol)
 
     def getPty(self, terminal, windowSize, attrs):
+        self.has_pty = True
         # The terminal type is attacker input from the pty request and need
         # not be valid UTF-8.
         self.environ["TERM"] = terminal.decode("utf-8", errors="replace")
@@ -105,9 +111,14 @@ class SSHSessionForCowrieUser:
         self.windowSize = windowSize
 
     def execCommand(self, processprotocol, cmd):
-        self.protocol = insults.LoggingServerProtocol(
-            protocol.HoneyPotExecProtocol, self, cmd
-        )
+        self._start_terminal(processprotocol, protocol.HoneyPotExecProtocol, cmd)
+
+    def _start_terminal(self, processprotocol, terminal_protocol, *args):
+        """Connect the SSH channel to a logging terminal that runs
+        ``terminal_protocol`` for this session, with ``args`` after the
+        session in its constructor."""
+        self.protocol = insults.LoggingServerProtocol(terminal_protocol, self, *args)
+        self.protocol.has_pty = self.has_pty
         self.protocol.makeConnection(processprotocol)
         processprotocol.makeConnection(ProtocolTransport(self.protocol))
 

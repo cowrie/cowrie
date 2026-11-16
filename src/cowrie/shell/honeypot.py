@@ -45,7 +45,12 @@ from cowrie.shell.bashparse import (
     max_input_size,
 )
 from cowrie.shell.parser import CommandParser
-from cowrie.shell.pipe import FD_CAPTURE, FD_TERMINAL, PipeProtocol
+from cowrie.shell.pipe import (
+    FD_CAPTURE,
+    TERMINAL_STDERR,
+    TERMINAL_STDOUT,
+    PipeProtocol,
+)
 
 # Honeypot safety caps. A loop in an uploaded script must never hang or exhaust
 # the process: bound the number of iterations a single loop runs. Real malware
@@ -78,11 +83,14 @@ class _Continuation:
     ``cmdpending`` so it can react to a condition's exit status or step a loop.
     ``is_loop_cont`` marks the continuation that closes one loop-body iteration,
     which is where a pending ``break`` / ``continue`` is consumed.
+    ``on_discard`` runs instead of ``fn`` when a ``break`` / ``continue``
+    drops this entry unreached, to undo state the entry would have restored.
     """
 
     fn: Callable[[], None]
     is_loop_cont: bool = False
     op: str | None = None
+    on_discard: Callable[[], None] | None = None
 
 
 class HoneyPotShell:
@@ -145,22 +153,24 @@ class HoneyPotShell:
             self.environ["LINES"] = str(protocol.user.windowSize[0])
         self.parser = CommandParser()
         self.bashparser = BashParser(self)
-        # The shell's fd table for the commands it runs (stdout=1, stderr=2),
-        # inherited by each command as a forked process inherits its parent's
-        # open files. A command applies its own redirections on top, and a
-        # redirection on a compound command (`{ ...; } > f`) swaps the shell's
-        # own entry for the group's duration. A top-level shell writes to the
-        # terminal; a capture child (see run_child) points fd 1 at a sink.
+        # The shell's fd table for the commands it runs: stdout=1, stderr=2 and
+        # any higher fd opened by exec, by a redirection on an enclosing group,
+        # or on the command that started this shell. Each command inherits it
+        # as a forked process inherits its parent's open files, and applies its
+        # own redirections on top. A redirection on a compound command
+        # (`{ ...; } > f`) changes the shell's own entries for the group's
+        # duration. A top-level shell writes to the terminal; a capture child
+        # (see run_child) points fd 1 at a sink.
         self.fds: dict[int, tuple[str, Any]] = {
-            1: (FD_TERMINAL, None),
-            2: (FD_TERMINAL, None),
+            1: TERMINAL_STDOUT,
+            2: TERMINAL_STDERR,
         }
         # A shell a command starts (bash -c, a script, su -c) writes where that
         # command writes, so `$(bash -c ...)` or `sh x.sh > f` captures it.
         launcher = protocol.cmdstack[-1] if protocol.cmdstack else None
         launcher_pp = getattr(launcher, "pp", None)
         if launcher_pp is not None and getattr(launcher_pp, "targets", None):
-            self.fds = {1: launcher_pp.targets[1], 2: launcher_pp.targets[2]}
+            self.fds = launcher_pp.output_fds()
         # How this shell names itself in the errors it reports, as bash does
         # from $0: "-bash" for the login shell, the name as typed for bash -c
         # or a script (the launching command sets it). A non-interactive shell
@@ -296,11 +306,11 @@ class HoneyPotShell:
         )
 
     def _capture_fds(self) -> tuple[dict[int, tuple[str, Any]], bytearray]:
-        """An fd table whose stdout is a fresh capture sink; stderr is
-        inherited from this shell, so a substitution's or stage's errors reach
-        the terminal (or the enclosing capture) as bash does."""
+        """An fd table whose stdout is a fresh capture sink; stderr and higher
+        fds are inherited from this shell, so a substitution's or stage's
+        errors reach the terminal (or the enclosing capture) as bash does."""
         buf = bytearray()
-        return {1: (FD_CAPTURE, buf), 2: self.fds[2]}, buf
+        return {**self.fds, 1: (FD_CAPTURE, buf)}, buf
 
     def run_child(
         self,
@@ -316,7 +326,7 @@ class HoneyPotShell:
         ``last_exit_code`` and, when ``capture_buf`` is its stdout sink, its
         output in ``captured``.
 
-        ``fds`` is the child's stdout/stderr table. ``stdin`` is the pipe
+        ``fds`` is the child's output fd table. ``stdin`` is the pipe
         buffer the child reads; without one, an ``inherits_stdin`` child reads
         whatever this shell reads (a pipeline's first stage, a "(...)" group)
         and any other child sees EOF. The child starts with copies of this
@@ -938,6 +948,8 @@ class HoneyPotShell:
                 if isinstance(node, _Continuation) and node.is_loop_cont:
                     break
                 self.cmdpending.pop(0)
+                if isinstance(node, _Continuation) and node.on_discard is not None:
+                    node.on_discard()
             if not self.cmdpending:
                 # break / continue with no enclosing loop body left: ignore it.
                 self._loop_signal = None
@@ -1053,50 +1065,79 @@ class HoneyPotShell:
 
         def apply(tokens: list[str]) -> None:
             _, ops = self.parser.parse_redirections(tokens)
-            fds, stdin, error = self._open_redirection_fds(ops)
-            if error:
-                # bash reports the failure (already written) and skips the group.
-                self.last_exit_code = 1
-                self._advance()
-                return
-            saved_fds, self.fds = self.fds, fds
-            saved_stdin = None
-            if stdin is not None:
-                saved_stdin = (self.stdin,)
-                self.stdin = stdin
-            self.cmdpending.insert(
-                0, _Continuation(lambda: self._restore_fds(saved_fds, saved_stdin))
-            )
-            self._run_compound(command)
+            self._run_with_redirections(ops, lambda: self._run_compound(command))
 
         d = Deferred.fromCoroutine(self.bashparser.evaluate(redirections))
         d.addCallback(apply)
         d.addErrback(self._statement_failed)
 
+    def _run_with_redirections(
+        self, ops: list[dict[str, Any]], run_body: Callable[[], None]
+    ) -> None:
+        """Run a group's or a function's body with ``ops`` applied to the
+        shell's fd table, and to its stdin for an input redirection, then
+        restore both once the body drains: ``run_body`` queues the body after
+        the restore continuation queued here. A failed redirection is reported
+        (already written) and the body skipped with status 1, as in bash."""
+        fds, stdin, error = self._open_redirection_fds(ops)
+        if error:
+            self.last_exit_code = 1
+            self._advance()
+            return
+        # What each output fd the group redirects pointed at before (None:
+        # closed). Only these are restored, so an exec inside the body keeps
+        # its changes to other fds, as in bash. Stdin (fd 0) is saved below.
+        saved_fds = {op["fd"]: self.fds.get(op["fd"]) for op in ops if op["fd"] != 0}
+        self.fds = fds
+        saved_stdin = None
+        if stdin is not None:
+            saved_stdin = (self.stdin,)
+            self.stdin = stdin
+
+        def restore() -> None:
+            self._restore_fds(saved_fds, saved_stdin)
+
+        def restore_and_continue() -> None:
+            restore()
+            self._advance()
+
+        self.cmdpending.insert(
+            0, _Continuation(restore_and_continue, on_discard=restore)
+        )
+        run_body()
+
     def _restore_fds(
         self,
-        saved: dict[int, tuple[str, Any]],
+        saved: dict[int, tuple[str, Any] | None],
         saved_stdin: tuple[bytes | None] | None = None,
     ) -> None:
-        """Restore the shell's fd table, and its stdin when the group
-        redirected that too, after a redirected group finishes."""
-        self.fds = saved
+        """Restore the fds a redirected group changed, and its stdin when the
+        group redirected that too, after the group finishes or a break /
+        continue leaves it."""
+        fds = dict(self.fds)
+        for fd, target in saved.items():
+            if target is None:
+                fds.pop(fd, None)
+            else:
+                fds[fd] = target
+        self.fds = fds
         if saved_stdin is not None:
             (self.stdin,) = saved_stdin
-        self._advance()
 
     def _open_redirection_fds(
         self, ops: list[dict[str, Any]]
     ) -> tuple[dict[int, tuple[str, Any]], bytes | None, bool]:
         """Apply redirection ops over this shell's fd table, opening any files
-        once for the whole group, and register their backing files. Returns the
-        new table, the stdin an input redirection among them supplies (or
-        None), and whether a redirection failed."""
+        once for the whole group (or for exec, the rest of the session), and
+        register their backing files so they are hashed/renamed or removed at
+        session close instead of being orphaned in the download directory.
+        Returns the new table, the stdin an input redirection among them
+        supplies (or None), and whether a redirection failed."""
         pp = self._make_pipe(None, [], None, ops)
         for real_path, virtual_path in pp.redirect_real_files:
             self.protocol.terminal.redirFiles.add((real_path, virtual_path))
         return (
-            {1: pp.targets[1], 2: pp.targets[2]},
+            pp.output_fds(),
             pp.input_data,
             pp.has_redirection_error,
         )
@@ -1187,24 +1228,31 @@ class HoneyPotShell:
             self._advance()
             return
 
+        args, ops = self.parser.parse_redirections(cmd_tokens)
+
         # A call to a shell function defined earlier runs its body with the
-        # positional parameters bound to the call arguments. `exec` never
-        # sees functions: it only runs files.
-        if not exec_replace and cmd_tokens[0] in self.functions:
-            self._call_function(cmd_tokens[0], cmd_tokens[1:])
+        # positional parameters bound to the call arguments, and the call's
+        # redirections applied to the whole body. `exec` never sees
+        # functions: it only runs files.
+        if not exec_replace and args and args[0] in self.functions:
+            name, call_args = args[0], args[1:]
+            self._run_with_redirections(
+                ops, lambda: self._call_function(name, call_args)
+            )
             return
 
-        args, ops = self.parser.parse_redirections(cmd_tokens)
         if not args:
             if ops:
-                # Handle redirection without command (e.g. > file). This
-                # creates the backing files via _setup_redirections; register
-                # them so they are hashed/renamed or removed at session close
-                # instead of being orphaned in the download directory.
-                pp = self._make_pipe(None, [], None, ops)
-                for real_path, virtual_path in pp.redirect_real_files:
-                    self.protocol.terminal.redirFiles.add((real_path, virtual_path))
-                self.last_exit_code = 1 if pp.has_redirection_error else 0
+                # Redirections without a command (e.g. > file) still create
+                # their files.
+                fds, stdin, error = self._open_redirection_fds(ops)
+                self.last_exit_code = 1 if error else 0
+                if exec_seen and not error:
+                    # `exec 2>/dev/null`, `exec 3>&1`, `exec < f`: the
+                    # redirections change this shell's own fds from here on.
+                    self.fds = fds
+                    if stdin is not None:
+                        self.stdin = stdin
             self._advance()
             return
 
@@ -1373,7 +1421,7 @@ class HoneyPotShell:
         self.protocol.lineBufferIndex = 0
         # At the `> ` prompt CTRL-C abandons the construct being written.
         self._discard_pending()
-        self.protocol.terminal.write(b"\n")
+        self.protocol.terminal.write(b"^C\n")
         self.showPrompt()
 
     def handle_TAB(self) -> None:

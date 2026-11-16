@@ -117,6 +117,10 @@ class FakeTransport(testing.StringTransport):
     # '\x10':     self.handle_UP,		# CTRL-P
     # '\x15':     self.handle_CTRL_U,	# CTRL-U
 
+    def writeStderr(self, data: bytes) -> None:
+        # Like a pty, the fake terminal shows stderr together with stdout.
+        self.write(data)
+
     def setModes(self, modes):
         for m in modes:
             self.modes[m] = True

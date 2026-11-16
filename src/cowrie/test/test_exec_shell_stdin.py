@@ -30,16 +30,20 @@ PROMPT = b"root@unitTest:~# "
 
 
 def start_exec_session(
-    cmd: bytes, term: str | None = None
+    cmd: bytes, term: str | None = None, env_term: str | None = None
 ) -> tuple[insults.LoggingServerProtocol, bytearray, dict[str, int]]:
     """Open an SSH exec channel running `cmd`.
 
-    Returns the logging protocol, a buffer collecting channel output, and a
+    Returns the logging protocol, a buffer collecting channel output (stdout
+    and stderr together, in the order written), and a
     dict that gains a "code" key once the session reports its exit status.
-    A pty request is simulated by `term`, which sets TERM in the session
-    environment as SSHSessionForCowrieUser.getPty does.
+    A pty request is simulated by `term`: it sets has_pty and TERM, as
+    SSHSessionForCowrieUser does. `env_term` is a TERM the client sent with
+    an env request, without a pty.
     """
     avatar = FakeAvatar(FakeServer())
+    if env_term is not None:
+        avatar.environ["TERM"] = env_term
     if term is not None:
         avatar.environ["TERM"] = term
 
@@ -52,7 +56,9 @@ def start_exec_session(
 
     transport = make_exec_transport(CaptureSink(), processEnded=process_ended)
     transport.write = out.extend
+    transport.errReceived = out.extend
     lsp = insults.LoggingServerProtocol(protocol.HoneyPotExecProtocol, avatar, cmd)
+    lsp.has_pty = term is not None
     lsp.makeConnection(transport)
     return lsp, out, ended
 
@@ -61,9 +67,9 @@ class ExecShellStdinTests(unittest.TestCase):
     """`ssh host bash` runs a shell fed by channel stdin, as real sshd does."""
 
     def drive(
-        self, cmd: bytes, term: str | None = None
+        self, cmd: bytes, term: str | None = None, env_term: str | None = None
     ) -> tuple[insults.LoggingServerProtocol, bytearray, dict[str, int]]:
-        lsp, out, ended = start_exec_session(cmd, term)
+        lsp, out, ended = start_exec_session(cmd, term, env_term)
         self.addCleanup(lsp.connectionLost, connectionDone)
         return lsp, out, ended
 
@@ -114,7 +120,17 @@ class ExecShellStdinTests(unittest.TestCase):
         self.assertEqual(bytes(out), PROMPT)
         out.clear()
         lsp.dataReceived(b"echo hi\r")
-        self.assertEqual(bytes(out), b"hi\n" + PROMPT)
+        # The pty echoes what was typed, as bash 5.3 shows it.
+        self.assertEqual(bytes(out), b"echo hi\r\nhi\r\n" + PROMPT)
+
+    def test_term_without_pty_has_no_prompt(self) -> None:
+        """A client can send TERM with an env request and no pty
+        (`ssh -T -o SendEnv=TERM`). Without a pty the shell's stdin is not a
+        terminal, so bash runs without a prompt."""
+        lsp, out, _ended = self.drive(b"bash", env_term="xterm")
+        self.assertEqual(bytes(out), b"")
+        lsp.dataReceived(b"echo hi\n")
+        self.assertEqual(bytes(out), b"hi\n")
 
     def test_ctrl_d_on_empty_line_exits(self) -> None:
         lsp, _out, ended = self.drive(b"bash", term="xterm")
@@ -170,13 +186,43 @@ class ExecShellStdinTests(unittest.TestCase):
         lsp, out, _ended = self.drive(b"bash", term="xterm")
         out.clear()
         lsp.dataReceived(b"echo hix\x7f\r")
-        self.assertEqual(bytes(out), b"hi\n" + PROMPT)
+        # Backspace moves back and clears to the end of the line.
+        self.assertEqual(bytes(out), b"echo hix\x08\x1b[K\r\nhi\r\n" + PROMPT)
+
+    def test_backspace_on_an_empty_line_rings_the_bell(self) -> None:
+        lsp, out, _ended = self.drive(b"bash", term="xterm")
+        out.clear()
+        lsp.dataReceived(b"\x7f")
+        self.assertEqual(bytes(out), b"\x07")
 
     def test_ctrl_c_discards_pending_line(self) -> None:
         lsp, out, _ended = self.drive(b"bash", term="xterm")
         out.clear()
         lsp.dataReceived(b"echo dropped\x03echo kept\r")
-        self.assertEqual(bytes(out), b"kept\n" + PROMPT)
+        self.assertEqual(
+            bytes(out),
+            b"echo dropped^C\r\n" + PROMPT + b"echo kept\r\nkept\r\n" + PROMPT,
+        )
+
+    def test_ctrl_c_at_the_continuation_prompt(self) -> None:
+        lsp, out, _ended = self.drive(b"bash", term="xterm")
+        lsp.dataReceived(b"if true\r")
+        out.clear()
+        lsp.dataReceived(b"\x03")
+        self.assertEqual(bytes(out), b"^C\r\n" + PROMPT)
+        out.clear()
+        lsp.dataReceived(b"echo after\r")
+        self.assertEqual(bytes(out), b"echo after\r\nafter\r\n" + PROMPT)
+
+    def test_ctrl_c_stops_a_running_command(self) -> None:
+        lsp, out, _ended = self.drive(b"bash", term="xterm")
+        lsp.dataReceived(b"sleep 100\r")
+        out.clear()
+        lsp.dataReceived(b"\x03")
+        self.assertEqual(bytes(out), b"^C\r\n" + PROMPT)
+        out.clear()
+        lsp.dataReceived(b"echo $?\r")
+        self.assertEqual(bytes(out), b"echo $?\r\n130\r\n" + PROMPT)
 
     def test_overlong_line_is_capped(self) -> None:
         # The stdin buffer caps at STDIN_LINE_MAX so an endless unterminated
@@ -229,10 +275,10 @@ class ExecShellStdinTests(unittest.TestCase):
         lsp, out, _ended = self.drive(b"bash", term="xterm")
         out.clear()
         lsp.dataReceived(b"if true\r")
-        self.assertEqual(bytes(out), b"> ")
+        self.assertEqual(bytes(out), b"if true\r\n> ")
         out.clear()
         lsp.dataReceived(b"then echo yes; fi\r")
-        self.assertEqual(bytes(out), b"yes\n" + PROMPT)
+        self.assertEqual(bytes(out), b"then echo yes; fi\r\nyes\r\n" + PROMPT)
 
     def test_eof_while_a_command_runs_still_runs_the_typed_ahead_lines(self) -> None:
         # The lines arrive while `sleep` holds the channel, so the EOF goes

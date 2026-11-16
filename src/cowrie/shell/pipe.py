@@ -27,6 +27,11 @@ FD_FILE = "file"
 FD_FILE_INPUT = "file_input"
 FD_DEVNULL = "devnull"
 
+# The terminal's output streams. A terminal target names the stream it writes
+# to, so a duplicated fd (2>&1) keeps writing to the stream it was copied from.
+TERMINAL_STDOUT = (FD_TERMINAL, 1)
+TERMINAL_STDERR = (FD_TERMINAL, 2)
+
 # Soft limit on open file descriptors (ulimit -n). A redirection naming an fd at
 # or above this is rejected by bash with "Bad file descriptor"; valid fds are
 # 0 .. MAX_OPEN_FILES - 1.
@@ -70,10 +75,10 @@ class PipeProtocol:
         # will ever feed it.
         self.stdin_from_pipe: bool = False
         self.protocol = protocol
-        # The command inherits its shell's fd table for stdout/stderr (fds 1
-        # and 2), as a forked process inherits its parent's open files, then
-        # applies its own redirections on top. Without one it writes to the
-        # terminal.
+        # The command inherits its shell's output fds (1, 2 and any higher
+        # ones open), as a forked process inherits its parent's open files,
+        # then applies its own redirections on top. Without them it writes to
+        # the terminal.
         self.base_targets = base_targets
         self.redirections = redirections or []
 
@@ -88,6 +93,11 @@ class PipeProtocol:
         self.terminal_lost = False
         self._setup_redirections()
         self.has_redirection_error = self.redirection_error
+
+    def output_fds(self) -> dict[int, tuple[str, Any]]:
+        """The fd table without stdin: what a shell this command starts, or a
+        group these redirections apply to, writes through."""
+        return {fd: target for fd, target in self.targets.items() if fd != 0}
 
     def _out_of_range_fd(self, op: dict[str, Any]) -> int | None:
         """Return the first file descriptor in ``op`` that exceeds the open-file
@@ -107,15 +117,15 @@ class PipeProtocol:
 
     def _setup_redirections(self) -> None:
         """Process redirection operations to build the FD table."""
-        # Inherit the shell's stdout/stderr (fds 1 and 2), or default to the
-        # terminal; then apply this command's own redirections on top.
+        # Inherit the shell's output fds as they are, including a closed
+        # stdout or stderr, or without them write to the terminal; then apply
+        # this command's own redirections on top.
         self.targets[0] = (FD_STDIN, None)
-        if self.base_targets is not None:
-            self.targets[1] = self.base_targets.get(1, (FD_TERMINAL, None))
-            self.targets[2] = self.base_targets.get(2, (FD_TERMINAL, None))
+        if self.base_targets is None:
+            self.targets[1] = TERMINAL_STDOUT
+            self.targets[2] = TERMINAL_STDERR
         else:
-            self.targets[1] = (FD_TERMINAL, None)
-            self.targets[2] = (FD_TERMINAL, None)
+            self.targets.update(self.base_targets)
 
         # Defer reading stdin until all redirections are processed, so that
         # when an output redirection truncates the file also used for input
@@ -169,6 +179,9 @@ class PipeProtocol:
             elif op["type"] == "dup":
                 fd = op["fd"]
                 self.targets[fd] = self.targets[op["target"]]
+
+            elif op["type"] == "close":
+                self.targets.pop(op["fd"], None)
 
         if isinstance(pending_stdin, str):
             self.input_data = self.protocol.fs.file_contents(pending_stdin)
@@ -281,12 +294,10 @@ class PipeProtocol:
         return safeoutfile, start_size
 
     def _emit_redirection_error(self, message: str) -> None:
-        """Send a redirection-related error to the terminal and flag failure."""
+        """Report a failed redirection on stderr and flag failure. As in bash,
+        stderr is fd 2 as the redirections before the failed one left it."""
         self.redirection_error = True
-        try:
-            self.protocol.terminal.write(message.encode("utf8"))
-        except Exception:
-            self._log.info("{msg}", msg=message)
+        self._write_to_fd(2, message.encode("utf8"))
 
     def connectionMade(self) -> None:
         if self.input_data is None:
@@ -321,9 +332,12 @@ class PipeProtocol:
             status=reason.value.exitCode,
         )
 
-    def _write_to_terminal(self, data: bytes) -> None:
+    def _write_to_terminal(self, stream: int, data: bytes) -> None:
         if self.protocol is not None and self.protocol.terminal is not None:
-            self.protocol.terminal.write(data)
+            if stream == 2:
+                self.protocol.terminal.writeStderr(data)
+            else:
+                self.protocol.terminal.write(data)
         elif not self.terminal_lost:
             self.terminal_lost = True
             self._log.info("Connection was probably lost. Could not write to terminal")
@@ -343,7 +357,7 @@ class PipeProtocol:
         t_type, t_val = target
 
         if t_type == FD_TERMINAL:
-            self._write_to_terminal(data)
+            self._write_to_terminal(t_val, data)
         elif t_type == FD_CAPTURE:
             # The sink is a bytearray shared by every command writing to this
             # fd (a capture subshell, or a pipeline stage feeding the next).

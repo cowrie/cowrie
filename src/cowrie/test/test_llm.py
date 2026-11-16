@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import os
 import unittest
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+from twisted.conch.ssh.session import SSHSessionProcessProtocol
 from twisted.internet import defer
 
 from cowrie.core.config import CowrieConfig
@@ -21,8 +23,10 @@ os.environ["COWRIE_SHELL_FILESYSTEM"] = "src/cowrie/data/fs.pickle"
 
 from cowrie.llm import llm as llm_module
 from cowrie.llm import protocol as llm_protocol
+from cowrie.llm import session as llm_session
 from cowrie.ssh.transport import HoneyPotSSHTransport
 from cowrie.test.configoverride import override_option
+from cowrie.test.test_stderr_channel import FakeChannel
 
 
 def _avatar() -> MagicMock:
@@ -302,3 +306,39 @@ class RateLimitTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ExecLineEndingTests(unittest.TestCase):
+    """An LLM exec answer ends its lines as a real server's would: \\r\\n
+    when the client asked for a pty, bare \\n without one."""
+
+    def run_exec(self, pty: bool) -> bytes:
+        for option in ("internet_facing_ip", "internet_facing_ipv6"):
+            override_option(self, "honeypot", option, "192.0.2.1")
+        channel = FakeChannel()
+        avatar = SimpleNamespace(
+            server=SimpleNamespace(hostname="svr04"),
+            username="root",
+            conn=channel.conn,
+        )
+        session = llm_session.SSHSessionForCowrieUser(avatar)
+        if pty:
+            session.getPty(b"xterm", (25, 80, 0, 0), b"")
+        client = MagicMock()
+        client.get_response.return_value = defer.succeed("a\nb")
+        with (
+            patch.object(
+                llm_protocol,
+                "llm_rate_limiter",
+                return_value=RateLimiter(max_requests=5),
+            ),
+            patch.object(llm_protocol, "get_shared_client", return_value=client),
+        ):
+            session.execCommand(SSHSessionProcessProtocol(channel), b"id")
+        return bytes(channel.stdout)
+
+    def test_without_pty(self) -> None:
+        self.assertEqual(self.run_exec(pty=False), b"a\nb\n")
+
+    def test_with_pty(self) -> None:
+        self.assertEqual(self.run_exec(pty=True), b"a\r\nb\r\n")

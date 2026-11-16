@@ -48,6 +48,9 @@ class LoggingServerProtocol(insults.ServerProtocol):
         "honeypot", "ttylog_limit_size", fallback=10485760
     )
     ttylogMinFree: int = CowrieConfig.getint("honeypot", "ttylog_min_free", fallback=0)
+    # A pty merges stderr into stdout, as a terminal shows both. An SSH
+    # session without one sets this False and sends stderr on its own stream.
+    has_pty: bool = True
 
     def __init__(self, protocolFactory=None, *a, **kw):
         self.type: str
@@ -70,6 +73,10 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
         insults.ServerProtocol.__init__(self, protocolFactory, *a, **kw)
 
+        # Only an exec command is logged as one: its command goes into the
+        # TTY log and its stdin into the stdin log. A shell without a pty
+        # (a subclass) reads command lines as a terminal session does, so
+        # it is logged as interactive.
         if protocolFactory is protocol.HoneyPotExecProtocol:
             self.type = "e"  # Execcmd
         else:
@@ -186,14 +193,26 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.ttylogWritten = written
         return len(data)
 
-    def write(self, data: bytes) -> None:
+    def recordOutput(self, data: bytes) -> None:
+        """Count output sent to the client and record it in the TTY log."""
         self.bytesSent += len(data)
         self.ttylogSize += self.ttylogWrite(ttylog.TYPE_OUTPUT, data)
 
-        if self.type == "e":
-            # Exec channel: no PTY was allocated, so write raw bytes without
-            # the \n -> \r\n translation that insults.ServerProtocol.write()
-            # performs (which is only appropriate for PTY sessions).
+    def writeStderr(self, data: bytes) -> None:
+        """Send stderr output: merged into stdout on a pty, otherwise on the
+        SSH channel's stderr stream."""
+        if self.has_pty:
+            self.write(data)
+            return
+        self.recordOutput(data)
+        self.transport.errReceived(data)
+
+    def write(self, data: bytes) -> None:
+        self.recordOutput(data)
+
+        if not self.has_pty:
+            # No pty: write raw bytes without the \n -> \r\n translation that
+            # insults.ServerProtocol.write() performs, as a real pty does.
             self.transport.write(data)
         else:
             insults.ServerProtocol.write(self, data)
@@ -237,7 +256,12 @@ class LoggingServerProtocol(insults.ServerProtocol):
         for ch in iterbytes(data):
             if self.terminalProtocol is None:
                 break
-            insults.ServerProtocol.dataReceived(self, ch)
+            if self.has_pty:
+                insults.ServerProtocol.dataReceived(self, ch)
+            else:
+                # Without a pty the channel is a plain pipe: escape sequences
+                # are data, not keys, so every byte reaches the command as is.
+                self.terminalProtocol.keystrokeReceived(ch, None)
 
     def eofReceived(self) -> None:
         """

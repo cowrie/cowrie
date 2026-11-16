@@ -105,11 +105,10 @@ class ParseRedirectionsTests(unittest.TestCase):
         self.assertEqual(ops[0]["target"], "file")
 
     def test_fd_close_syntax(self) -> None:
-        # 2>&- should be parsed (even if not fully supported)
-        args = ["cmd", "2>&-"]
-        cleaned, _ops = self.parser.parse_redirections(args)
+        args = ["cmd", "2>&-", ">&-"]
+        cleaned, ops = self.parser.parse_redirections(args)
         self.assertEqual(cleaned, ["cmd"])
-        # FD close is parsed but results in no operation currently
+        self.assertEqual(ops, [{"type": "close", "fd": 2}, {"type": "close", "fd": 1}])
 
     def test_non_digit_after_dup(self) -> None:
         # >&file is treated as argument (not bash-style redirect)
