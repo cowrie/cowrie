@@ -527,14 +527,12 @@ or available locally via: info '(coreutils) rm invocation'\n"""
             if node is None:
                 if not force:
                     self.errorWrite(
-                        f"rm: cannot remove `{f}': No such file or directory\n"
+                        f"rm: cannot remove '{f}': No such file or directory\n"
                     )
                     self.exit_code = 1
                 continue
             if node[fs.A_TYPE] == fs.T_DIR and not recursive:
-                self.errorWrite(
-                    f"rm: cannot remove `{node[fs.A_NAME]}': Is a directory\n"
-                )
+                self.errorWrite(f"rm: cannot remove '{f}': Is a directory\n")
                 self.exit_code = 1
                 continue
             self.fs.remove(pname)
@@ -549,6 +547,13 @@ commands["/bin/rm"] = Command_rm
 commands["rm"] = Command_rm
 
 
+def _target_reason(command: HoneyPotCommand, dest: str) -> str:
+    """Why the target of a multi-file cp or mv is no directory, as coreutils
+    words it: a file is there, or nothing is."""
+    path = command.fs.resolve_path(dest, command.cwd)
+    return "Not a directory" if command.fs.exists(path) else "No such file or directory"
+
+
 class Command_cp(HoneyPotCommand):
     """
     cp command
@@ -557,7 +562,7 @@ class Command_cp(HoneyPotCommand):
     def call(self) -> None:
         if not len(self.args):
             self.errorWrite("cp: missing file operand\n")
-            self.errorWrite("Try `cp --help' for more information.\n")
+            self.errorWrite("Try 'cp --help' for more information.\n")
             self.exit_code = 1
             return
         try:
@@ -577,9 +582,9 @@ class Command_cp(HoneyPotCommand):
 
         if len(args) < 2:
             self.errorWrite(
-                f"cp: missing destination file operand after `{self.args[0]}'\n"
+                f"cp: missing destination file operand after '{self.args[0]}'\n"
             )
-            self.errorWrite("Try `cp --help' for more information.\n")
+            self.errorWrite("Try 'cp --help' for more information.\n")
             self.exit_code = 1
             return
         sources, dest = args[:-1], args[-1]
@@ -587,18 +592,18 @@ class Command_cp(HoneyPotCommand):
         # path, so there is nothing to resolve or index into.
         if not dest:
             self.errorWrite(
-                f"cp: cannot create regular file `{dest}': No such file or directory\n"
+                f"cp: cannot create regular file '{dest}': No such file or directory\n"
             )
             self.exit_code = 1
             return
         if len(sources) > 1 and not self.fs.isdir(resolv(dest)):
-            self.errorWrite(f"cp: target `{dest}' is not a directory\n")
+            self.errorWrite(f"cp: target '{dest}': {_target_reason(self, dest)}\n")
             self.exit_code = 1
             return
 
         if dest[-1] == "/" and not self.fs.exists(resolv(dest)) and not recursive:
             self.errorWrite(
-                f"cp: cannot create regular file `{dest}': Is a directory\n"
+                f"cp: cannot create regular file '{dest}': Is a directory\n"
             )
             self.exit_code = 1
             return
@@ -611,18 +616,18 @@ class Command_cp(HoneyPotCommand):
             if not self.fs.exists(parent):
                 self.errorWrite(
                     "cp: cannot create regular file "
-                    + f"`{dest}': No such file or directory\n"
+                    + f"'{dest}': No such file or directory\n"
                 )
                 self.exit_code = 1
                 return
 
         for src in sources:
             if not self.fs.exists(resolv(src)):
-                self.errorWrite(f"cp: cannot stat `{src}': No such file or directory\n")
+                self.errorWrite(f"cp: cannot stat '{src}': No such file or directory\n")
                 self.exit_code = 1
                 continue
             if not recursive and self.fs.isdir(resolv(src)):
-                self.errorWrite(f"cp: omitting directory `{src}'\n")
+                self.errorWrite(f"cp: -r not specified; omitting directory '{src}'\n")
                 self.exit_code = 1
                 continue
             s = copy.deepcopy(self.fs.getfile(resolv(src)))
@@ -648,7 +653,7 @@ class Command_mv(HoneyPotCommand):
     def call(self) -> None:
         if not len(self.args):
             self.errorWrite("mv: missing file operand\n")
-            self.errorWrite("Try `mv --help' for more information.\n")
+            self.errorWrite("Try 'mv --help' for more information.\n")
             self.exit_code = 1
             return
 
@@ -665,9 +670,9 @@ class Command_mv(HoneyPotCommand):
 
         if len(args) < 2:
             self.errorWrite(
-                f"mv: missing destination file operand after `{self.args[0]}'\n"
+                f"mv: missing destination file operand after '{self.args[0]}'\n"
             )
-            self.errorWrite("Try `mv --help' for more information.\n")
+            self.errorWrite("Try 'mv --help' for more information.\n")
             self.exit_code = 1
             return
         sources, dest = args[:-1], args[-1]
@@ -675,19 +680,19 @@ class Command_mv(HoneyPotCommand):
         # path, so there is nothing to resolve or index into.
         if not dest:
             self.errorWrite(
-                f"mv: cannot move `{sources[0]}' to `{dest}': "
+                f"mv: cannot move '{sources[0]}' to '{dest}': "
                 "No such file or directory\n"
             )
             self.exit_code = 1
             return
         if len(sources) > 1 and not self.fs.isdir(resolv(dest)):
-            self.errorWrite(f"mv: target `{dest}' is not a directory\n")
+            self.errorWrite(f"mv: target '{dest}': {_target_reason(self, dest)}\n")
             self.exit_code = 1
             return
 
         if dest[-1] == "/" and not self.fs.exists(resolv(dest)) and len(sources) != 1:
             self.errorWrite(
-                f"mv: cannot create regular file `{dest}': Is a directory\n"
+                f"mv: cannot create regular file '{dest}': Is a directory\n"
             )
             self.exit_code = 1
             return
@@ -699,8 +704,8 @@ class Command_mv(HoneyPotCommand):
             parent = posixpath.dirname(resolv(dest))
             if not self.fs.exists(parent):
                 self.errorWrite(
-                    "mv: cannot create regular file "
-                    + f"`{dest}': No such file or directory\n"
+                    f"mv: cannot move '{sources[0]}' to '{dest}': "
+                    "No such file or directory\n"
                 )
                 self.exit_code = 1
                 return
@@ -708,7 +713,7 @@ class Command_mv(HoneyPotCommand):
         for src in sources:
             srcpath = resolv(src)
             if not self.fs.exists(srcpath):
-                self.errorWrite(f"mv: cannot stat `{src}': No such file or directory\n")
+                self.errorWrite(f"mv: cannot stat '{src}': No such file or directory\n")
                 self.exit_code = 1
                 continue
             if isdir:
@@ -822,7 +827,7 @@ class Command_rmdir(HoneyPotCommand):
             try:
                 if len(self.fs.get_path(pname)):
                     self.errorWrite(
-                        f"rmdir: failed to remove `{f}': Directory not empty\n"
+                        f"rmdir: failed to remove '{f}': Directory not empty\n"
                     )
                     self.exit_code = 1
                     continue
@@ -832,7 +837,7 @@ class Command_rmdir(HoneyPotCommand):
             fname = posixpath.basename(f)
             if not directory or fname not in [x[fs.A_NAME] for x in directory]:
                 self.errorWrite(
-                    f"rmdir: failed to remove `{f}': No such file or directory\n"
+                    f"rmdir: failed to remove '{f}': No such file or directory\n"
                 )
                 self.exit_code = 1
                 continue
@@ -873,14 +878,14 @@ class Command_touch(HoneyPotCommand):
     def call(self) -> None:
         if not len(self.args):
             self.errorWrite("touch: missing file operand\n")
-            self.errorWrite("Try `touch --help' for more information.\n")
+            self.errorWrite("Try 'touch --help' for more information.\n")
             self.exit_code = 1
             return
         for f in self.args:
             pname = self.fs.resolve_path(f, self.cwd)
             if not self.fs.exists(posixpath.dirname(pname)):
                 self.errorWrite(
-                    f"touch: cannot touch `{pname}`: No such file or directory\n"
+                    f"touch: cannot touch '{f}': No such file or directory\n"
                 )
                 self.exit_code = 1
                 continue
@@ -889,7 +894,7 @@ class Command_touch(HoneyPotCommand):
                 continue
             # can't touch in special directories
             if any([pname.startswith(_p) for _p in fs.SPECIAL_PATHS]):
-                self.errorWrite(f"touch: cannot touch `{pname}`: Permission denied\n")
+                self.errorWrite(f"touch: cannot touch '{f}': Permission denied\n")
                 self.exit_code = 1
                 continue
 
