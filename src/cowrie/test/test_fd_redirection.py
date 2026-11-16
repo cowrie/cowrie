@@ -591,13 +591,15 @@ class ShellRedirectionUnwindTests(unittest.TestCase):
             + PROMPT,
         )
 
-    def test_break_out_of_redirected_function_call(self) -> None:
+    def test_break_in_redirected_function_call(self) -> None:
+        """break cannot leave the function, so its error goes to the call's
+        stderr, the loop goes on and the redirection is undone after it."""
         self.proto.lineReceived(
-            b"for i in 1 2; do f() { break; }; f 2>/dev/null; done; ls /nope1"
+            b"f() { break; }; for i in 1 2; do f 2>/dev/null; echo $i; done; ls /nope1"
         )
         self.assertEqual(
             self.tr.value(),
-            b"ls: cannot access '/nope1': No such file or directory\n" + PROMPT,
+            b"1\n2\nls: cannot access '/nope1': No such file or directory\n" + PROMPT,
         )
 
 

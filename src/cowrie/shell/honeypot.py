@@ -218,9 +218,10 @@ class HoneyPotShell:
         # Exit status of the most recent command in this shell, for $? and the
         # && / || short-circuit logic.
         self.last_exit_code: int = 0
-        # Flow-control state: how many loops are currently running (so break /
-        # continue only act inside a loop) and a pending loop signal consumed by
-        # the innermost loop continuation.
+        # Flow-control state: how many loops are currently running in the
+        # current function call (so break / continue only act inside a loop)
+        # and a pending loop signal consumed by the innermost loop
+        # continuation.
         self._loop_depth: int = 0
         self._loop_signal: LoopSignal | None = None
         # Trampoline state for _advance (see its docstring).
@@ -903,6 +904,9 @@ class HoneyPotShell:
         params = [str(i) for i in range(1, len(args) + 1)] + ["#", "@", "*"]
         saved = {key: self.environ.get(key) for key in params}
         self.set_positional_params(args)
+        # The caller's loops are not the body's: break / continue in the
+        # body only see loops the body itself runs.
+        saved_loop_depth, self._loop_depth = self._loop_depth, 0
 
         def restore() -> None:
             for key, value in saved.items():
@@ -910,6 +914,7 @@ class HoneyPotShell:
                     self.environ.pop(key, None)
                 else:
                     self.environ[key] = value
+            self._loop_depth = saved_loop_depth
             self._advance()
 
         self.cmdpending[0:0] = [*body, _Continuation(restore)]
