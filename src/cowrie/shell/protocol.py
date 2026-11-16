@@ -440,10 +440,16 @@ class HoneyPotExecProtocol(HoneyPotBaseProtocol):
         if keyID == b"\n" and last_cr:
             # The \n of a \r\n pair; the \r already dispatched the line.
             return
-        # Control bytes are handled as a tty would, which is only strictly
-        # right when the client requested a pty; in a plain pipe they are
-        # rare enough that the difference does not matter. With a pty the
-        # input is also echoed, as bash 5.3 shows it.
+        # Control bytes are handled as a tty's line discipline would, with or
+        # without a pty. Without a pty this is lenient by choice: a real pipe
+        # passes \r, ^C, ^H/DEL and ^D to bash as plain bytes, so a CRLF
+        # script fails there (`$'\r': command not found`, arguments ending in
+        # \r) and ^D mid-stream is just data. Here a lone \r ends the line, ^C
+        # drops it, backspace edits it and ^D on an empty line is EOF. That
+        # keeps scripts saved with Windows line endings running, so their
+        # downloads and later stages are still captured. The cost is a tell
+        # for a client that sends a CRLF script on purpose to compare.
+        # With a pty the input is also echoed, as bash 5.3 shows it.
         pty = self.terminal.has_pty
         if keyID in (b"\r", b"\n"):
             if pty:
