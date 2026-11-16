@@ -7,14 +7,19 @@
 
 from __future__ import annotations
 
+import tempfile
 import unittest
+from pathlib import Path
 from typing import Any
 from unittest.mock import patch
+
+from twisted.cred.error import UnauthorizedLogin
 
 from cowrie.core import auth
 from cowrie.core.checkers import HoneypotNoneChecker, HoneypotPasswordChecker
 from cowrie.core.config import CowrieConfig
 from cowrie.core.credentials import Username, UsernamePasswordIP
+from cowrie.test.configoverride import override_option
 from cowrie.test.eventcapture import capture_eventlog
 
 
@@ -77,6 +82,62 @@ class TestHoneypotPasswordChecker(unittest.TestCase):
         self.assertEqual(len(events), 1)
         self.assertEqual(events[0]["eventid"], "cowrie.login.success")
         self.assertEqual(events[0]["session"], "test0000")
+
+
+class TestUsernameWithSlash(unittest.TestCase):
+    """A Unix account name cannot contain "/", so sshd refuses such a login
+    whatever the password, even where every other login succeeds."""
+
+    def setUp(self) -> None:
+        etc = tempfile.TemporaryDirectory()
+        self.addCleanup(etc.cleanup)
+        (Path(etc.name) / "userdb.txt").write_text("*:x:*\n", encoding="ascii")
+        override_option(self, "honeypot", "etc_path", etc.name)
+        override_option(self, "honeypot", "auth_class", "UserDB")
+        self.events, self.dispatched = capture_eventlog(protocol="ssh")
+
+    def test_password_login_fails(self) -> None:
+        checker = HoneypotPasswordChecker()
+        self.assertTrue(checker.checkUserPass(b"root", b"123", "1.2.3.4", None))
+        self.assertFalse(
+            checker.checkUserPass(b"root/123456", b"123", "1.2.3.4", self.events)
+        )
+        events = login_events(self.dispatched)
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]["eventid"], "cowrie.login.failed")
+        self.assertEqual(events[0]["username"], "root/123456")
+
+    def test_none_auth_fails(self) -> None:
+        d = HoneypotNoneChecker().requestAvatarId(
+            Username(b"root/bin", events=self.events)
+        )
+        failures: list[Any] = []
+        d.addErrback(failures.append)
+        self.assertEqual(len(failures), 1)
+        failures[0].trap(UnauthorizedLogin)
+        events = login_events(self.dispatched)
+        self.assertEqual([e["eventid"] for e in events], ["cowrie.login.failed"])
+
+    def test_public_key_login_fails_even_when_any_key_is_allowed(self) -> None:
+        from cryptography.hazmat.primitives.asymmetric import ed25519
+        from twisted.conch.ssh import keys
+        from twisted.cred.credentials import SSHPrivateKey
+
+        from cowrie.core.checkers import HoneypotPublicKeyChecker
+
+        override_option(self, "ssh", "auth_publickey_allow_any", "true")
+        blob = keys.Key(ed25519.Ed25519PrivateKey.generate()).public().blob()
+        for username, expected in (
+            (b"root", "cowrie.login.success"),
+            (b"root/bin", "cowrie.login.failed"),
+        ):
+            with self.subTest(username=username):
+                self.dispatched.clear()
+                creds = SSHPrivateKey(username, b"ssh-ed25519", blob, None, None)
+                creds.events = self.events  # type: ignore[attr-defined]
+                HoneypotPublicKeyChecker().requestAvatarId(creds)
+                events = login_events(self.dispatched)
+                self.assertEqual([e["eventid"] for e in events], [expected])
 
 
 class TestHoneypotPublicKeyChecker(unittest.TestCase):

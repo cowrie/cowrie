@@ -30,6 +30,13 @@ if TYPE_CHECKING:
     from cowrie.core.events import EventLog
 
 
+def is_possible_username(username: bytes) -> bool:
+    """Whether a Unix account could have this name. POSIX does not allow "/"
+    in a user name, so sshd refuses such a login whatever the password. The
+    session would also have no home directory to start in."""
+    return b"/" not in username
+
+
 @implementer(ICredentialsChecker)
 class HoneypotPublicKeyChecker:
     """
@@ -57,7 +64,9 @@ class HoneypotPublicKeyChecker:
                 **keyfields,
             )
 
-        if CowrieConfig.getboolean("ssh", "auth_publickey_allow_any", fallback=False):
+        if CowrieConfig.getboolean(
+            "ssh", "auth_publickey_allow_any", fallback=False
+        ) and is_possible_username(credentials.username):
             if events:
                 events.dispatch(
                     "cowrie.login.success",
@@ -84,6 +93,14 @@ class HoneypotNoneChecker:
     credentialInterfaces = (conchcredentials.IUsername,)
 
     def requestAvatarId(self, credentials):
+        if not is_possible_username(credentials.username):
+            if credentials.events:
+                credentials.events.dispatch(
+                    "cowrie.login.failed",
+                    "login attempt [%(username)s] failed",
+                    username=escape_nonprintable(credentials.username),
+                )
+            return defer.fail(UnauthorizedLogin())
         if credentials.events:
             credentials.events.dispatch(
                 "cowrie.login.success",
@@ -157,7 +174,9 @@ class HoneypotPasswordChecker:
 
         theauth = authname()
 
-        if theauth.checklogin(theusername, thepassword, ip):
+        if is_possible_username(theusername) and theauth.checklogin(
+            theusername, thepassword, ip
+        ):
             if events:
                 events.dispatch(
                     "cowrie.login.success",
