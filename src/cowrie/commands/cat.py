@@ -25,6 +25,7 @@ class Command_cat(HoneyPotCommand):
     """
 
     consumes_stdin = True
+    closed_stdout_error = "standard output: Bad file descriptor"
 
     number = False
     linenumber = 1

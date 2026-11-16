@@ -18,6 +18,9 @@ commands = {}
 
 
 class Command_ls(HoneyPotCommand):
+    # GNU ls treats a failed write as serious trouble.
+    closed_stdout_status = 2
+
     def uid2name(self, uid: int) -> str:
         try:
             name: str = Passwd().getpwuid(uid)["pw_name"]
