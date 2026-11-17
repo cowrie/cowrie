@@ -13,6 +13,8 @@ This module contains code to run a command
 from __future__ import annotations
 
 import os
+import posixpath
+import time
 from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
@@ -95,13 +97,20 @@ class HoneyPotCommand:
         # the shell, so it is the shell's process; any other command is a
         # child process of the shell. Only a bare name means the builtin:
         # /usr/bin/echo is an external command.
+        # comm is the process name the kernel reports (/proc/<pid>/stat):
+        # the file name it was run by, cut to 15 characters.
         pp: Any = getattr(self.protocol, "pp", None)
-        if getattr(pp, "argv0", None) in BASH_BUILTINS:
+        argv0: str = getattr(pp, "argv0", None) or ""
+        if argv0 in BASH_BUILTINS:
             self.pid: int = self.shell.pid
             self.ppid: int = self.shell.ppid
+            self.comm: str = self.shell.comm
+            self.start_time: float = self.shell.start_time
         else:
             self.pid = self.protocol.next_pid()
             self.ppid = self.shell.pid
+            self.comm = posixpath.basename(argv0)[:15]
+            self.start_time = time.time()
         self.fs = self.protocol.fs
         self.data: bytes = b""  # output data
         # used to store STDIN data passed via PIPE

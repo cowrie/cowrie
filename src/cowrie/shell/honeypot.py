@@ -11,6 +11,7 @@ import enum
 import fnmatch
 import posixpath
 import re
+import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -103,6 +104,7 @@ class HoneyPotShell:
         reads_stdin: bool = False,
         pid: int | None = None,
         ppid: int | None = None,
+        comm: str = "bash",
     ) -> None:
         self.protocol = protocol
         self.interactive: bool = interactive
@@ -112,6 +114,10 @@ class HoneyPotShell:
         # the session's sshd process, as for a login shell.
         self.pid: int = protocol.next_pid() if pid is None else pid
         self.ppid: int = protocol.login_pid if ppid is None else ppid
+        # The process name the kernel reports (/proc/<pid>/stat), and when the
+        # process started.
+        self.comm: str = comm
+        self.start_time: float = time.time()
         # $$: the shell's own PID. A subshell is a separate process but keeps
         # its parent's $$ (see run_child).
         self.shell_pid: int = self.pid
@@ -361,7 +367,9 @@ class HoneyPotShell:
         the parent's blocking read on the pipe. When every statement completes
         synchronously the Deferred has already fired by the time this returns.
         """
-        shell = HoneyPotShell(self.protocol, interactive=False, ppid=self.pid)
+        shell = HoneyPotShell(
+            self.protocol, interactive=False, ppid=self.pid, comm=self.comm
+        )
         shell.shell_pid = self.shell_pid
         shell.fds = fds
         shell._capture = capture_buf

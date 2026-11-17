@@ -77,7 +77,11 @@ class Command_sh(HoneyPotCommand):
         # create new HoneyPotShell for our a new 'sh' shell
         # The sh process becomes this shell: it keeps the command's PID.
         shell = HoneyPotShell(
-            self.protocol, interactive=False, pid=self.pid, ppid=self.ppid
+            self.protocol,
+            interactive=False,
+            pid=self.pid,
+            ppid=self.ppid,
+            comm=self.comm,
         )
         shell.name = self.argv0
         self.protocol.cmdstack.append(shell)
@@ -135,6 +139,7 @@ class Command_sh(HoneyPotCommand):
             reads_stdin=reads_stdin,
             pid=self.pid,
             ppid=self.ppid,
+            comm=self.comm,
         )
         # A shell reading commands from stdin names itself as invoked; it has
         # no -c string to name in its syntax errors.
