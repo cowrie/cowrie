@@ -176,11 +176,23 @@ class BundledPickleContentsTests(unittest.TestCase):
         data = honeyfs.read_honeyfs_bytes("etc/issue.net")
         self.assertIsInstance(data, bytes)
 
-    def test_proc_has_no_docker_entry(self) -> None:
-        # /proc/docker exists only on a host running Docker; a plain Debian
-        # server does not have it, so it would give the honeypot away.
-        self.assertIsNone(honeyfs._find(honeyfs.get_tree(), "/proc/docker"))
-        self.assertIsNotNone(honeyfs._find(honeyfs.get_tree(), "/proc/version"))
+    def test_has_no_docker_entries(self) -> None:
+        # These exist only on a Docker host or inside a Docker image; a plain
+        # Debian server does not have them, so they would give the honeypot
+        # away.
+        tree = honeyfs.get_tree()
+        for path in (
+            "/proc/docker",
+            "/.dockerenv",
+            "/etc/apt/apt.conf.d/docker-autoremove-suggests",
+            "/etc/apt/apt.conf.d/docker-clean",
+            "/etc/apt/apt.conf.d/docker-gzip-indexes",
+            "/etc/apt/apt.conf.d/docker-no-languages",
+            "/etc/dpkg/dpkg.cfg.d/docker-apt-speedup",
+        ):
+            with self.subTest(path=path):
+                self.assertIsNone(honeyfs._find(tree, path))
+        self.assertIsNotNone(honeyfs._find(tree, "/proc/version"))
 
 
 class ReadHoneyfsBytesTests(unittest.TestCase):
