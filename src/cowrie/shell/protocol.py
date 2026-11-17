@@ -22,7 +22,7 @@ from twisted.protocols.policies import TimeoutMixin
 import cowrie.commands
 from cowrie.core.config import CowrieConfig
 from cowrie.core.resources import read_data_bytes
-from cowrie.shell import command, fs, honeypot
+from cowrie.shell import command, honeypot, procfs
 from cowrie.shell.script import run_script_file
 
 if TYPE_CHECKING:
@@ -91,6 +91,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         # The last process ID handed out in this session. Each new shell takes
         # the next one, so $$ grows the way PIDs do on a busy host.
         self.last_pid: int = random.randint(2000, 30000)
+        # The session's sshd process: the parent of the login shell.
+        self.login_pid: int = self.last_pid
 
     def next_pid(self) -> int:
         """Allocate a process ID for a new process in this session."""
@@ -121,6 +123,12 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
 
         self.events.dispatch("cowrie.session.params", "", arch=self.user.server.arch)
         self.fs.generated_files["/proc/uptime"] = self.proc_uptime
+        self.fs.generated_files["/proc/self/stat"] = functools.partial(
+            procfs.self_stat, self
+        )
+        self.fs.generated_files["/proc/self/status"] = functools.partial(
+            procfs.self_status, self
+        )
 
         idle_timeout = CowrieConfig.getint("honeypot", "idle_timeout", fallback=180)
         self.setTimeout(idle_timeout)
@@ -363,12 +371,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         """/proc/uptime: seconds since boot, and idle seconds summed over the
         CPUs listed in /proc/cpuinfo, as a lightly loaded machine reports."""
         uptime = self.uptime()
-        try:
-            cpuinfo = self.fs.file_contents("/proc/cpuinfo")
-        except (fs.FileNotFound, IsADirectoryError):
-            cpuinfo = b""
-        processors = [x for x in cpuinfo.splitlines() if x.startswith(b"processor")]
-        cpus = max(1, len(processors))
+        cpus = procfs.cpu_count(self.fs)
         return f"{uptime:.2f} {uptime * cpus * 0.97:.2f}\n".encode()
 
     def eofReceived(self) -> None:

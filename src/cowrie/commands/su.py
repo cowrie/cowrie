@@ -155,7 +155,8 @@ class Command_su(HoneyPotCommand):
         # Create a non-interactive shell running as the target user. The
         # identity must be set before the command line runs so the commands
         # it spawns snapshot the switched credentials.
-        shell = HoneyPotShell(self.protocol, interactive=False)
+        # su stays running as the parent of the shell it starts.
+        shell = HoneyPotShell(self.protocol, interactive=False, ppid=self.pid)
         shell.user = dict(effective_user)
 
         # Update environment for the target user
@@ -178,7 +179,7 @@ class Command_su(HoneyPotCommand):
         self, effective_user: dict[str, Any], login_shell: bool, preserve_env: bool
     ) -> None:
         """Start an interactive shell as the target user."""
-        shell = HoneyPotShell(self.protocol, interactive=True)
+        shell = HoneyPotShell(self.protocol, interactive=True, ppid=self.pid)
         shell.user = dict(effective_user)
 
         # A login shell (`su -`) starts in the target user's home; a plain su
