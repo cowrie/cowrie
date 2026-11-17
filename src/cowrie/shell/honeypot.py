@@ -101,12 +101,20 @@ class HoneyPotShell:
         protocol: Any,
         interactive: bool = True,
         reads_stdin: bool = False,
+        pid: int | None = None,
+        ppid: int | None = None,
     ) -> None:
         self.protocol = protocol
         self.interactive: bool = interactive
-        # $$: a new shell is a new process. A command substitution's subshell
-        # takes its parent's instead (see run_child).
-        self.pid: int = protocol.next_pid()
+        # The shell's process ID and its parent's. A shell is a new process
+        # unless it is given the PID of the command that runs it (`sh -c`
+        # replaces the sh process with this shell). Its parent defaults to
+        # the session's sshd process, as for a login shell.
+        self.pid: int = protocol.next_pid() if pid is None else pid
+        self.ppid: int = protocol.login_pid if ppid is None else ppid
+        # $$: the shell's own PID. A subshell is a separate process but keeps
+        # its parent's $$ (see run_child).
+        self.shell_pid: int = self.pid
         # The shell's commands arrive over a live stdin (an SSH exec channel
         # running `bash`): a drained queue means idle, not done, until EOF.
         self.reads_stdin: bool = reads_stdin
@@ -285,7 +293,7 @@ class HoneyPotShell:
 
     def get_pid(self) -> str:
         """Return $$ -- this shell's process ID as a string."""
-        return str(self.pid)
+        return str(self.shell_pid)
 
     @property
     def captured(self) -> bytes:
@@ -353,8 +361,8 @@ class HoneyPotShell:
         the parent's blocking read on the pipe. When every statement completes
         synchronously the Deferred has already fired by the time this returns.
         """
-        shell = HoneyPotShell(self.protocol, interactive=False)
-        shell.pid = self.pid
+        shell = HoneyPotShell(self.protocol, interactive=False, ppid=self.pid)
+        shell.shell_pid = self.shell_pid
         shell.fds = fds
         shell._capture = capture_buf
         shell.stdin = stdin

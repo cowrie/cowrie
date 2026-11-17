@@ -22,6 +22,8 @@ from twisted.internet import error, reactor
 from twisted.logger import Logger
 from twisted.python import failure
 
+from cowrie.shell.pipe import BASH_BUILTINS
+
 if TYPE_CHECKING:
     from twisted.internet.interfaces import IDelayedCall
 
@@ -89,6 +91,17 @@ class HoneyPotCommand:
         )
         self.cwd: str = self.shell.cwd
         self.user: dict[str, Any] = dict(self.shell.user)
+        # This command's process ID and its parent's. A builtin runs inside
+        # the shell, so it is the shell's process; any other command is a
+        # child process of the shell. Only a bare name means the builtin:
+        # /usr/bin/echo is an external command.
+        pp: Any = getattr(self.protocol, "pp", None)
+        if getattr(pp, "argv0", None) in BASH_BUILTINS:
+            self.pid: int = self.shell.pid
+            self.ppid: int = self.shell.ppid
+        else:
+            self.pid = self.protocol.next_pid()
+            self.ppid = self.shell.pid
         self.fs = self.protocol.fs
         self.data: bytes = b""  # output data
         # used to store STDIN data passed via PIPE
@@ -97,7 +110,6 @@ class HoneyPotCommand:
         # over at spawn. Held per command because a command that finishes late
         # (an async download) must still write to and clean up the fds it was
         # started with, not whichever command is running by the time it ends.
-        pp: Any = getattr(self.protocol, "pp", None)
         self.pp: Any = pp
         self.writefn: Callable[[bytes], None]
         self.errorWritefn: Callable[[bytes], None]

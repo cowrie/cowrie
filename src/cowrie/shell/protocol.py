@@ -91,6 +91,8 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         # The last process ID handed out in this session. Each new shell takes
         # the next one, so $$ grows the way PIDs do on a busy host.
         self.last_pid: int = random.randint(2000, 30000)
+        # The session's sshd process: the parent of the login shell.
+        self.login_pid: int = self.last_pid
 
     def next_pid(self) -> int:
         """Allocate a process ID for a new process in this session."""

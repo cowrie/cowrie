@@ -129,7 +129,10 @@ def run_script_file(
 
     protocol._script_depth = depth + 1
     try:
-        shell = HoneyPotShell(protocol, interactive=False)
+        # The script runs in the process of the command that started it.
+        shell = HoneyPotShell(
+            protocol, interactive=False, pid=command.pid, ppid=command.ppid
+        )
         # Errors in a script name it as invoked, with the line: "./x.sh: line 3:".
         shell.name = name
         shell.syntax_label = None
