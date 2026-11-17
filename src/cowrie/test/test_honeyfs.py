@@ -176,6 +176,12 @@ class BundledPickleContentsTests(unittest.TestCase):
         data = honeyfs.read_honeyfs_bytes("etc/issue.net")
         self.assertIsInstance(data, bytes)
 
+    def test_proc_has_no_docker_entry(self) -> None:
+        # /proc/docker exists only on a host running Docker; a plain Debian
+        # server does not have it, so it would give the honeypot away.
+        self.assertIsNone(honeyfs._find(honeyfs.get_tree(), "/proc/docker"))
+        self.assertIsNotNone(honeyfs._find(honeyfs.get_tree(), "/proc/version"))
+
 
 class ReadHoneyfsBytesTests(unittest.TestCase):
     """read_honeyfs_bytes cascades operator override to pickle extraction."""
