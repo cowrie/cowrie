@@ -11,7 +11,7 @@ import os
 import tempfile
 import unittest
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 os.environ["COWRIE_HONEYPOT_DATA_PATH"] = "data"
 os.environ["COWRIE_HONEYPOT_DOWNLOAD_PATH"] = tempfile.gettempdir()
@@ -106,6 +106,49 @@ class TelegramHtmlEscapingTests(unittest.TestCase):
 
         self.assertIn("<strong>[Cowrie testsensor]</strong>", sent[0])
         self.assertIn("<pre>ls</pre>", sent[0])
+
+
+def _sent_params(out: Any) -> list[tuple[str, str]]:
+    """Call send_message with treq stubbed and return the query params used."""
+    out.bot_token = "token"
+    out.chat_id = "-1001234567890"
+    with patch("cowrie.output.telegram.treq.get", return_value=MagicMock()) as get:
+        out.send_message("hello")
+    params: list[tuple[str, str]] = get.call_args.kwargs["params"]
+    return params
+
+
+class TelegramThreadIdTests(unittest.TestCase):
+    def test_thread_id_is_sent_when_set(self) -> None:
+        with patch.object(telegram.Output, "start", lambda self: None):
+            out = telegram.Output()
+        out.thread_id = "42"
+
+        self.assertIn(("message_thread_id", "42"), _sent_params(out))
+
+    def test_no_thread_id_by_default(self) -> None:
+        """Without a topic the request must not carry message_thread_id;
+        this also covers a plugin built without running start()."""
+        with patch.object(telegram.Output, "start", lambda self: None):
+            out = telegram.Output()
+
+        params = dict(_sent_params(out))
+
+        self.assertNotIn("message_thread_id", params)
+        self.assertEqual(params["chat_id"], "-1001234567890")
+
+    def test_start_reads_thread_id_from_environment(self) -> None:
+        with patch.dict(os.environ, {"COWRIE_OUTPUT_TELEGRAM_THREAD_ID": "42"}):
+            out = telegram.Output()
+
+        self.assertEqual(out.thread_id, "42")
+
+    def test_start_without_thread_id_configured(self) -> None:
+        with patch.dict(os.environ):
+            os.environ.pop("COWRIE_OUTPUT_TELEGRAM_THREAD_ID", None)
+            out = telegram.Output()
+
+        self.assertEqual(out.thread_id, "")
 
 
 if __name__ == "__main__":
