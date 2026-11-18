@@ -2,6 +2,9 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+# ABOUTME: The free command: reports memory and swap use from the emulated
+# ABOUTME: machine's /proc/meminfo.
+
 """
 This module ...
 """
@@ -12,6 +15,7 @@ import getopt
 from math import floor
 
 from cowrie.shell.command import HoneyPotCommand
+from cowrie.shell.fs import FileNotFound
 
 commands = {}
 
@@ -49,10 +53,14 @@ class Command_free(HoneyPotCommand):
         print free statistics
         """
 
-        # Get real host memstats and add the calculated fields
-        raw_mem_stats = self.get_free_stats()
-
-        if raw_mem_stats == {}:
+        # Get the emulated machine's memstats and add the calculated fields
+        try:
+            raw_mem_stats = self.get_free_stats()
+        except FileNotFound:
+            self.errorWrite(
+                "free: Memory information file /proc/meminfo does not exist\n"
+            )
+            self.exit_code = 1
             return
 
         raw_mem_stats["calc_total_buffers_and_cache"] = (
@@ -90,31 +98,36 @@ class Command_free(HoneyPotCommand):
 
     def get_free_stats(self) -> dict[str, int]:
         """
-        Get the free stats from /proc
+        Get the free stats from the emulated /proc/meminfo.
+
+        Like procps, a field that is missing or unreadable counts as 0, and a
+        kernel without MemAvailable reports MemFree as available.
+        Raises FileNotFound when /proc/meminfo does not exist.
         """
-        needed_keys = [
-            "Buffers",
-            "Cached",
-            "MemTotal",
-            "MemFree",
-            "SwapTotal",
-            "SwapFree",
-            "Shmem",
-            "MemAvailable",
-        ]
-        mem_info_map: dict[str, int] = {}
-        try:
-            with open("/proc/meminfo") as proc_file:
-                for line in proc_file:
-                    tokens = line.split(":")
+        mem_info_map = dict.fromkeys(
+            [
+                "Buffers",
+                "Cached",
+                "MemTotal",
+                "MemFree",
+                "SwapTotal",
+                "SwapFree",
+                "Shmem",
+                "MemAvailable",
+            ],
+            0,
+        )
+        meminfo = self.fs.file_contents("/proc/meminfo").decode(errors="replace")
+        for line in meminfo.splitlines():
+            key, _, value = line.partition(":")
+            fields = value.split()
+            if key in mem_info_map and fields and fields[0].isdigit():
+                mem_info_map[key] = int(fields[0])
 
-                    # Later we are going to do some math on those numbers, better not include uneeded keys for performance
-                    if tokens[0] in needed_keys:
-                        mem_info_map[tokens[0]] = int(tokens[1].lstrip().split(" ")[0])
-        except Exception:
-            pass
+        if mem_info_map["MemAvailable"] == 0:
+            mem_info_map["MemAvailable"] = mem_info_map["MemFree"]
 
-        # Got a map with all tokens from /proc/meminfo and sizes in KBs
+        # Sizes are in kB, as /proc/meminfo gives them
         return mem_info_map
 
 
