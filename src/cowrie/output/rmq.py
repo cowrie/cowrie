@@ -67,7 +67,7 @@ class RabbitMQFactory(ReconnectingClientFactory):
         self.exchange = exchange
         self.exchange_type = exchange_type
         self.clock = clock
-        # pika ships no type information, so its objects are typed Any.
+        # Both stay None until the handshake with the broker completes.
         self.connection: Any = None
         self.channel: Any = None
         self.queue: deque[tuple[str, bytes]] = deque(maxlen=self.max_queued)
@@ -78,8 +78,11 @@ class RabbitMQFactory(ReconnectingClientFactory):
         connection = TwistedProtocolConnection(self.parameters, self.clock)
         connection.factory = self
         self.connection = connection
-        connection.ready.addCallback(self._open_channel)
-        connection.ready.addErrback(self._setup_failed, connection)
+        # pika clears ready once it fires, which a new connection has not done.
+        ready = connection.ready
+        assert ready is not None
+        ready.addCallback(self._open_channel)
+        ready.addErrback(self._setup_failed, connection)
         return connection
 
     @inlineCallbacks

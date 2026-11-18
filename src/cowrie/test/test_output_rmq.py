@@ -98,7 +98,7 @@ class Broker:
 
     def publishes(self) -> list[tuple[str, str, Any, bytes]]:
         """Return (exchange, routing key, properties, body) per publish."""
-        result = []
+        result: list[list[Any]] = []
         for f in self.received():
             if isinstance(f, frame.Method) and isinstance(f.method, spec.Basic.Publish):
                 result.append([f.method.exchange, f.method.routing_key, None, b""])
