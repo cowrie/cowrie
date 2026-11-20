@@ -40,6 +40,22 @@ def read_data_bytes(*parts: str) -> bytes:
     return resource.read_bytes()
 
 
+def list_data_files(*parts: str) -> list[str]:
+    """List the regular files under bundled cowrie.data/<parts>, as
+    slash-separated paths relative to it."""
+    found: list[str] = []
+
+    def walk(resource: Traversable, prefix: str) -> None:
+        for child in resource.iterdir():
+            if child.is_dir():
+                walk(child, f"{prefix}{child.name}/")
+            elif child.is_file():
+                found.append(f"{prefix}{child.name}")
+
+    walk(_data_resource(*parts), "")
+    return sorted(found)
+
+
 @contextmanager
 def open_data_binary(*parts: str) -> Generator[IO[bytes], None, None]:
     """Open bundled cowrie.data/<parts> as a binary stream.
