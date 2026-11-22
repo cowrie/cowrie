@@ -2,6 +2,9 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+# ABOUTME: Handles SSH direct-tcpip requests: logs them, or forwards them to a
+# ABOUTME: configured address directly or through an HTTP CONNECT proxy.
+
 """
 This module contains code for handling SSH direct-tcpip connection requests
 """
@@ -18,6 +21,9 @@ from cowrie.core.fingerprint import (
     parse_http_request,
     parse_tls_client_hello,
 )
+
+# Longest CONNECT reply header accepted from the tunnel proxy.
+MAX_CONNECT_REPLY_SIZE = 16 * 1024
 
 
 def cowrieOpenConnectForwardingClient(remoteWindow, remoteMaxPacket, data, avatar):
@@ -213,6 +219,9 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
         forwarding.SSHConnectForwardingChannel.__init__(self, hostport, *args, **kw)
         self.dstport = dstport
         self.tunnel_established = False
+        self.tunnel_refused = False
+        # The proxy's CONNECT reply, collected until its header is complete.
+        self.connect_reply = b""
 
     def channelOpen(self, specificData: bytes) -> None:
         """
@@ -293,28 +302,49 @@ class TCPTunnelForwardingChannel(forwarding.SSHConnectForwardingChannel):
 
     def write(self, data: bytes) -> None:
         """
-        Modifies the original to strip off the TCP tunnel response
+        Modifies the original to read the proxy's CONNECT reply, which may
+        arrive in several packets, and forward only what follows it, and only
+        when the proxy accepted the tunnel.
         """
-        if not self.tunnel_established and data[:4].lower() == b"http":
-            # Check proxy response code
-            try:
-                res_code = int(data.split(b" ")[1], 10)
-            except (IndexError, ValueError):
-                self._log.error("Failed to parse TCP tunnel response code")
-                self._close("Connection refused")
-                return
-            if res_code != 200:
-                self._log.error("Unexpected response code: {code}", code=res_code)
-                self._close("Connection refused")
-                return
-            # Strip off rest of packet
-            eop = data.find(b"\r\n\r\n")
-            if eop > -1:
-                data = data[eop + 4 :]
-            # This only happens once when the channel is opened
-            self.tunnel_established = True
+        if self.tunnel_established:
+            forwarding.SSHConnectForwardingChannel.write(self, data)
+            return
+        if self.tunnel_refused:
+            return
 
-        forwarding.SSHConnectForwardingChannel.write(self, data)
+        reply = self.connect_reply + data
+        if not b"http/".startswith(reply[:5].lower()):
+            self._refuse("TCP tunnel proxy did not reply with HTTP")
+            return
+        end = reply.find(b"\r\n\r\n")
+        if end == -1:
+            if len(reply) > MAX_CONNECT_REPLY_SIZE:
+                self._refuse("TCP tunnel response header too long")
+            else:
+                self.connect_reply = reply
+            return
+
+        try:
+            res_code = int(reply.split(b"\r\n", 1)[0].split(b" ")[1], 10)
+        except (IndexError, ValueError):
+            self._refuse("Failed to parse TCP tunnel response code")
+            return
+        if res_code != 200:
+            self._refuse(f"Unexpected response code: {res_code}")
+            return
+
+        self.tunnel_established = True
+        self.connect_reply = b""
+        rest = reply[end + 4 :]
+        if rest:
+            forwarding.SSHConnectForwardingChannel.write(self, rest)
+
+    def _refuse(self, reason: str) -> None:
+        """Close the channel, and drop anything more the proxy sends."""
+        self._log.error("{reason}", reason=reason)
+        self.tunnel_refused = True
+        self.connect_reply = b""
+        self._close("Connection refused")
 
     def eofReceived(self) -> None:
         self.loseConnection()
