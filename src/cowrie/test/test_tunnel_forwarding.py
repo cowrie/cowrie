@@ -71,6 +71,19 @@ class TunnelForwardingWriteTests(unittest.TestCase):
         self.assertEqual(closed, 0)
         self.assertTrue(channel.tunnel_established)
 
+    def test_tunneled_traffic_of_any_protocol_is_forwarded(self) -> None:
+        # Only the proxy's reply has to be HTTP. A server-first protocol such
+        # as SMTP sends its banner after it, in the same packet or a later one.
+        banner = b"220 mail.example.com ESMTP Postfix\r\n"
+        established = b"HTTP/1.1 200 Connection established\r\n\r\n"
+        for chunks in ((established + banner,), (established, banner)):
+            with self.subTest(chunks=chunks):
+                channel, forwarded, closed = self._feed(*chunks)
+
+                self.assertEqual(forwarded, [banner])
+                self.assertEqual(closed, 0)
+                self.assertTrue(channel.tunnel_established)
+
     def test_rejection_split_across_packets_closes(self) -> None:
         channel, forwarded, closed = self._feed(
             b"HTTP/1.1 40", b"3 Forbidden\r\n\r\nbody", b"more body"
