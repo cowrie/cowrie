@@ -2,8 +2,8 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
-# ABOUTME: Asserts TCPTunnelForwardingChannel.write() closes on a rejected
-# ABOUTME: or malformed CONNECT response without forwarding its data.
+# ABOUTME: Asserts TCPTunnelForwardingChannel.write() reads the proxy's whole CONNECT
+# ABOUTME: reply, however it is split, and closes without forwarding it unless it is a 200.
 
 from __future__ import annotations
 
@@ -43,10 +43,60 @@ class TunnelForwardingWriteTests(unittest.TestCase):
             patch.object(channel, "_close") as close,
             patch.object(conchforwarding.SSHConnectForwardingChannel, "write") as write,
         ):
-            channel.write(b"http")
+            channel.write(b"http\r\n\r\n")
 
         close.assert_called_once_with("Connection refused")
         write.assert_not_called()
+
+    def _feed(
+        self, *chunks: bytes
+    ) -> tuple[forwarding.TCPTunnelForwardingChannel, list[bytes], int]:
+        """Write each chunk to a new channel; return it, the data forwarded to
+        the SSH client, and how often the channel was closed."""
+        channel = self._channel()
+        with (
+            patch.object(channel, "_close") as close,
+            patch.object(conchforwarding.SSHConnectForwardingChannel, "write") as write,
+        ):
+            for chunk in chunks:
+                channel.write(chunk)
+        return channel, [c.args[1] for c in write.call_args_list], close.call_count
+
+    def test_200_reply_split_across_packets_is_not_forwarded(self) -> None:
+        channel, forwarded, closed = self._feed(
+            b"HTTP/1.1 200 Conn", b"ection established\r\n\r\npay", b"load"
+        )
+
+        self.assertEqual(forwarded, [b"pay", b"load"])
+        self.assertEqual(closed, 0)
+        self.assertTrue(channel.tunnel_established)
+
+    def test_rejection_split_across_packets_closes(self) -> None:
+        channel, forwarded, closed = self._feed(
+            b"HTTP/1.1 40", b"3 Forbidden\r\n\r\nbody", b"more body"
+        )
+
+        self.assertEqual(forwarded, [])
+        self.assertEqual(closed, 1)
+        self.assertFalse(channel.tunnel_established)
+
+    def test_reply_that_is_not_http_closes(self) -> None:
+        for reply in (b"SSH-2.0-OpenSSH_9.2\r\n", b"\x16\x03\x01\x00\x05"):
+            with self.subTest(reply=reply):
+                channel, forwarded, closed = self._feed(reply)
+
+                self.assertEqual(forwarded, [])
+                self.assertEqual(closed, 1)
+                self.assertFalse(channel.tunnel_established)
+
+    def test_reply_header_without_end_is_capped(self) -> None:
+        channel, forwarded, closed = self._feed(
+            b"HTTP/1.1 200 OK\r\n", b"X-Pad: " + b"a" * 65536
+        )
+
+        self.assertEqual(forwarded, [])
+        self.assertEqual(closed, 1)
+        self.assertFalse(channel.tunnel_established)
 
     def test_200_response_establishes_and_strips_header(self) -> None:
         channel = self._channel()
