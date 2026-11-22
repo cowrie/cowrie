@@ -387,6 +387,22 @@ class ConsoleRendererTests(unittest.TestCase):
                 self.assertEqual(lines[-1], (expected, "ssh,abcd0123,192.0.2.1"))
                 self.assertEqual(event["message"], message)
 
+    def test_escapes_control_characters(self) -> None:
+        # Attacker input must not drive the terminal of an operator reading
+        # cowrie.log: escape sequences, tab, NUL, DEL and invisible characters
+        # are shown as escapes. Readable non-ASCII text stays as it is.
+        lines: list[str] = []
+        renderer = ConsoleRenderer(logmsg=lambda msg, system: lines.append(msg))
+        for message, expected in (
+            ("CMD: echo \x1b]0;title\x07\x1b[2J", r"CMD: echo \x1b]0;title\x07\x1b[2J"),
+            ("CMD: a\tb\x00c\x7f", r"CMD: a\tb\x00c\x7f"),
+            ("CMD: rm\u200b -rf", r"CMD: rm\u200b -rf"),
+            ("CMD: echo 你好 café", "CMD: echo 你好 café"),
+        ):
+            with self.subTest(message=message):
+                renderer.write({"message": message})
+                self.assertEqual(lines[-1], expected)
+
     def test_renders_with_session_prefix(self) -> None:
         lines: list[tuple[str, str]] = []
         renderer = ConsoleRenderer(
