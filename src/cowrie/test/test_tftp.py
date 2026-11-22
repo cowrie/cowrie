@@ -25,6 +25,7 @@ from cowrie.commands.tftp import (
     OPCODE_RRQ,
     TFTP_BLOCK_SIZE,
     Command_tftp,
+    TFTPClient,
     tftp_rate_limiter,
 )
 from cowrie.core.artifact import Artifact
@@ -335,6 +336,49 @@ class TFTPArtifactCloseTests(unittest.TestCase):
         with open(cmd.artifactFile.shasumFilename, "rb") as f:
             self.assertEqual(f.read(), content)
         os.remove(cmd.artifactFile.shasumFilename)
+
+    def test_graceful_shutdown_removes_empty_temp_file(self) -> None:
+        """A transfer stopped before any data arrives leaves no temp file."""
+        client = TFTPClient("192.0.2.1", 69, "/tmp/file", Artifact("tftp-download"))
+        temp = client.artifact.tempFilename
+        self.assertTrue(os.path.exists(temp))
+
+        client.stopProtocol()
+
+        self.assertTrue(client.artifact.closed)
+        self.assertFalse(os.path.exists(temp))
+        self.assertFalse(client.deferred.called)
+
+    def test_graceful_shutdown_stores_partial_transfer(self) -> None:
+        """Partial data is stored under its hash instead of being orphaned."""
+        import hashlib
+
+        content = b"partial tftp block\n"
+        client = TFTPClient("192.0.2.1", 69, "/tmp/file", Artifact("tftp-download"))
+        client.artifact.write(content)
+        temp = client.artifact.tempFilename
+
+        client.stopProtocol()
+
+        self.assertFalse(os.path.exists(temp))
+        self.assertEqual(client.artifact.shasum, hashlib.sha256(content).hexdigest())
+        self.assertTrue(os.path.exists(client.artifact.shasumFilename))
+        with open(client.artifact.shasumFilename, "rb") as f:
+            self.assertEqual(f.read(), content)
+        os.remove(client.artifact.shasumFilename)
+
+    def test_stop_after_transfer_finished_is_a_no_op(self) -> None:
+        """Teardown after a resolved transfer must leave the stored file alone."""
+        client = TFTPClient("192.0.2.1", 69, "/tmp/file", Artifact("tftp-download"))
+        client.artifact.write(b"complete transfer\n")
+        client.artifact.close()
+        stored = client.artifact.shasumFilename
+        client.deferred.callback(None)
+
+        client.stopProtocol()
+
+        self.assertTrue(os.path.exists(stored))
+        os.remove(stored)
 
 
 class TFTPHostnameResolutionTests(unittest.TestCase):
@@ -677,8 +721,6 @@ class TFTPDownloadLimitTests(unittest.TestCase):
         os.rmdir(self.tmpdir)
 
     def _client(self, limit_size: int) -> Any:
-        from cowrie.commands.tftp import TFTPClient
-
         artifact = Artifact("tftp-limit")
         self._artifacts.append(artifact)
         client = TFTPClient("127.0.0.1", 69, "f", artifact, limit_size=limit_size)
