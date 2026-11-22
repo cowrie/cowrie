@@ -46,6 +46,16 @@ def _sink_failure_line(message: str) -> None:
     _log.error("{log_message}", log_message=message)
 
 
+def _printable(message: str) -> str:
+    """Show each character that does not print as a Python escape (\\n,
+    \\x1b, \\u200b), so one event stays one line and attacker input cannot
+    drive the terminal of an operator reading the log."""
+    return "".join(
+        c if c.isprintable() else c.encode("unicode_escape").decode("ascii")
+        for c in message
+    )
+
+
 def _console_line(message: str, system: str = "-") -> None:
     """Default emitter for rendered event lines: the diagnostic log, with
     the session identity as the line's system prefix. The message is data,
@@ -257,4 +267,4 @@ class ConsoleRenderer:
             event.get("session", "-"),
             event.get("src_ip", "-"),
         )
-        self.logmsg(message.replace("\r", r"\r").replace("\n", r"\n"), system=system)
+        self.logmsg(_printable(message), system=system)
