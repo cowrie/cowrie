@@ -275,6 +275,15 @@ legacy_tox_ini = """
         {[testenv]deps}
         bcrypt @ git+https://github.com/pyca/bcrypt.git@f9b7febe5c3f31a8559653d23bd3d1a8771bef40
 
+    # cffi 2.1.1 does not build on 3.16: it uses Py_FileSystemDefaultEncoding,
+    # which 3.16 removed. git main has the fix (python-cffi/cffi#287). deps
+    # install before the package, so cryptography's cffi requirement is met by
+    # this build. Remove once the next cffi release ships.
+    [testenv:py316]
+    deps =
+        {[testenv]deps}
+        cffi @ git+https://github.com/python-cffi/cffi.git@1285f4647de0d96dba770725af033255760035b9
+
     [testenv:pypi]
     extras =
         dev

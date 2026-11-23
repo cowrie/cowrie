@@ -125,6 +125,13 @@ jobs:
         if: matrix.python-version == '3.15t'
         run: python -m pip -q install "bcrypt @ git+https://github.com/pyca/bcrypt.git@f9b7febe5c3f31a8559653d23bd3d1a8771bef40"
 
+      # cffi 2.1.1 does not build on 3.16: it uses Py_FileSystemDefaultEncoding,
+      # which 3.16 removed. git main has the fix (python-cffi/cffi#287).
+      # Remove once the next cffi release ships.
+      - name: Install cffi from git for 3.16
+        if: matrix.python-version == '3.16'
+        run: python -m pip -q install "cffi @ git+https://github.com/python-cffi/cffi.git@1285f4647de0d96dba770725af033255760035b9"
+
       - name: Install dependencies
         run: |
           python -m pip -q install --upgrade pip setuptools setuptools-scm wheel
