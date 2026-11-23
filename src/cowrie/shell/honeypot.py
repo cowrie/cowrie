@@ -65,6 +65,16 @@ MAX_FOR_ITEMS = 10000
 ASSIGNMENT_WORD = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=")
 
 
+def _single_line(command: str) -> str:
+    """Collapse embedded line breaks so one command stays on one log line.
+
+    An argument expanded from a command's multi-line output can carry CR and
+    LF. The Command found diagnostic writes this text straight to the log, so
+    one command must not split into several lines there.
+    """
+    return command.replace("\r\n", " ").replace("\r", " ").replace("\n", " ")
+
+
 class LoopSignal(enum.Enum):
     """A pending ``break`` / ``continue`` for the innermost running loop.
 
@@ -1320,7 +1330,10 @@ class HoneyPotShell:
             self._advance()
             return
 
-        self._log.info("Command found: {input}", input=cmd + " " + " ".join(args))
+        self._log.info(
+            "Command found: {input}",
+            input=_single_line(cmd + " " + " ".join(args)),
+        )
         # The pipe buffer feeding this shell is offered to every command and
         # drained by the first one that consumes stdin, as a shared pipe is;
         # a stdin redirection on the command replaces it.
