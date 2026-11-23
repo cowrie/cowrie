@@ -10,7 +10,7 @@ from __future__ import annotations
 import getopt
 import os
 import posixpath
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from twisted.internet import defer, reactor
 from twisted.internet.defer import inlineCallbacks
@@ -24,6 +24,7 @@ from cowrie.core.network import outbound_bind_address, resolve_allowed
 from cowrie.shell.command import HoneyPotCommand
 
 if TYPE_CHECKING:
+    from twisted.internet.interfaces import ITCPTransport
     from twisted.python.failure import Failure
 
 commands = {}
@@ -79,6 +80,8 @@ class Command_ftpget(HoneyPotCommand):
     artifactFile: Artifact
     ftp_client: FTPClient | None
     receiver: FTPFileReceiver | None = None
+    transfer: defer.Deferred[None] | None = None
+    stalled: bool = False  # the artifact ended the transfer before it finished
 
     def help(self) -> None:
         self.errorWrite(
@@ -183,6 +186,7 @@ Download a file via FTP
         self.url_log = f"{self.url_log}/{self.remote_path}"
 
         self.artifactFile = Artifact(self.local_file)
+        self.artifactFile.on_abort = self.abort_transfer
         self.ftp_client = None
         self.fakeoutfile = fakeoutfile
         # True from the moment the data transfer starts until one of the
@@ -191,7 +195,7 @@ Download a file via FTP
         self.transfer_running = False
 
         # Start async download
-        d = self.ftp_download_async()
+        d = self.transfer = self.ftp_download_async()
         if d:
             d.addCallback(self._download_success)
             d.addErrback(self._download_error)
@@ -374,6 +378,19 @@ Download a file via FTP
 
         self.exit()
 
+    def abort_transfer(self) -> None:
+        """Stop a transfer the artifact ended: no data for a while, or
+        shutdown. _download_error() reports it as a timeout."""
+        self.stalled = True
+        if self.ftp_client is not None and self.ftp_client.transport is not None:
+            # Closing the control connection fails the pending retrieve
+            # through FTPClient, which keeps its own reference to it.
+            cast("ITCPTransport", self.ftp_client.transport).abortConnection()
+            if self.receiver is not None and self.receiver.transport is not None:
+                cast("ITCPTransport", self.receiver.transport).abortConnection()
+        elif self.transfer is not None:
+            self.transfer.cancel()
+
     def _download_error(self, failure: Failure) -> None:
         """
         Called when download fails
@@ -391,7 +408,9 @@ Download a file via FTP
         self.exit_code = 1
         error_msg = "Connection error"
 
-        if failure.check(CommandFailed):
+        if self.stalled:
+            error_msg = "Connection timed out"
+        elif failure.check(CommandFailed):
             # FTP command failed (auth, file not found, etc)
             error_msg = f"FTP error: {failure.value.args[0]}"
         else:
