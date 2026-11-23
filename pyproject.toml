@@ -235,7 +235,7 @@ version_file = "src/cowrie/_version.py"
 [tool.tox]
 legacy_tox_ini = """
     [tox]
-    envlist = lint,docs,typing,py311,py312,py313,py314,py314t,py315,py315t,py316,pypy311
+    envlist = lint,docs,typing,py311,py312,py313,py314,py314t,py315,py315t,py316,py316t,pypy311
     deps = -r{toxinidir}/requirements.txt
     skip_missing_interpreters = True
 
@@ -249,6 +249,7 @@ legacy_tox_ini = """
         3.15: py315
         3.15t: py315t
         3.16: py316
+        3.16t: py316t
         pypy-3.11: pypy311
 
     [testenv]
@@ -282,6 +283,14 @@ legacy_tox_ini = """
     [testenv:py316]
     deps =
         {[testenv]deps}
+        cffi @ git+https://github.com/python-cffi/cffi.git@1285f4647de0d96dba770725af033255760035b9
+
+    # Free-threaded 3.16 needs both builds above: bcrypt as for 3.15t, cffi as
+    # for 3.16.
+    [testenv:py316t]
+    deps =
+        {[testenv]deps}
+        bcrypt @ git+https://github.com/pyca/bcrypt.git@f9b7febe5c3f31a8559653d23bd3d1a8771bef40
         cffi @ git+https://github.com/python-cffi/cffi.git@1285f4647de0d96dba770725af033255760035b9
 
     [testenv:pypi]
