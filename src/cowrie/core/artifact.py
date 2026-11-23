@@ -107,6 +107,10 @@ class Artifact:
         return True
 
     def write(self, data: bytes) -> None:
+        if self.closed:
+            # A transfer can still deliver data after its artifact was ended;
+            # what was stored stays as it is.
+            return
         self.fp.write(data)
         if self._idle_call is not None and self._idle_call.active():
             self._idle_call.reset(self.idle_timeout)

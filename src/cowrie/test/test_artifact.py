@@ -130,6 +130,18 @@ class ArtifactLifetimeTests(unittest.TestCase):
         self.assertEqual(aborted, [])
         self.assertEqual(self.clock.getDelayedCalls(), [])
 
+    def test_data_after_the_artifact_ended_is_dropped(self) -> None:
+        # A transfer can still deliver a chunk after its artifact ended it;
+        # that chunk must not fail on the closed file.
+        a = Artifact("ended")
+        a.write(b"kept")
+        a.abort()
+
+        a.write(b"late")
+
+        with open(a.shasumFilename, "rb") as f:
+            self.assertEqual(f.read(), b"kept")
+
     def test_zero_idle_timeout_never_aborts(self) -> None:
         with patch.object(Artifact, "idle_timeout", 0):
             a = Artifact("unbounded")
