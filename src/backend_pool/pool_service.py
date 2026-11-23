@@ -147,7 +147,7 @@ class PoolService:
         self.any_vm_up = False  # TODO fix for no VM available
 
         # start producer
-        threads.deferToThread(self.producer_loop)
+        self._producer_start()
 
         # recycle myself after some time
         recycle_period = CowrieConfig.getint(
@@ -366,6 +366,27 @@ class PoolService:
             if self.guest_id == 252:
                 self.guest_id = 0
 
+    def _producer_start(self) -> None:
+        """
+        Run one producer iteration on a worker thread, then arm the timer for
+        the next one. Runs on the reactor thread.
+
+        The deferred callback also runs on the reactor thread once the worker
+        is done, which keeps reactor.callLater() where it belongs.
+        """
+        self.loop_next_call = None
+        deferred = threads.deferToThread(self.producer_loop)
+        deferred.addCallback(lambda _result: self._producer_schedule_next())
+
+    def _producer_schedule_next(self) -> None:
+        """
+        Arm the timer for the next producer iteration.
+        Must run on the reactor thread.
+        """
+        self.loop_next_call = reactor.callLater(
+            self.loop_sleep_time, self._producer_start
+        )
+
     def producer_loop(self) -> None:
         # delete old VMs, but do not let pool size be 0
         if self.existing_pool_size() > 1:
@@ -386,11 +407,6 @@ class PoolService:
 
         # check for created VMs that can become available
         self.__producer_mark_available()
-
-        # sleep until next iteration
-        self.loop_next_call = reactor.callLater(
-            self.loop_sleep_time, self.producer_loop
-        )
 
     # Consumers
     def __consumers_get_guest_ip(self, src_ip: str) -> Guest | None:
