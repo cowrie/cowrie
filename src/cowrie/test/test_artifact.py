@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
 import tempfile
 import unittest
@@ -16,7 +17,11 @@ from unittest.mock import patch
 from twisted.internet.task import Clock
 
 from cowrie.core import artifact as artifact_module
-from cowrie.core.artifact import Artifact, abort_open_artifacts
+from cowrie.core.artifact import (
+    Artifact,
+    abort_open_artifacts,
+    store_leftover_artifacts,
+)
 
 
 class ArtifactDuplicateTests(unittest.TestCase):
@@ -170,6 +175,51 @@ class ArtifactLifetimeTests(unittest.TestCase):
         self.assertEqual(
             sorted(os.listdir(self.tmpdir)), sorted(a.shasum for a in running)
         )
+
+
+class LeftoverArtifactTests(unittest.TestCase):
+    """At startup, temp files a killed or crashed run left behind are stored
+    under their SHA-256, or removed when empty. Other files are untouched."""
+
+    def setUp(self) -> None:
+        self.tmpdir = tempfile.mkdtemp()
+        self.addCleanup(self._remove_tmpdir)
+
+    def _remove_tmpdir(self) -> None:
+        for name in os.listdir(self.tmpdir):
+            os.remove(os.path.join(self.tmpdir, name))
+        os.rmdir(self.tmpdir)
+
+    def _file(self, name: str, data: bytes) -> None:
+        with open(os.path.join(self.tmpdir, name), "wb") as f:
+            f.write(data)
+
+    def test_leftover_temp_files_are_stored_or_removed(self) -> None:
+        self._file("tmpab_cd123", b"partial sample")
+        self._file("tmp0000empt", b"")
+        for other in ("notes.txt", "tmpshort", "wget-download_1234", "tmpABCDEFGH"):
+            self._file(other, b"keep")
+
+        store_leftover_artifacts(self.tmpdir)
+
+        stored = hashlib.sha256(b"partial sample").hexdigest()
+        self.assertEqual(
+            sorted(os.listdir(self.tmpdir)),
+            sorted(
+                [stored, "notes.txt", "tmpshort", "wget-download_1234", "tmpABCDEFGH"]
+            ),
+        )
+        with open(os.path.join(self.tmpdir, stored), "rb") as f:
+            self.assertEqual(f.read(), b"partial sample")
+
+    def test_leftover_already_captured_is_removed(self) -> None:
+        stored = hashlib.sha256(b"sample").hexdigest()
+        self._file(stored, b"sample")
+        self._file("tmpzzzzzzzz", b"sample")
+
+        store_leftover_artifacts(self.tmpdir)
+
+        self.assertEqual(os.listdir(self.tmpdir), [stored])
 
 
 if __name__ == "__main__":

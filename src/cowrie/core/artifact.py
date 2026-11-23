@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import re
 import tempfile
 import uuid
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -46,6 +47,9 @@ if TYPE_CHECKING:
 
 _log = Logger()
 
+# The names tempfile.NamedTemporaryFile gives an artifact's temp file.
+_TEMP_NAME = re.compile(r"tmp[a-z0-9_]{8}")
+
 
 def temp_download_path(prefix: str) -> str:
     """A unique download-dir path for a temp file that is renamed to its
@@ -55,6 +59,48 @@ def temp_download_path(prefix: str) -> str:
         CowrieConfig.get("honeypot", "download_path", fallback="."),
         f"{prefix}_{uuid.uuid4().hex}",
     )
+
+
+def _store_by_hash(path: str, directory: str) -> tuple[str, str, bool]:
+    """Move the file at ``path`` to ``directory``/<its SHA-256>, or remove
+    it when that content is already stored. Returns the hash, the stored
+    path, and whether it was a duplicate."""
+    with open(path, "rb") as f:
+        shasum = hashlib.sha256(f.read()).hexdigest()
+    stored = os.path.join(directory, shasum)
+    if os.path.exists(stored):
+        os.remove(path)
+        return shasum, stored, True
+    os.rename(path, stored)
+    umask = os.umask(0)
+    os.umask(umask)
+    os.chmod(stored, 0o666 & ~umask)
+    return shasum, stored, False
+
+
+def store_leftover_artifacts(directory: str | None = None) -> None:
+    """Deal with the temp files a previous run left in the download
+    directory because it was killed or crashed before it could close them:
+    store each under its SHA-256, or remove it when empty. Run at startup,
+    before any artifact of this run exists."""
+    directory = directory or Artifact.artifactDir
+    try:
+        names = os.listdir(directory)
+    except FileNotFoundError:
+        return
+    for name in names:
+        path = os.path.join(directory, name)
+        if not _TEMP_NAME.fullmatch(name) or not os.path.isfile(path):
+            continue
+        if os.path.getsize(path) == 0:
+            os.remove(path)
+            continue
+        shasum, _stored, _duplicate = _store_by_hash(path, directory)
+        _log.info(
+            "Stored partial download {name} left by an earlier run as {shasum}",
+            name=name,
+            shasum=shasum,
+        )
 
 
 def abort_open_artifacts() -> None:
@@ -155,25 +201,13 @@ class Artifact:
                 pass
             return None
 
-        self.fp.seek(0)
-        data = self.fp.read()
         self.fp.close()
         self.closed = True
 
-        self.shasum = hashlib.sha256(data).hexdigest()
-        self.shasumFilename = os.path.join(self.artifactDir, self.shasum)
-
-        if os.path.exists(self.shasumFilename):
-            # Content already captured; drop the temp copy. The dedup outcome is
-            # reported once, congruently, on the caller's file_download event
-            # (duplicate=True) rather than as a separate log line here.
-            os.remove(self.fp.name)
-            self.duplicate = True
-        else:
-            os.rename(self.fp.name, self.shasumFilename)
-            umask = os.umask(0)
-            os.umask(umask)
-            os.chmod(self.shasumFilename, 0o666 & ~umask)
-            self.duplicate = False
-
+        # Content already captured is dropped. The dedup outcome is reported
+        # once, congruently, on the caller's file_download event
+        # (duplicate=True) rather than as a separate log line here.
+        self.shasum, self.shasumFilename, self.duplicate = _store_by_hash(
+            self.fp.name, self.artifactDir
+        )
         return self.shasum, self.shasumFilename
