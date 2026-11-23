@@ -99,6 +99,11 @@ jobs:
         include:
           - python-version: "pypy-3.11"
             experimental: true
+          # Alpha: allowed to fail until 3.16 is released.
+          - python-version: "3.16"
+            experimental: true
+          - python-version: "3.16t"
+            experimental: true
     continue-on-error: ${{ matrix.experimental }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -109,16 +114,25 @@ jobs:
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
         with:
           python-version: ${{ matrix.python-version }}
+          # Uses a pre-release only for a version with no final release yet.
+          allow-prereleases: true
           cache: pip
 
-      # bcrypt 5.0.0 has no free-threaded 3.15 wheel and its vendored pyo3
-      # 0.26 refuses to build past 3.14; git main builds with pyo3 0.29,
+      # bcrypt 5.0.0 has no free-threaded 3.15 or 3.16 wheel and its vendored
+      # pyo3 0.26 refuses to build past 3.14; git main builds with pyo3 0.29,
       # which supports 3.15, and still reports version 5.0.0 so it
       # satisfies the requirements pin. Remove once the next bcrypt
       # release ships.
-      - name: Install bcrypt from git for free-threaded 3.15
-        if: matrix.python-version == '3.15t'
+      - name: Install bcrypt from git for free-threaded 3.15 and 3.16
+        if: matrix.python-version == '3.15t' || matrix.python-version == '3.16t'
         run: python -m pip -q install "bcrypt @ git+https://github.com/pyca/bcrypt.git@f9b7febe5c3f31a8559653d23bd3d1a8771bef40"
+
+      # cffi 2.1.1 does not build on 3.16: it uses Py_FileSystemDefaultEncoding,
+      # which 3.16 removed. git main has the fix (python-cffi/cffi#287).
+      # Remove once the next cffi release ships.
+      - name: Install cffi from git for 3.16
+        if: matrix.python-version == '3.16' || matrix.python-version == '3.16t'
+        run: python -m pip -q install "cffi @ git+https://github.com/python-cffi/cffi.git@1285f4647de0d96dba770725af033255760035b9"
 
       - name: Install dependencies
         run: |
