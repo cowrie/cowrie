@@ -86,6 +86,13 @@ txtcmds_path = txtcmds
 # (default: 0)
 #download_limit_size = 10485760
 
+# Seconds a download may go without receiving data before it is stopped and
+# reported as failed. Whatever arrived is still stored in 'download_path'.
+# A value of 0 means no limit.
+#
+# (default: 60)
+#download_idle_timeout = 60
+
 # TTY logging will log a transcript of the complete terminal interaction in UML
 # compatible format.
 # (default: true)

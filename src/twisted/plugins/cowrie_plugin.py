@@ -25,6 +25,7 @@ import cowrie.telnet.factory
 from backend_pool.pool_server import PoolServerFactory
 from cowrie import __version__ as __cowrie_version__
 from cowrie.core import checkers, uuid
+from cowrie.core.artifact import abort_open_artifacts
 from cowrie.core.config import CowrieConfig
 from cowrie.core.events import ConsoleRenderer, EventDispatcher
 from cowrie.core.output import Output, load_plugins
@@ -147,6 +148,9 @@ Makes a Cowrie SSH/Telnet honeypot.
         self.dispatcher = EventDispatcher([renderer])
         self.dispatcher.registerShutdown(reactor)
         Output.dispatcher = self.dispatcher
+        # Downloads still running at shutdown are stopped and reported before
+        # sessions close, so their temp files are stored rather than left behind.
+        reactor.addSystemEventTrigger("before", "shutdown", abort_open_artifacts)
 
         # Load output modules
         self.output_plugins = load_plugins(reactor)
