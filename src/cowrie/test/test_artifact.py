@@ -67,6 +67,8 @@ class ArtifactLifetimeTests(unittest.TestCase):
             patch.object(Artifact, "artifactDir", self.tmpdir),
             patch.object(Artifact, "idle_timeout", 60),
             patch.object(artifact_module, "reactor", self.clock),
+            # Only this test's artifacts, not ones other tests left open.
+            patch.object(Artifact, "open_artifacts", set()),
         )
         for p in patches:
             p.start()
