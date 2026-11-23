@@ -10,6 +10,7 @@ from __future__ import annotations
 import os
 import tempfile
 import unittest
+from typing import Any
 from unittest.mock import patch
 
 from twisted.internet.task import Clock
@@ -63,7 +64,7 @@ class ArtifactLifetimeTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tmpdir = tempfile.mkdtemp()
         self.clock = Clock()
-        patches = (
+        patches: tuple[Any, ...] = (
             patch.object(Artifact, "artifactDir", self.tmpdir),
             patch.object(Artifact, "idle_timeout", 60),
             patch.object(artifact_module, "reactor", self.clock),

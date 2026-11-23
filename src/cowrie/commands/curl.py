@@ -10,9 +10,8 @@ import posixpath
 from http.client import responses
 from urllib import parse
 
-import treq
 from twisted.internet import error, reactor
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import CancelledError, inlineCallbacks
 from twisted.logger import Logger
 from twisted.python import failure
 from twisted.web.iweb import UNKNOWN_LENGTH
@@ -23,6 +22,7 @@ from cowrie.core.download import (
     BlockedAddress,
     UnreachableAddress,
     capture_download,
+    collect_body,
     fetch,
     outbound_rate_limiter,
     report_download_failure,
@@ -328,6 +328,7 @@ class Command_curl(HoneyPotCommand):
             return None
 
         self.artifact = Artifact("curl-download")
+        self.artifact.on_abort = self.abort_transfer
 
         # treq.get() can raise synchronously before returning a Deferred (e.g.
         # idna.core.InvalidCodepoint for an IPv4-embedded IPv6 URL literal such
@@ -341,6 +342,13 @@ class Command_curl(HoneyPotCommand):
         if self.deferred:
             self.deferred.addCallback(self.success)
             self.deferred.addErrback(self.error)
+
+    def abort_transfer(self) -> None:
+        """Stop a transfer the artifact ended: no data for a while, or
+        shutdown. Cancelling closes the connection and error() reports it."""
+        if getattr(self, "deferred", None) is not None:
+            # Cancelling reaches the body read the download is waiting on.
+            self.deferred.cancel()
 
     def treqDownload(self, url):
         """
@@ -425,7 +433,7 @@ class Command_curl(HoneyPotCommand):
                 "                                 Dload  Upload   Total   Spent    Left  Speed\n"
             )
 
-        deferred = treq.collect(response, self.collect)
+        deferred = collect_body(response, self.collect)
         deferred.addCallback(self.collectioncomplete)
         return deferred
 
@@ -536,8 +544,16 @@ class Command_curl(HoneyPotCommand):
             self.exit()
             return
 
+        elif response.check(CancelledError) is not None:
+            # The artifact ended a transfer that stopped receiving data.
+            self.errorWrite(
+                f"curl: (28) Operation timed out after {Artifact.idle_timeout * 1000}"
+                f" milliseconds with {self.currentlength} bytes received\n"
+            )
+            self.exit(28)
+            return
+
         # possible errors:
-        # defer.CancelledError,
         # error.ConnectingCancelledError,
 
         self._log.failure("Unhandled curl error", failure=response)

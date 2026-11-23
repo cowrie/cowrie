@@ -11,7 +11,6 @@ import time
 from typing import Any
 from urllib import parse
 
-import treq
 from twisted.internet import defer, error, reactor
 from twisted.internet.defer import CancelledError, inlineCallbacks
 from twisted.internet.protocol import ClientCreator, Protocol
@@ -26,6 +25,7 @@ from cowrie.core.download import (
     BlockedAddress,
     UnreachableAddress,
     capture_download,
+    collect_body,
     fetch,
     outbound_rate_limiter,
     report_download_failure,
@@ -109,6 +109,7 @@ class Command_wget(HoneyPotCommand):
     currentlength: int = 0  # partial size during download
     totallength: int = 0  # total length
     proglen: int = 0
+    stalled: bool = False  # the artifact ended the transfer before it finished
     wget_version: str = (
         "1.25.0"  # GNU wget version used in --help and User-Agent header
     )
@@ -301,6 +302,7 @@ class Command_wget(HoneyPotCommand):
                 return
 
         self.artifact = Artifact("wget-download")
+        self.artifact.on_abort = self.abort_transfer
 
         if not self.quiet:
             tm = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -328,6 +330,19 @@ class Command_wget(HoneyPotCommand):
         except Exception:
             self.error(failure.Failure())
             return
+
+    def abort_transfer(self) -> None:
+        """Stop a transfer the artifact ended: no data for a while, or
+        shutdown. error() reports it as a timeout."""
+        self.stalled = True
+        ftp_client = getattr(self, "ftp_client", None)
+        if ftp_client is not None and ftp_client.transport is not None:
+            # Closing the control connection fails the pending retrieve
+            # through FTPClient, which keeps its own reference to it.
+            ftp_client.transport.abortConnection()
+        elif getattr(self, "deferred", None) is not None:
+            # Cancelling reaches the body read the download is waiting on.
+            self.deferred.cancel()
 
     def httpDownload(self, url: str) -> Any:
         """
@@ -547,7 +562,7 @@ class Command_wget(HoneyPotCommand):
             abort_body(response)
             return None
 
-        deferred = treq.collect(response, self.collect)
+        deferred = collect_body(response, self.collect)
         deferred.addCallback(self.collectioncomplete)
         return deferred
 
@@ -664,6 +679,11 @@ class Command_wget(HoneyPotCommand):
         self.exit_code = 1
         report_download_failure(self, self.url.decode())
 
+        if self.stalled or response.check(CancelledError) is not None:
+            self.errorWrite("failed: Operation timed out.\n")
+            self.exit()
+            return
+
         if response.check(BlockedAddress) is not None:
             # A redirect reached a host the honeypot must not contact.
             self.errorWrite(
@@ -682,11 +702,6 @@ class Command_wget(HoneyPotCommand):
                 f"Resolving no.such ({self.host})... failed: Temporary failure in name resolution.\n"
             )
             self.errorWrite(f"wget: unable to resolve host address ‘{self.host}’\n")
-            self.exit()
-            return
-
-        if response.check(CancelledError) is not None:
-            self.errorWrite("failed: Operation timed out.\n")
             self.exit()
             return
 
