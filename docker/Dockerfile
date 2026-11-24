@@ -72,8 +72,18 @@ RUN python3 -m venv cowrie-env && \
 
 COPY --chown=${COWRIE_USER}:${COWRIE_GROUP} . ${COWRIE_HOME}/cowrie-git
 
-# RUN . cowrie-env/bin/activate && \
-#     pip install -e ${COWRIE_HOME}/cowrie-git
+# src/cowrie/_version.py is generated, not tracked, and .git is not in the
+# build context, so a bare `docker build` has no way to derive a version.
+ARG SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE
+RUN if [ ! -f cowrie-git/src/cowrie/_version.py ]; then \
+      [ -n "${SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE}" ] || \
+        echo "WARNING: no src/cowrie/_version.py in the build context and no" \
+             "SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE build argument;" \
+             "the image will report version 0.0.0+unknown" >&2; \
+      printf '__version__ = version = "%s"\n' \
+        "${SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE:-0.0.0+unknown}" \
+        > cowrie-git/src/cowrie/_version.py; \
+    fi
 
 FROM gcr.io/distroless/python3-debian13:latest AS runtime
 #FROM gcr.io/distroless/python3-debian13:debug AS runtime

@@ -97,8 +97,16 @@ jobs:
           cache-to: type=gha,scope=${{ env.PLATFORM_PAIR }},mode=max
 
       - name: Test
+        # A crashing container exits after `docker run -d` returns, so wait
+        # for the honeypot to announce itself instead of trusting the start.
         run: |
-          docker run -d --rm cowrie:test
+          docker run -d --name cowrie-test cowrie:test
+          trap 'docker rm -f cowrie-test >/dev/null' EXIT
+          if ! timeout 60 sh -c 'until docker logs cowrie-test 2>&1 | grep -q "Ready to accept SSH connections"; do sleep 2; done'; then
+            docker logs cowrie-test
+            echo "cowrie did not start"
+            exit 1
+          fi
 
       - name: Push Container Image by digest
         id: push

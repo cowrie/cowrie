@@ -63,3 +63,15 @@ If you want to make extensive changes to the Docker image, it may be easier to b
 your own local docker image with::
 
     $ make docker-load
+
+The image needs ``src/cowrie/_version.py``, which ``setuptools_scm`` generates from
+the git history and which is not tracked in git. ``make`` writes it before the build.
+A plain ``docker build`` from a fresh clone does not have it, and ``.git`` is excluded
+from the build context, so pass the version in instead::
+
+    $ pip install setuptools-scm
+    $ docker build -f docker/Dockerfile \
+        --build-arg SETUPTOOLS_SCM_PRETEND_VERSION_FOR_COWRIE=$(python3 -m setuptools_scm) .
+
+Without the build argument the image still builds and runs, reporting version
+``0.0.0+unknown``.
