@@ -17,7 +17,7 @@ from urllib.parse import urlparse
 
 from twisted.internet import defer, error
 from twisted.python.failure import Failure
-from twisted.web.client import URI
+from twisted.web.client import URI, ResponseNeverReceived
 from twisted.web.http_headers import Headers
 
 from cowrie.commands.wget import Command_wget
@@ -129,6 +129,25 @@ class WgetArtifactCleanupTests(unittest.TestCase):
         cmd.error(Failure(error.TCPTimedOutError()))
 
         self.assertIn(b"Connection timed out", b"".join(writes))
+
+    def test_request_timeout_reports_operation_timed_out(self) -> None:
+        # treq reports a request timeout by cancelling the request, which
+        # Twisted surfaces wrapped in ResponseNeverReceived. It must be
+        # reported as a timeout instead of falling through to the CRITICAL
+        # "Unhandled wget error" branch.
+        cmd = Command_wget.__new__(Command_wget)
+        cmd.protocol = self.proto
+        writes: list[bytes] = []
+        cmd.errorWritefn = lambda data: writes.append(data)
+        cmd.exit = lambda code=None: None  # type: ignore[method-assign]
+        cmd.url = b"http://192.0.2.1/file"
+        cmd.host = "192.0.2.1"
+        cmd.port = 80
+        cmd.artifact = Artifact("wget-download")
+
+        cmd.error(Failure(ResponseNeverReceived([Failure(defer.CancelledError())])))
+
+        self.assertIn(b"Operation timed out", b"".join(writes))
 
     def test_failed_download_removes_temp_artifact(self) -> None:
         # Bypass HoneyPotCommand.__init__: its stdout/stderr wiring needs a

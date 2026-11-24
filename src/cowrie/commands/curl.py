@@ -15,6 +15,7 @@ from twisted.internet import error, reactor
 from twisted.internet.defer import inlineCallbacks
 from twisted.logger import Logger
 from twisted.python import failure
+from twisted.web.client import ResponseFailed
 from twisted.web.iweb import UNKNOWN_LENGTH
 
 from cowrie.core.artifact import Artifact
@@ -24,6 +25,7 @@ from cowrie.core.download import (
     UnreachableAddress,
     capture_download,
     fetch,
+    is_timeout,
     outbound_rate_limiter,
     report_download_failure,
 )
@@ -512,6 +514,16 @@ class Command_curl(HoneyPotCommand):
 
         if response.check(error.DNSLookupError) is not None:
             self.errorWrite(f"curl: (6) Could not resolve host: {self.host}\n")
+            self.exit()
+            return
+
+        elif is_timeout(response):
+            self.errorWrite("curl: (28) Operation timed out\n")
+            self.exit()
+            return
+
+        elif response.check(ResponseFailed) is not None:
+            self.errorWrite("curl: (56) Failure when receiving data from the peer\n")
             self.exit()
             return
 
