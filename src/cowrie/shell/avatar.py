@@ -59,6 +59,7 @@ class CowrieUser(avatar.ConchUser):
 
     def logout(self) -> None:
         self._log.info("avatar {username} logging out", username=self.username)
+        self.server.logout()
 
     def lookupChannel(self, channelType, windowSize, maxPacket, data):
         """

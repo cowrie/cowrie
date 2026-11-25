@@ -22,12 +22,8 @@ if TYPE_CHECKING:
 
 class CowrieServer:
     """
-    In traditional Kippo each connection gets its own simulated machine.
-    This is not always ideal, sometimes two connections come from the same
-    source IP address. we want to give them the same environment as well.
-    So files uploaded through SFTP are visible in the SSH session.
-    This class represents a 'virtual server' that can be shared between
-    multiple Cowrie connections
+    The emulated machine of one connection. Every channel and SFTP
+    subsystem of the connection shares its filesystem.
     """
 
     _log = Logger()
@@ -51,10 +47,24 @@ class CowrieServer:
             "Initialized emulated server as architecture: {arch}", arch=self.arch
         )
 
+    def logout(self) -> None:
+        """Release what the connection held on the real disk."""
+        if self.fs is not None:
+            self.fs.remove_backing_files()
+
     def initFileSystem(self, home: str) -> None:
         """
-        Do this so we can trigger it later. Not all sessions need file system
+        Create the emulated filesystem on first use. Not all connections need
+        one. Every later channel and SFTP subsystem of the connection shares
+        it, so a file written in one channel is there in the next.
+
+        Channels of a connection are assumed to run one after another, as
+        every multi-channel session seen in the wild does: each channel
+        finds the files the previous one left, and stores what it wrote
+        when it closes.
         """
+        if self.fs is not None:
+            return
         self.fs = fs.HoneyPotFilesystem(self.arch, home)
 
         processes = CowrieConfig.get("shell", "processes", fallback=None)
