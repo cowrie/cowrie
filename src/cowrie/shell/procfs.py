@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 # ABOUTME: Generated /proc files that describe the process reading them
-# ABOUTME: (/proc/self/stat and status), in the format of Linux 6.1.
+# ABOUTME: (/proc/self/stat, status, cmdline and comm), in the format of Linux 6.1.
 
 """
 /proc/self is the process that opens it. In cowrie that is the process on top
@@ -223,3 +223,27 @@ def self_status(protocol: Any) -> bytes:
         ("nonvoluntary_ctxt_switches", rnd.randrange(0, 15)),
     ]
     return "".join(f"{key}:\t{value}\n" for key, value in lines).encode()
+
+
+def process_argv(process: Any) -> list[str]:
+    """The arguments a process was started with. A command has the name it was
+    invoked by and its arguments; a shell only has its name, "-bash" for a
+    login shell."""
+    args = getattr(process, "args", None)
+    if args is None:
+        return [process.name]
+    argv0 = getattr(getattr(process, "pp", None), "argv0", None) or process.comm
+    return [argv0, *args]
+
+
+def self_cmdline(protocol: Any) -> bytes:
+    """/proc/self/cmdline for the reading process: its arguments, each ended
+    by a NUL byte."""
+    argv = process_argv(reading_process(protocol))
+    return b"".join(arg.encode("utf-8", "surrogateescape") + b"\0" for arg in argv)
+
+
+def self_comm(protocol: Any) -> bytes:
+    """/proc/self/comm for the reading process."""
+    comm: str = reading_process(protocol).comm
+    return comm.encode("utf-8", "surrogateescape") + b"\n"
