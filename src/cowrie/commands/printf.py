@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import math
 import re
 
 from cowrie.shell.command import HoneyPotCommand
@@ -50,6 +51,36 @@ class _Stop(Exception):
     """Output ends here: \\c in a %b argument, or a bad conversion."""
 
 
+# The lead byte and length for each code point range, as bash encodes \u and
+# \U: UTF-8 extended to six bytes, and nothing at all from 0x80000000 up.
+_UTF8_RANGES = (
+    (0x80, 1, 0x00),
+    (0x800, 2, 0xC0),
+    (0x10000, 3, 0xE0),
+    (0x200000, 4, 0xF0),
+    (0x4000000, 5, 0xF8),
+    (0x80000000, 6, 0xFC),
+)
+
+
+def _encode_code_point(code: int) -> bytes:
+    """Encode ``code`` the way bash does, which keeps going past the Unicode
+    range: up to six bytes, then nothing from 0x80000000 up. Python's chr()
+    stops at 0x10FFFF, so going through it loses every \\u and \\U above that."""
+    for limit, length, lead in _UTF8_RANGES:
+        if code >= limit:
+            continue
+        if length == 1:
+            return bytes([code])
+        shift = 6 * (length - 1)
+        out = bytearray([lead | (code >> shift)])
+        while shift:
+            shift -= 6
+            out.append(0x80 | ((code >> shift) & 0x3F))
+        return bytes(out)
+    return b""
+
+
 def _take(text: str, i: int, digits: str, limit: int) -> str:
     """The run of up to ``limit`` characters from ``digits`` at ``i``."""
     end = i
@@ -88,7 +119,7 @@ def expand_escapes(text: str, *, in_b: bool = False) -> tuple[bytes, bool]:
             i += 2 + len(digits)
         elif nxt in "uU" and _take(text, i + 2, _HEX, 4 if nxt == "u" else 8):
             digits = _take(text, i + 2, _HEX, 4 if nxt == "u" else 8)
-            out += chr(int(digits, 16)).encode("utf-8", errors="surrogatepass")
+            out += _encode_code_point(int(digits, 16))
             i += 2 + len(digits)
         else:
             out += b"\\" + nxt.encode("utf-8", errors="surrogateescape")
@@ -229,9 +260,14 @@ class Command_printf(HoneyPotCommand):
         if conv in "eEfFgGaA":
             number = self._float(arg)
             if conv in "aA":
-                # C prints the shortest mantissa; float.hex() pads it with zeros.
-                mantissa, exponent = number.hex().split("p")
-                text = mantissa.rstrip("0").rstrip(".") + "p" + exponent
+                if math.isfinite(number):
+                    # C prints the shortest mantissa; float.hex() pads it with zeros.
+                    mantissa, exponent = number.hex().split("p")
+                    text = mantissa.rstrip("0").rstrip(".") + "p" + exponent
+                else:
+                    # An argument that overflowed has no mantissa to print, and
+                    # float.hex() gives back "inf" with no exponent to split off.
+                    text = f"{number:f}"
                 return ((spec + "s") % (text.upper() if conv == "A" else text)).encode()
             return ((spec + conv) % number).encode()
         self._error(f"`{conv}': invalid format character")
