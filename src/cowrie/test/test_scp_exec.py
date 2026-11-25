@@ -35,7 +35,11 @@ scp.Command_scp.download_path_uniq = _DOWNLOAD_DIR
 
 
 def run_exec_scp_push(
-    framed_stdin: bytes, chunk_size: int = 0, fs_newcount: int | None = None
+    framed_stdin: bytes,
+    chunk_size: int = 0,
+    fs_newcount: int | None = None,
+    command: bytes = b"scp -t /tmp",
+    avatar: FakeAvatar | None = None,
 ) -> tuple[list[bytes], list[dict]]:
     """Drive a full exec-channel `scp -t` push.
 
@@ -43,17 +47,17 @@ def run_exec_scp_push(
     the SSH channel delivers them, then a channel EOF and connection close. A
     non-zero chunk_size splits the stdin across multiple dataReceived calls, as
     happens for a large transfer. fs_newcount pre-loads the filesystem's
-    new-file counter to drive it over its quota. Returns the contents of every
-    saved download file and the captured events.
+    new-file counter to drive it over its quota. command is the exec command
+    line; pass avatar to inspect its filesystem afterwards. Returns the
+    contents of every saved download file and the captured events.
     """
     sink = CaptureSink()
-    avatar = FakeAvatar(FakeServer())
+    if avatar is None:
+        avatar = FakeAvatar(FakeServer())
     if fs_newcount is not None:
         avatar.server.fs.newcount = fs_newcount
 
-    lsp = insults.LoggingServerProtocol(
-        protocol.HoneyPotExecProtocol, avatar, b"scp -t /tmp"
-    )
+    lsp = insults.LoggingServerProtocol(protocol.HoneyPotExecProtocol, avatar, command)
     lsp.makeConnection(make_exec_transport(sink))
 
     live_stdinlog = lsp.stdinlogFile
@@ -157,6 +161,57 @@ class ScpExecPushTests(unittest.TestCase):
 
         self.assertEqual(saved, [body])
         self.assertIn("cowrie.session.file_upload", [e.get("eventid") for e in events])
+
+
+class ScpExecTargetTests(unittest.TestCase):
+    """`scp -t TARGET` stores the upload where OpenSSH's sink would."""
+
+    def setUp(self) -> None:
+        for name in os.listdir(_DOWNLOAD_DIR):
+            full = os.path.join(_DOWNLOAD_DIR, name)
+            if os.path.isfile(full):
+                os.remove(full)
+
+    def push(self, command: bytes) -> tuple[FakeAvatar, list[dict]]:
+        avatar = FakeAvatar(FakeServer())
+        body = b"\x7fELF-dropper"
+        framed = b"C0755 %d hw\n" % len(body) + body + b"\x00"
+        _saved, events = run_exec_scp_push(framed, command=command, avatar=avatar)
+        return avatar, events
+
+    def destfiles(self, events: list[dict]) -> list[str]:
+        return [
+            e["destfile"]
+            for e in events
+            if e.get("eventid") == "cowrie.session.file_upload"
+        ]
+
+    def test_target_file_is_used_as_the_file_name(self) -> None:
+        """A target that is not an existing directory names the file itself,
+        so a dropper's `scp -t /bin/x` followed by `/bin/x` finds it."""
+        avatar, events = self.push(b"scp -t /bin/ncvoxyrolwfvbutzzbwnntfxwv")
+
+        self.assertEqual(self.destfiles(events), ["/bin/ncvoxyrolwfvbutzzbwnntfxwv"])
+        self.assertTrue(avatar.server.fs.isfile("/bin/ncvoxyrolwfvbutzzbwnntfxwv"))
+        self.assertFalse(avatar.server.fs.exists("/root/hw"))
+
+    def test_relative_target_file_resolves_from_cwd(self) -> None:
+        avatar, events = self.push(b"scp -t payload")
+
+        self.assertEqual(self.destfiles(events), ["/root/payload"])
+        self.assertTrue(avatar.server.fs.isfile("/root/payload"))
+
+    def test_target_directory_keeps_the_sent_name(self) -> None:
+        avatar, events = self.push(b"scp -t /tmp")
+
+        self.assertEqual(self.destfiles(events), ["/tmp/hw"])
+        self.assertTrue(avatar.server.fs.isfile("/tmp/hw"))
+
+    def test_directory_flag_keeps_the_sent_name(self) -> None:
+        avatar, events = self.push(b"scp -d -t /tmp")
+
+        self.assertEqual(self.destfiles(events), ["/tmp/hw"])
+        self.assertTrue(avatar.server.fs.isfile("/tmp/hw"))
 
 
 class ScpExecHardeningTests(unittest.TestCase):
