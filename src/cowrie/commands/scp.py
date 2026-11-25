@@ -2,6 +2,9 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
+# ABOUTME: Emulates the scp command, including the `scp -t` sink an scp
+# ABOUTME: client runs on the honeypot to upload files, which it captures.
+
 from __future__ import annotations
 
 import getopt
@@ -35,6 +38,7 @@ class Command_scp(HoneyPotCommand):
     )
 
     out_dir: str = ""
+    target_file: str = ""
 
     def help(self) -> None:
         self.write(
@@ -52,13 +56,18 @@ class Command_scp(HoneyPotCommand):
             return
 
         self.out_dir = ""
+        self.target_file = ""
 
-        for opt in optlist:
-            # -d takes no getopt argument of its own; the target directory is
-            # the first positional argument, which need not be there.
-            if opt[0] == "-d" and args:
+        # As in OpenSSH's sink, the first positional argument is the target.
+        # It is the directory to store into when it is an existing directory
+        # or -d demands one; otherwise it is the name of the file itself.
+        # -d takes no getopt argument of its own.
+        if args:
+            directory_only = any(opt[0] == "-d" for opt in optlist)
+            if directory_only or self.fs.isdir(self.fs.resolve_path(args[0], self.cwd)):
                 self.out_dir = args[0]
-                break
+            else:
+                self.target_file = args[0]
 
         if self.out_dir:
             outdir = self.fs.resolve_path(self.out_dir, self.cwd)
@@ -166,7 +175,9 @@ class Command_scp(HoneyPotCommand):
                     # best-effort name.
                     scpname = r.group(3).decode(errors="replace")
 
-                    if self.out_dir:
+                    if self.target_file:
+                        fname = self.target_file
+                    elif self.out_dir:
                         fname = posixpath.join(self.out_dir, scpname)
                     else:
                         fname = scpname
