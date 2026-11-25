@@ -83,13 +83,17 @@ class Command_cat(HoneyPotCommand):
             return
 
         lines = inb.split(b"\n")
-        if lines[-1] == b"":
-            lines.pop()
-        for line in lines:
+        # What follows the last newline: nothing, or a line that does not end
+        # in one. cat writes that line as it is and adds no newline.
+        last = lines.pop()
+        chunks = [line + b"\n" for line in lines]
+        if last:
+            chunks.append(last)
+        for chunk in chunks:
             if self.number:
                 self.write(f"{self.linenumber:>6}  ")
                 self.linenumber = self.linenumber + 1
-            self.writeBytes(line + b"\n")
+            self.writeBytes(chunk)
 
     def lineReceived(self, line: str) -> None:
         """
@@ -102,7 +106,8 @@ class Command_cat(HoneyPotCommand):
             input=line,
         )
 
-        self.output(line.encode("utf-8"))
+        # A typed line is a complete line, whether or not its newline is kept.
+        self.output(line.rstrip("\n").encode("utf-8") + b"\n")
 
     def eofReceived(self) -> None:
         """
