@@ -40,10 +40,14 @@ definitions.
 Known deviations from standard bash (none are emulated yet):
 
 * A trailing ``&`` is treated as a literal argument, not a background job.
-* No word expansions beyond ``$VAR`` / ``${VAR}``: tilde (``~``), brace
-  (``{a,b}`` / ``{1..3}``) and ANSI-C quoting (``$'...'``) are passed through
-  literally. The parameter expansion operators (``${x:-y}``, ``${#x}``,
-  ``${x/a/b}`` ...) are a syntax error.
+* Tilde (``~``), brace (``{a,b}`` / ``{1..3}``) and ANSI-C quoting
+  (``$'...'``) are passed through literally.
+* Of the parameter expansion operators, the length (``${#x}``), the prefix
+  and suffix removals (``${x#p}``, ``${x##p}``, ``${x%p}``, ``${x%%p}``) and
+  the default and alternate values (``${x:-w}``, ``${x-w}``, ``${x:+w}``,
+  ``${x+w}``) are emulated, each with a literal operand: one holding a quote,
+  a backslash or another expansion is a syntax error, as are the remaining
+  operators (``${x:=w}``, ``${x:?w}``, ``${x/a/b}``, ``${x:1:2}`` ...).
 * Arithmetic expansion (``$((...))``, see ``arithmetic``) has no assignment,
   increment or comma operators, and nests parentheses at most three deep.
   A rejected expression fails only its own statement, where bash also
@@ -78,6 +82,7 @@ plain syntax error.
 from __future__ import annotations
 
 import contextlib
+import fnmatch
 import gc
 import re
 import signal
@@ -177,7 +182,7 @@ ESAC: /esac(?![^\s;&|<>()])/
 // A "#" starts a comment only at a word start (see _COMMENT), so a LITERAL
 // never begins with one; inside a word ("a#b", "''#x") it is ordinary text.
 word: _atom (_atom | HASH_LITERAL)*
-_atom: sq | dq | arith | cmdsub | backtick | dollar_brace | dollar_var | ESC | BARE_DOLLAR | LITERAL
+_atom: sq | dq | arith | cmdsub | backtick | dollar_brace | param_op | dollar_var | ESC | BARE_DOLLAR | LITERAL
 HASH_LITERAL: /#[^ \t\r\n|&;<>()$`'"\\]*/
 
 // An explicit "$(" terminal: BARE_DOLLAR never matches before a "(". A
@@ -189,11 +194,11 @@ arith: ARITH
 ARITH: /\$\(\(@ARITH_BODY@\)\)/
 
 backtick: "`" _bq_atom* "`"
-_bq_atom: dollar_var | dollar_brace | BQ_LITERAL
+_bq_atom: dollar_var | dollar_brace | param_op | BQ_LITERAL
 BQ_LITERAL: /[^`]+/
 
 dq: "\"" _dq_part* "\""
-_dq_part: arith | cmdsub | backtick | dollar_brace | dollar_var | DQ_ESC | DQ_TEXT | BARE_DOLLAR
+_dq_part: arith | cmdsub | backtick | dollar_brace | param_op | dollar_var | DQ_ESC | DQ_TEXT | BARE_DOLLAR
 DQ_TEXT: /[^"$`\\]+/
 // A lone backslash is literal only where it escapes nothing, so "\\" has
 // exactly one reading: one escaped backslash, never two literal ones. The
@@ -206,6 +211,14 @@ SQ: /'[^']*'/
 
 dollar_brace: "${" BRACE_NAME "}"
 BRACE_NAME: /[_a-zA-Z0-9]+|[?@$#!*]/
+
+// A parameter expansion with an operator: the length "${#x}", or a name, an
+// operator and a literal operand ("${x##*/}", "${x%% *}", "${1:-default}").
+// One token, so the operand may hold spaces and "#"; it ends at the first
+// "}". An operator always follows the name, which a dollar_brace never has,
+// so a "${...}" has one reading.
+param_op: PARAM_OP
+PARAM_OP: /\$\{(?:#[_a-zA-Z0-9]+|[_a-zA-Z0-9]+(?:##?|%%?|:?[-+])[^}$`'"\\]*)\}/
 
 dollar_var: DOLLAR_NAME | DOLLAR_SPECIAL
 DOLLAR_NAME: /\$[_a-zA-Z0-9]+/
@@ -256,7 +269,7 @@ _WS: /([ \t]|\\\r?\n)+/
 // substitution, no quoting -- except that a backslash escapes only $ ` \
 // and a newline (a line continuation); before anything else it is literal.
 heredoc_body: _hd_part*
-_hd_part: arith | cmdsub | backtick | dollar_brace | dollar_var | HD_ESC | HD_TEXT | BARE_DOLLAR
+_hd_part: arith | cmdsub | backtick | dollar_brace | param_op | dollar_var | HD_ESC | HD_TEXT | BARE_DOLLAR
 HD_TEXT: /[^$`\\]+/
 HD_ESC: /\\[$`\\]/ | /\\\r?\n/ | /\\(?![$`\\\r\n])/
 """.replace("@ARITH_BODY@", _ARITH_BODY)
@@ -602,7 +615,12 @@ _IFS_WHITESPACE = " \t\n"
 # The special parameters a ``$x`` / ``${x}`` reference can name.
 _SPECIAL_PARAMS = frozenset("?@$#!*")
 
-_UNQUOTED_EXPANSIONS = frozenset({"dollar_var", "dollar_brace", "cmdsub", "backtick"})
+_UNQUOTED_EXPANSIONS = frozenset(
+    {"dollar_var", "dollar_brace", "param_op", "cmdsub", "backtick"}
+)
+# A PARAM_OP token apart from its "${" and "}": the name, the operator and
+# the operand (the length form "${#x}" is handled before this is used).
+_PARAM_OP = re.compile(r"([_a-zA-Z0-9]+)(##?|%%?|:?[-+])(.*)", re.DOTALL)
 
 
 class _Cursor:
@@ -1363,6 +1381,8 @@ class BashParser:
                     parts.append(str(part.value))
             elif part.data == "dollar_var" or part.data == "dollar_brace":
                 parts.append(self._expand_embedded(part))
+            elif part.data == "param_op":
+                parts.append(self._expand_param_op(part))
             elif part.data == "arith":
                 parts.append(await self._eval_arith(part))
             elif part.data == "cmdsub":
@@ -1469,6 +1489,8 @@ class BashParser:
             return self._leaf_value(atom)[1:-1]  # strip surrounding quotes
         if atom.data == "dollar_var" or atom.data == "dollar_brace":
             return self._expand_embedded(atom)
+        if atom.data == "param_op":
+            return self._expand_param_op(atom)
         if atom.data == "arith":
             return await self._eval_arith(atom)
         if atom.data == "cmdsub":
@@ -1514,6 +1536,8 @@ class BashParser:
             return ""
         if part.data == "dollar_var" or part.data == "dollar_brace":
             return self._expand_embedded(part)
+        if part.data == "param_op":
+            return self._expand_param_op(part)
         if part.data == "arith":
             return await self._eval_arith(part)
         if part.data == "cmdsub":
@@ -1572,6 +1596,40 @@ class BashParser:
         value = self.context.get_variable(self._var_name(node)[0])
         if value is None:
             return ""
+        return value
+
+    def _expand_param_op(self, node: Tree) -> str:
+        """Expand a ``${...}`` that carries an operator (see PARAM_OP).
+
+        ``${#x}`` is the length of the value. ``#`` / ``##`` remove the
+        shortest / longest prefix matching the operand, ``%`` / ``%%`` the
+        shortest / longest suffix; the operand is a pattern, matched like a
+        ``case`` pattern. ``-`` gives the operand for an unset parameter and
+        ``+`` for a set one; with a colon an empty value counts as unset.
+        """
+        body = self._leaf_value(node)[2:-1]
+        if body.startswith("#"):
+            return str(len(self.context.get_variable(body[1:]) or ""))
+        match = _PARAM_OP.fullmatch(body)
+        assert match is not None
+        name, operator, operand = match.groups()
+        value = self.context.get_variable(name)
+        if operator[-1] in "-+":
+            is_set = bool(value) if operator[0] == ":" else value is not None
+            if operator[-1] == "-":
+                return (value or "") if is_set else operand
+            return operand if is_set else ""
+        value = value or ""
+        cuts = range(len(value) + 1)
+        if operator[0] == "#":
+            # Prefix: the shortest match is the first cut that matches.
+            for cut in cuts if operator == "#" else reversed(cuts):
+                if fnmatch.fnmatchcase(value[:cut], operand):
+                    return value[cut:]
+            return value
+        for cut in reversed(cuts) if operator == "%" else cuts:
+            if fnmatch.fnmatchcase(value[cut:], operand):
+                return value[:cut]
         return value
 
     def _special_param(self, node: Tree) -> str | None:
