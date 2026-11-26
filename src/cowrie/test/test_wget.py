@@ -130,6 +130,30 @@ class WgetArtifactCleanupTests(unittest.TestCase):
 
         self.assertIn(b"Connection timed out", b"".join(writes))
 
+    def test_ended_ftp_transfer_closes_control_and_reports_timeout(self) -> None:
+        # For FTP, ending the artifact closes the control connection; FTPClient
+        # then fails the retrieve with ConnectionLost. That must be reported as
+        # the timeout it is, not as an unhandled error.
+        cmd = Command_wget.__new__(Command_wget)
+        cmd.protocol = self.proto
+        writes: list[bytes] = []
+        cmd.errorWritefn = lambda data: writes.append(data)
+        cmd.exit = lambda code=None: None  # type: ignore[method-assign]
+        cmd.url = b"ftp://192.0.2.1/file"
+        cmd.host = "192.0.2.1"
+        cmd.port = 21
+        cmd.ftp_client = mock.Mock()
+        cmd.artifact = Artifact("wget-download")
+        cmd.artifact.on_abort = cmd.abort_transfer
+
+        with mock.patch.object(cmd, "_log") as log:
+            cmd.artifact.abort()
+            cmd.error(Failure(error.ConnectionLost()))
+
+        cmd.ftp_client.transport.abortConnection.assert_called_once_with()
+        self.assertIn(b"Operation timed out", b"".join(writes))
+        log.failure.assert_not_called()
+
     def test_failed_download_removes_temp_artifact(self) -> None:
         # Bypass HoneyPotCommand.__init__: its stdout/stderr wiring needs a
         # running process protocol (self.protocol.pp), which is irrelevant to
@@ -331,8 +355,8 @@ class WgetStdoutOutputTests(unittest.TestCase):
             return defer.succeed(None)
 
         with (
-            mock.patch("cowrie.commands.wget.treq.get", fake_get),
-            mock.patch("cowrie.commands.wget.treq.collect", fake_collect),
+            mock.patch("cowrie.core.download.treq.get", fake_get),
+            mock.patch("cowrie.commands.wget.collect_body", fake_collect),
         ):
             self.proto.lineReceived(line)
 

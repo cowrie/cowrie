@@ -25,6 +25,7 @@ import cowrie.telnet.factory
 from backend_pool.pool_server import PoolServerFactory
 from cowrie import __version__ as __cowrie_version__
 from cowrie.core import checkers, uuid
+from cowrie.core.artifact import abort_open_artifacts, store_leftover_artifacts
 from cowrie.core.config import CowrieConfig
 from cowrie.core.events import ConsoleRenderer, EventDispatcher
 from cowrie.core.output import Output, load_plugins
@@ -45,6 +46,13 @@ class Options(usage.Options):
     # The '-c' parameters is currently ignored
     optParameters: ClassVar[list[str]] = []
     optFlags: ClassVar[list[list[str]]] = [["help", "h", "Display this help and exit."]]
+
+
+def _store_leftover_artifacts() -> None:
+    try:
+        store_leftover_artifacts()
+    except OSError:
+        _log.failure("Could not store partial downloads left by an earlier run")
 
 
 @provider(ILogObserver)
@@ -147,6 +155,13 @@ Makes a Cowrie SSH/Telnet honeypot.
         self.dispatcher = EventDispatcher([renderer])
         self.dispatcher.registerShutdown(reactor)
         Output.dispatcher = self.dispatcher
+        # Downloads still running at shutdown are stopped and reported before
+        # sessions close, so their temp files are stored rather than left behind.
+        reactor.addSystemEventTrigger("before", "shutdown", abort_open_artifacts)
+        # Temp files an earlier run left behind when it was killed or crashed.
+        # Run once the reactor runs, after twistd has applied --umask, so the
+        # stored files get the same permissions as every other download.
+        reactor.callWhenRunning(_store_leftover_artifacts)
 
         # Load output modules
         self.output_plugins = load_plugins(reactor)

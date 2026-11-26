@@ -124,6 +124,8 @@ class TFTPClient(DatagramProtocol):
         self.timeout_call: IDelayedCall | None = None
         self.bytes_received = 0
         self.server_tid: tuple[str, int] | None = None  # Server's transfer ID (port)
+        # The artifact ends a stalled transfer, and any left at shutdown.
+        artifact.on_abort = self.abort
 
     def startProtocol(self) -> None:
         """Called when protocol starts - send initial RRQ"""
@@ -141,20 +143,14 @@ class TFTPClient(DatagramProtocol):
         """Called when protocol stops"""
         if self.timeout_call is not None and self.timeout_call.active():
             self.timeout_call.cancel()
-        if not self.deferred.called:
-            # The reactor is shutting down while this transfer is still in
-            # flight: the client will never see another packet, so nothing
-            # will resolve the deferred and the download callbacks will not
-            # run. Close the artifact here instead of firing the deferred,
-            # because the callbacks write to the terminal and touch the
-            # command stack, both of which may already be torn down.
-            # Artifact.close() removes a zero-length temp file and stores a
-            # partial transfer under its hash name, which is what every other
-            # interrupted transfer path already does.
-            try:
-                self.artifact.close()
-            except Exception:  # pylint: disable=broad-exception-caught
-                pass
+
+    def abort(self) -> None:
+        """Fail an unfinished transfer the way a TFTP timeout does."""
+        if self.deferred.called:
+            return
+        if self.timeout_call is not None and self.timeout_call.active():
+            self.timeout_call.cancel()
+        self.deferred.errback(Exception("TFTP: Transfer timed out"))
 
     def sendRRQ(self) -> None:
         """Send Read ReQuest packet"""

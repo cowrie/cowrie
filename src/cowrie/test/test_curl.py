@@ -293,8 +293,8 @@ class CurlStdoutOutputTests(unittest.TestCase):
             return defer.succeed(None)
 
         with (
-            mock.patch("cowrie.commands.curl.treq.get", fake_get),
-            mock.patch("cowrie.commands.curl.treq.collect", fake_collect),
+            mock.patch("cowrie.core.download.treq.get", fake_get),
+            mock.patch("cowrie.commands.curl.collect_body", fake_collect),
         ):
             self.proto.lineReceived(line)
 

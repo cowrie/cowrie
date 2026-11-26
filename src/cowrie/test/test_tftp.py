@@ -108,6 +108,13 @@ class MockTFTPServer(DatagramProtocol):
             self.transport.write(packet, self.client_addr)  # type: ignore[union-attr]
 
 
+class StallingTFTPServer(MockTFTPServer):
+    """Sends the first block, then never answers again."""
+
+    def sendNextBlock(self, acked_block: int) -> None:
+        pass
+
+
 class ShellTftpCommandTests(unittest.TestCase):
     """Basic tests for TFTP command parsing"""
 
@@ -182,10 +189,10 @@ class ShellTftpAsyncTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.proto.connectionLost()
 
-    def serve(self, content: bytes) -> int:
+    def serve(self, content: bytes, server_class: type = MockTFTPServer) -> int:
         """Start a mock TFTP server on loopback and return its port."""
         server = reactor.listenUDP(
-            0, MockTFTPServer(content), interface="127.0.0.1", maxPacketSize=8192
+            0, server_class(content), interface="127.0.0.1", maxPacketSize=8192
         )
         self.addCleanup(server.stopListening)
         return cast("IPv4Address", server.getHost()).port
@@ -283,6 +290,26 @@ class ShellTftpAsyncTests(unittest.TestCase):
         with open(self.downloaded()[0]["outfile"], "rb") as f:
             self.assertEqual(f.read(), large_content)
 
+    def test_stalled_transfer_ended_by_its_artifact(self) -> None:
+        """Ending the artifact (idle deadline or shutdown) stops a stalled
+        transfer, reports it, and stores the block that arrived."""
+        content = b"Z" * (TFTP_BLOCK_SIZE * 3)
+        port = self.serve(content, StallingTFTPServer)
+        self.proto.lineReceived(
+            f"tftp -c get /tmp/stall.bin 127.0.0.1:{port}\n".encode()
+        )
+        artifact = self.proto.cmdstack[-1].artifactFile
+        self.assertTrue(pump(lambda: artifact.fp.tell() > 0), "no block arrived")
+
+        artifact.abort()
+
+        self.assertTrue(pump(lambda: self.failed()), "stall was not reported")
+        self.assertIn("timed out", self.failed()[0]["error"])
+        self.assertTrue(pump(lambda: self.tr.value().endswith(PROMPT)))
+        with open(artifact.shasumFilename, "rb") as f:
+            self.assertEqual(f.read(), content[:TFTP_BLOCK_SIZE])
+        os.remove(artifact.shasumFilename)
+
     def test_download_over_limit_is_refused(self) -> None:
         """A transfer past download_limit_size must abort, end to end."""
         limited_port = self.serve(b"Y" * (TFTP_BLOCK_SIZE * 3))
@@ -337,35 +364,18 @@ class TFTPArtifactCloseTests(unittest.TestCase):
             self.assertEqual(f.read(), content)
         os.remove(cmd.artifactFile.shasumFilename)
 
-    def test_graceful_shutdown_removes_empty_temp_file(self) -> None:
-        """A transfer stopped before any data arrives leaves no temp file."""
+    def test_ending_the_artifact_fails_the_transfer(self) -> None:
+        """An artifact ended before its transfer finished fails the transfer
+        the way a TFTP timeout does, so the command reports and exits."""
         client = TFTPClient("192.0.2.1", 69, "/tmp/file", Artifact("tftp-download"))
-        temp = client.artifact.tempFilename
-        self.assertTrue(os.path.exists(temp))
+        failures: list[Failure] = []
+        client.deferred.addErrback(failures.append)
 
-        client.stopProtocol()
+        client.artifact.abort()
 
+        self.assertEqual(len(failures), 1)
+        self.assertIn("timed out", failures[0].getErrorMessage())
         self.assertTrue(client.artifact.closed)
-        self.assertFalse(os.path.exists(temp))
-        self.assertFalse(client.deferred.called)
-
-    def test_graceful_shutdown_stores_partial_transfer(self) -> None:
-        """Partial data is stored under its hash instead of being orphaned."""
-        import hashlib
-
-        content = b"partial tftp block\n"
-        client = TFTPClient("192.0.2.1", 69, "/tmp/file", Artifact("tftp-download"))
-        client.artifact.write(content)
-        temp = client.artifact.tempFilename
-
-        client.stopProtocol()
-
-        self.assertFalse(os.path.exists(temp))
-        self.assertEqual(client.artifact.shasum, hashlib.sha256(content).hexdigest())
-        self.assertTrue(os.path.exists(client.artifact.shasumFilename))
-        with open(client.artifact.shasumFilename, "rb") as f:
-            self.assertEqual(f.read(), content)
-        os.remove(client.artifact.shasumFilename)
 
     def test_stop_after_transfer_finished_is_a_no_op(self) -> None:
         """Teardown after a resolved transfer must leave the stored file alone."""

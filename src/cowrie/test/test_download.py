@@ -3,19 +3,21 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 # ABOUTME: Tests for the shared machinery behind the file-fetching commands.
-# ABOUTME: Covers rate-limiter construction and connecting to a pinned address.
+# ABOUTME: Covers rate limiters, pinned connections, and reading a body that can be cancelled.
 
 from __future__ import annotations
 
 import os
 import tempfile
 import unittest
-from typing import Any
+from typing import Any, cast
 from unittest import mock
 from unittest.mock import MagicMock
 
 from twisted.internet import defer, reactor
-from twisted.web.client import URI
+from twisted.internet.error import ConnectionLost
+from twisted.python.failure import Failure
+from twisted.web.client import URI, ResponseDone
 from twisted.web.http_headers import Headers
 
 from cowrie.core import download
@@ -197,6 +199,80 @@ class TestFetch(unittest.TestCase):
 
         self.assertFalse(result)
         self.assertIsInstance(failure[0].value, download.TooManyRedirects)
+
+
+class FakeBodyTransport:
+    def __init__(self) -> None:
+        self.stopped = False
+
+    def stopProducing(self) -> None:
+        self.stopped = True
+
+
+class FakeBodyResponse:
+    """A response whose body the test feeds by hand through `reader`."""
+
+    def __init__(self, length: int = 100) -> None:
+        self.length = length
+        self.transport = FakeBodyTransport()
+        self.reader: Any = None
+
+    def deliverBody(self, protocol: Any) -> None:
+        self.reader = protocol
+        protocol.makeConnection(self.transport)
+
+
+class TestCollectBody(unittest.TestCase):
+    """collect_body() hands each chunk to the collector, and cancelling it
+    closes the connection instead of leaving the transfer running."""
+
+    def setUp(self) -> None:
+        self.response = FakeBodyResponse()
+        self.chunks: list[bytes] = []
+        self.results: list[Any] = []
+        self.d = download.collect_body(cast("Any", self.response), self.chunks.append)
+        self.d.addBoth(self.results.append)
+
+    def test_chunks_reach_the_collector_until_the_body_ends(self) -> None:
+        self.response.reader.dataReceived(b"one")
+        self.response.reader.dataReceived(b"two")
+        self.response.reader.connectionLost(Failure(ResponseDone()))
+
+        self.assertEqual(self.chunks, [b"one", b"two"])
+        self.assertEqual(self.results, [None])
+
+    def test_cancel_closes_the_connection(self) -> None:
+        self.d.cancel()
+
+        self.assertTrue(self.response.transport.stopped)
+        self.assertIsInstance(self.results[0].value, defer.CancelledError)
+        # The connection closing afterwards neither fires the result again
+        # nor delivers data.
+        self.response.reader.dataReceived(b"late")
+        self.response.reader.connectionLost(Failure(ConnectionLost()))
+        self.assertEqual(len(self.results), 1)
+        self.assertEqual(self.chunks, [])
+
+    def test_collector_error_closes_the_connection(self) -> None:
+        def refuse(_data: bytes) -> None:
+            raise ValueError
+
+        response = FakeBodyResponse()
+        d = download.collect_body(cast("Any", response), refuse)
+        results: list[Any] = []
+        d.addBoth(results.append)
+
+        response.reader.dataReceived(b"chunk")
+
+        self.assertTrue(response.transport.stopped)
+        self.assertIsInstance(results[0].value, ValueError)
+
+    def test_empty_body_succeeds_at_once(self) -> None:
+        results: list[Any] = []
+        empty = cast("Any", FakeBodyResponse(length=0))
+        download.collect_body(empty, self.chunks.append).addBoth(results.append)
+
+        self.assertEqual(results, [None])
 
 
 if __name__ == "__main__":

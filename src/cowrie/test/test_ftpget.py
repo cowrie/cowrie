@@ -19,7 +19,7 @@ from twisted.cred.checkers import (
 from twisted.cred.portal import Portal
 from twisted.internet import defer
 from twisted.internet import reactor as _reactor
-from twisted.internet.error import ConnectionDone
+from twisted.internet.error import ConnectionDone, ConnectionLost
 from twisted.protocols.ftp import FTPFactory, FTPRealm
 from twisted.python.failure import Failure
 
@@ -183,29 +183,33 @@ class FtpGetArtifactCleanupTests(unittest.TestCase):
         )
 
 
+def mid_transfer(test: unittest.TestCase) -> Command_ftpget:
+    """A command whose data transfer is under way."""
+    cmd = Command_ftpget.__new__(Command_ftpget)
+    cmd.exited = False
+    cmd.exit_code = 0
+    cmd.protocol = mock.Mock()
+    cmd.fs = mock.Mock()
+    cmd.user = {"uid": 0, "gid": 0}
+    cmd.write = mock.Mock()  # type: ignore[method-assign]
+    cmd.errorWrite = mock.Mock()  # type: ignore[method-assign]
+    cmd.url_log = "ftp://evil.example/payload"
+    cmd.local_file = "payload"
+    cmd.fakeoutfile = "/root/payload"
+    cmd.artifactFile = Artifact("ftpget-test")
+    test.addCleanup(cmd.artifactFile.close)
+    cmd.receiver = FTPFileReceiver(cmd.artifactFile)
+    cmd.receiver.makeConnection(mock.Mock())
+    cmd.transfer_running = True
+    return cmd
+
+
 class FtpGetCtrlCKeepsDownloadingTests(unittest.TestCase):
     """CTRL-C returns the attacker to their prompt but must not cost us the
     sample: the transfer keeps running and is still captured and logged."""
 
     def _mid_transfer(self) -> Command_ftpget:
-        """A command whose data transfer is under way."""
-        cmd = Command_ftpget.__new__(Command_ftpget)
-        cmd.exited = False
-        cmd.exit_code = 0
-        cmd.protocol = mock.Mock()
-        cmd.fs = mock.Mock()
-        cmd.user = {"uid": 0, "gid": 0}
-        cmd.write = mock.Mock()  # type: ignore[method-assign]
-        cmd.errorWrite = mock.Mock()  # type: ignore[method-assign]
-        cmd.url_log = "ftp://evil.example/payload"
-        cmd.local_file = "payload"
-        cmd.fakeoutfile = "/root/payload"
-        cmd.artifactFile = Artifact("ftpget-test")
-        self.addCleanup(cmd.artifactFile.close)
-        cmd.receiver = FTPFileReceiver(cmd.artifactFile)
-        cmd.receiver.makeConnection(mock.Mock())
-        cmd.transfer_running = True
-        return cmd
+        return mid_transfer(self)
 
     def _receiver(self, cmd: Command_ftpget) -> FTPFileReceiver:
         """The receiver the mid-transfer fixture installed. The command
@@ -273,6 +277,56 @@ class FtpGetCtrlCKeepsDownloadingTests(unittest.TestCase):
             cmd._download_error(Failure(ConnectionDone()))
 
         cast("mock.Mock", cmd.errorWrite).assert_called_once()
+
+
+class FtpGetStalledTransferTests(unittest.TestCase):
+    """Ending the artifact (no data for a while, or shutdown) stops the
+    transfer and reports it as a timeout; what arrived is stored."""
+
+    def test_ending_the_artifact_closes_both_connections(self) -> None:
+        cmd = mid_transfer(self)
+        cmd.ftp_client = mock.Mock()
+        cmd.artifactFile.on_abort = cmd.abort_transfer
+
+        cmd.artifactFile.abort()
+
+        cast(
+            "mock.Mock", cmd.ftp_client.transport
+        ).abortConnection.assert_called_once_with()
+        assert cmd.receiver is not None
+        cast(
+            "mock.Mock", cmd.receiver.transport
+        ).abortConnection.assert_called_once_with()
+
+    def test_the_resulting_error_is_reported_as_a_timeout(self) -> None:
+        cmd = mid_transfer(self)
+        cmd.ftp_client = mock.Mock()
+        cmd.artifactFile.on_abort = cmd.abort_transfer
+        assert cmd.receiver is not None
+        cmd.receiver.dataReceived(b"half a sample")
+        cmd.artifactFile.abort()
+
+        with mock.patch.object(HoneyPotCommand, "exit"):
+            cmd._download_error(Failure(ConnectionLost()))
+
+        event = cmd.protocol.events.dispatch.call_args
+        self.assertEqual(event.args[0], "cowrie.session.file_download.failed")
+        self.assertIn("timed out", event.kwargs["error"])
+        self.assertIn("timed out", cast("mock.Mock", cmd.errorWrite).call_args.args[0])
+        with open(cmd.artifactFile.shasumFilename, "rb") as f:
+            self.assertEqual(f.read(), b"half a sample")
+        os.remove(cmd.artifactFile.shasumFilename)
+
+    def test_ending_before_connecting_cancels_the_connection(self) -> None:
+        cmd = mid_transfer(self)
+        cmd.ftp_client = None
+        cmd.receiver = None
+        cmd.transfer = mock.Mock()
+        cmd.artifactFile.on_abort = cmd.abort_transfer
+
+        cmd.artifactFile.abort()
+
+        cmd.transfer.cancel.assert_called_once_with()
 
 
 class FTPFileReceiverSizeLimitTests(unittest.TestCase):

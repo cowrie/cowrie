@@ -12,19 +12,23 @@ from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import urljoin, urlparse
 
 import treq
-from twisted.internet.defer import Deferred, inlineCallbacks
+from twisted.internet.defer import Deferred, inlineCallbacks, succeed
 from twisted.internet.endpoints import HostnameEndpoint, wrapClientTLS
-from twisted.web.client import Agent, BrowserLikePolicyForHTTPS
+from twisted.internet.protocol import Protocol, connectionDone
+from twisted.python.failure import Failure
+from twisted.web.client import Agent, BrowserLikePolicyForHTTPS, ResponseDone
+from twisted.web.http import PotentialDataLoss
 
 from cowrie.core.config import CowrieConfig
 from cowrie.core.network import outbound_bind_address, resolve_allowed
 from cowrie.core.rate_limiter import RateLimiter
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Callable, Generator
 
-    from twisted.internet.interfaces import IReactorCore
+    from twisted.internet.interfaces import IPushProducer, IReactorCore
     from twisted.web.client import URI
+    from twisted.web.iweb import IResponse
 
     from cowrie.core.artifact import Artifact
 
@@ -159,6 +163,58 @@ def fetch(
             raise TooManyRedirects
 
         url = urljoin(url, location[0])
+
+
+class _BodyReader(Protocol):
+    """Hands each chunk of a response body to a collector, and fires
+    ``finished`` once, when the body ends, fails, or is stopped."""
+
+    def __init__(self, collector: Callable[[bytes], None]) -> None:
+        self.collector = collector
+        self.finished: Deferred[None] | None = None
+
+    def dataReceived(self, data: bytes) -> None:
+        if self.finished is None:
+            return
+        try:
+            self.collector(data)
+        except BaseException:
+            finished, self.finished = self.finished, None
+            self.stop()
+            finished.errback(Failure())
+
+    def connectionLost(self, reason: Failure = connectionDone) -> None:
+        finished, self.finished = self.finished, None
+        if finished is None:
+            return
+        if reason.check(ResponseDone, PotentialDataLoss):
+            finished.callback(None)
+        else:
+            finished.errback(reason)
+
+    def stop(self) -> None:
+        """Close the connection; nothing more reaches the collector."""
+        self.finished = None
+        if self.transport is not None:
+            # A response body's transport is a producer; stopping it closes
+            # the connection.
+            cast("IPushProducer", self.transport).stopProducing()
+
+
+def collect_body(
+    response: IResponse, collector: Callable[[bytes], None]
+) -> Deferred[None]:
+    """Pass each chunk of ``response``'s body to ``collector``, like
+    treq.collect, but cancelling the result closes the connection, so a
+    stalled or unwanted transfer stops instead of running on. A collector
+    that raises also closes it, and the result fails with that error."""
+    if response.length == 0:
+        return succeed(None)
+    reader = _BodyReader(collector)
+    finished: Deferred[None] = Deferred(lambda _: reader.stop())
+    reader.finished = finished
+    response.deliverBody(reader)
+    return finished
 
 
 def capture_download(
