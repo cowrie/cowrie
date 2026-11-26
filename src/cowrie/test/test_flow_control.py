@@ -375,6 +375,42 @@ class FlowControlTests(unittest.TestCase):
             b"fetch http://a/x\n",
         )
 
+    # -- parameter operators inside loops ------------------------------------
+
+    def test_loop_over_paths_takes_the_last_component(self) -> None:
+        self.assertEqual(
+            self._run("for p in /proc/1 /proc/22; do echo ${p##*/}; done"),
+            b"1\n22\n",
+        )
+
+    def test_read_loop_cuts_each_line(self) -> None:
+        self.assertEqual(
+            self._run(
+                "while read -r line; do echo ${line%%:*}; done < /etc/passwd"
+                " | head -n 2"
+            ),
+            b"root\ndaemon\n",
+        )
+
+    def test_process_killer_loops_are_not_a_syntax_error(self) -> None:
+        # Sent by a telnet bot before it looks for a writable directory: the
+        # two loops end processes whose binary was deleted or that are mounted
+        # over. Nothing matches here, so they print nothing.
+        for line in (
+            "for pid in /proc/1; do case $(ls -l $pid/exe) in "
+            "*'(deleted)'*|*'/.'*) kill -9 ${pid##*/} ;; esac; done",
+            'while read -r line; do case $line in *"/proc/"*) '
+            "pid=${line##*/proc/}; kill -9 ${pid%% *}; ;; esac; done < /proc/mounts",
+        ):
+            with self.subTest(line=line):
+                self.assertEqual(self._run(line), b"")
+
+    def test_script_default_for_a_missing_argument(self) -> None:
+        self.assertEqual(
+            self._run('f() { TAG="${1:-asus}"; echo $TAG; }; f; f zte'),
+            b"asus\nzte\n",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -142,6 +142,57 @@ class BashParseVariableTests(unittest.TestCase):
         self.assertEqual(self._tokens("echo a$nope"), ["echo", "a"])
         self.assertEqual(self._tokens("echo a${nope}b"), ["echo", "ab"])
 
+    def test_length_of_a_value(self) -> None:
+        self.assertEqual(self._tokens("echo ${#LOGNAME}"), ["echo", "4"])
+        self.assertEqual(self._tokens("echo ${#nope}"), ["echo", "0"])
+
+    def test_prefix_removal_shortest_and_longest(self) -> None:
+        self.ctx.env["p"] = "/proc/123/exe"
+        self.assertEqual(self._tokens("echo ${p#*/}"), ["echo", "proc/123/exe"])
+        self.assertEqual(self._tokens("echo ${p##*/}"), ["echo", "exe"])
+        self.assertEqual(self._tokens("echo ${p##/proc/}"), ["echo", "123/exe"])
+        self.assertEqual(self._tokens("echo ${p#nomatch}"), ["echo", "/proc/123/exe"])
+
+    def test_suffix_removal_shortest_and_longest(self) -> None:
+        self.ctx.env["p"] = "/proc/123/exe"
+        self.assertEqual(self._tokens("echo ${p%/*}"), ["echo", "/proc/123"])
+        self.assertEqual(self._tokens("echo a${p%%/*}b"), ["echo", "ab"])
+        self.assertEqual(self._tokens("echo ${p%.so}"), ["echo", "/proc/123/exe"])
+
+    def test_removal_operand_may_hold_a_space(self) -> None:
+        # The operand is part of the "${...}", not a word boundary.
+        self.ctx.env["m"] = "123 / rw 0 0"
+        self.assertEqual(self._tokens("kill -9 ${m%% *}"), ["kill", "-9", "123"])
+
+    def test_removal_inside_double_quotes(self) -> None:
+        self.ctx.env["p"] = "/a/b c"
+        self.assertEqual(self._tokens('echo "${p##*/}|${p%/*}"'), ["echo", "b c|/a"])
+
+    def test_removal_result_is_split_when_unquoted(self) -> None:
+        self.ctx.env["p"] = "/a/b c"
+        self.assertEqual(self._tokens("echo ${p##*/}"), ["echo", "b", "c"])
+
+    def test_default_value(self) -> None:
+        self.ctx.env["empty"] = ""
+        self.assertEqual(self._tokens("echo ${nope:-asus}"), ["echo", "asus"])
+        self.assertEqual(self._tokens("echo ${x:-asus}"), ["echo", "hi"])
+        self.assertEqual(self._tokens('echo "${empty:-asus}"'), ["echo", "asus"])
+        # Without the colon only an unset parameter takes the default.
+        self.assertEqual(self._tokens('echo "${empty-asus}"'), ["echo", ""])
+        self.assertEqual(self._tokens('echo "${nope-asus}"'), ["echo", "asus"])
+
+    def test_alternate_value(self) -> None:
+        self.ctx.env["empty"] = ""
+        self.assertEqual(self._tokens('echo "${x:+set}"'), ["echo", "set"])
+        self.assertEqual(self._tokens('echo "${nope:+set}"'), ["echo", ""])
+        self.assertEqual(self._tokens('echo "${empty:+set}"'), ["echo", ""])
+        self.assertEqual(self._tokens('echo "${empty+set}"'), ["echo", "set"])
+
+    def test_operators_not_emulated_stay_a_syntax_error(self) -> None:
+        for line in ("echo ${x:=y}", "echo ${x/h/j}", 'echo ${x#"h"}', "echo ${x:-$y}"):
+            with self.subTest(line=line):
+                self.assertIsInstance(self.parser.parse(line)[0], SyntaxError_)
+
     def test_single_quotes_never_expand(self) -> None:
         # Correctness improvement over the shlex path, which loses quoting and
         # would expand a set variable inside single quotes.
@@ -691,6 +742,11 @@ class BashParseAmbiguityTests(unittest.TestCase):
     def test_arithmetic(self) -> None:
         self._assert_unambiguous(
             'echo $((1+2)) "$(( (x) * $((y)) ))" $((echo a); (echo b)) $(id)'
+        )
+
+    def test_parameter_operators(self) -> None:
+        self._assert_unambiguous(
+            'echo ${x} ${#x} ${#} ${x#a} ${x##*/} "${x%% *}" ${1:-a b} ${x+y}#z'
         )
 
     def test_recon_shaped_line(self) -> None:
