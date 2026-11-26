@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING, Any
 from twisted.logger import Logger
 
 from cowrie.core.artifact import temp_download_path
-from cowrie.core.config import CowrieConfig
 from cowrie.shell import fs
 
 if TYPE_CHECKING:
@@ -232,6 +231,8 @@ class PipeProtocol:
             safeoutfile = self._create_redirect_target(outfile)
             if safeoutfile is None:
                 return None
+            # The fresh backing file starts empty, even for an append.
+            start_size = 0
         else:
             reuse = self._reuse_existing_backing(outfile, p, append)
             if reuse is None:
@@ -247,14 +248,17 @@ class PipeProtocol:
         }
 
     def _needs_new_backing(self, p: Any) -> bool:
-        """Decide whether to create a fresh real file for redirection target."""
+        """Decide whether a redirection needs a fresh backing file.
+
+        Only backing files this connection created for its own writes are
+        written in place. Every other backing file is read-only: honeyfs
+        files and downloads, which point into the hash store. A redirection
+        to one of those gets a fresh, empty backing file, so neither the
+        honeyfs nor a stored sample ever changes.
+        """
         if not p or not p[fs.A_REALFILE]:
             return True
-        # Don't modify files from the honeyfs - create new backing instead
-        contents_path = CowrieConfig.get(
-            "honeypot", "contents_path", fallback="honeyfs"
-        )
-        return bool(p[fs.A_REALFILE].startswith(contents_path))
+        return p[fs.A_REALFILE] not in self.protocol.fs.backing_files
 
     def _create_redirect_target(self, outfile: str) -> str | None:
         """Create a new backing file for a redirected output target."""
@@ -286,6 +290,7 @@ class PipeProtocol:
             self.protocol.fs.update_realfile(
                 self.protocol.fs.getfile(outfile), safeoutfile
             )
+        self.protocol.fs.backing_files.add(safeoutfile)
         return safeoutfile
 
     def _reuse_existing_backing(

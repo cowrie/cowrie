@@ -28,6 +28,7 @@ class _StubFilesystem:
 
     def __init__(self) -> None:
         self.realfiles: list[str] = []
+        self.backing_files: set[str] = set()
 
     def resolve_path(self, path: str, cwd: str) -> str:
         return path

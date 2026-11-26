@@ -82,7 +82,9 @@ class SSHSessionForCowrieUser:
 
         self.server.initFileSystem(self.avatar.home)
 
-        if self.avatar.temporary:
+        # The filesystem outlives this channel, so an earlier channel of the
+        # same connection may have created the home already.
+        if self.avatar.temporary and not self.server.fs.exists(self.avatar.home):
             self.server.fs.mkdir(
                 self.avatar.home, self.uid, self.gid, 4096, stat.S_IFDIR | 0o755
             )

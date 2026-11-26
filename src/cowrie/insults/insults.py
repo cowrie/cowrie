@@ -321,17 +321,19 @@ class LoggingServerProtocol(insults.ServerProtocol):
                         continue
 
                     if os.path.getsize(rf) == 0:
-                        os.remove(rf)
                         continue
 
+                    # Copy, not move: the backing file keeps serving the
+                    # emulated file to later channels of the connection and
+                    # is removed at logout. The stored copy is never written
+                    # again.
                     with open(rf, "rb") as f:
                         shasum = hashlib.sha256(f.read()).hexdigest()
                     shasumfile = os.path.join(self.downloadPath, shasum)
                     if os.path.exists(shasumfile):
-                        os.remove(rf)
                         duplicate = True
                     else:
-                        os.rename(rf, shasumfile)
+                        shutil.copyfile(rf, shasumfile)
                         duplicate = False
                     self.events.dispatch(
                         "cowrie.session.file_download",

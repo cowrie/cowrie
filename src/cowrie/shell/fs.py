@@ -144,6 +144,10 @@ class HoneyPotFilesystem:
         # Keep count of new files, so we can have an artificial limit
         self.newcount: int = 0
 
+        # Real files this connection created to hold what it writes. Only
+        # these are written in place; they are removed at logout.
+        self.backing_files: set[str] = set()
+
         # Files whose contents are generated when read, like a kernel's /proc
         # entries: path -> function returning the current contents.
         self.generated_files: dict[str, Callable[[], bytes]] = {}
@@ -247,6 +251,22 @@ class HoneyPotFilesystem:
         if f is not None:
             return True
         return False
+
+    def remove_backing_files(self) -> None:
+        """Delete the real files behind this connection's writes. Their
+        content was already copied into the hash store."""
+        for path in self.backing_files:
+            try:
+                os.remove(path)
+            except FileNotFoundError:
+                pass
+            except OSError as e:
+                self._log.error(
+                    "Failed to remove backing file {path}: {error!r}",
+                    path=path,
+                    error=e,
+                )
+        self.backing_files.clear()
 
     def update_realfile(self, f: Node | None, realfile: str) -> None:
         if f is None:

@@ -101,6 +101,9 @@ class HoneyPotTelnetSession(TelnetBootstrapProtocol):
 
     def connectionLost(self, reason: failure.Failure = connectionDone) -> None:
         TelnetBootstrapProtocol.connectionLost(self, reason)
+        # Twisted calls logout() only after this, once the server is gone.
+        if self.server is not None:
+            self.server.logout()
         self.server = None
         self.avatar = None
         self.protocol = None
