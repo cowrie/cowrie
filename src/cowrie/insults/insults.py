@@ -58,7 +58,6 @@ class LoggingServerProtocol(insults.ServerProtocol):
         self.ttylogSize: int = 0
         self.bytesSent: int = 0
         self.bytesReceived: int = 0
-        self.redirFiles: set[list[str]] = set()
         self.redirlogOpen: bool = False  # it will be set at core/protocol.py
         self.stdinlogOpen: bool = False
         self.ttylogOpen: bool = False
@@ -278,8 +277,9 @@ class LoggingServerProtocol(insults.ServerProtocol):
 
     def connectionLost(self, reason: failure.Failure = connectionDone) -> None:
         """
-        Finalize the session: hash and store any captured stdin, redirected
-        files, and the TTY log, then drop references to the terminal.
+        Finalize the session: hash and store any captured stdin and the TTY
+        log, then drop references to the terminal. Redirected output is stored
+        when the connection logs out.
         """
         if self.stdinlogOpen:
             try:
@@ -306,46 +306,6 @@ class LoggingServerProtocol(insults.ServerProtocol):
                 self._log.error("Failed to save stdin contents: {error}", error=e)
             finally:
                 self.stdinlogOpen = False
-
-        if self.redirFiles:
-            for rp in self.redirFiles:
-                rf = rp[0]
-
-                if rp[1]:
-                    url = rp[1]
-                else:
-                    url = rf[rf.find("redir_") + len("redir_") :]
-
-                try:
-                    if not os.path.exists(rf):
-                        continue
-
-                    if os.path.getsize(rf) == 0:
-                        continue
-
-                    # Copy, not move: the backing file keeps serving the
-                    # emulated file to later channels of the connection and
-                    # is removed at logout. The stored copy is never written
-                    # again.
-                    with open(rf, "rb") as f:
-                        shasum = hashlib.sha256(f.read()).hexdigest()
-                    shasumfile = os.path.join(self.downloadPath, shasum)
-                    if os.path.exists(shasumfile):
-                        duplicate = True
-                    else:
-                        shutil.copyfile(rf, shasumfile)
-                        duplicate = False
-                    self.events.dispatch(
-                        "cowrie.session.file_download",
-                        "Saved redir contents with SHA-256 %(shasum)s to %(outfile)s",
-                        duplicate=duplicate,
-                        outfile=shasumfile,
-                        shasum=shasum,
-                        destfile=url,
-                    )
-                except OSError:
-                    pass
-            self.redirFiles.clear()
 
         if self.ttylogOpen:
             self.ttylogOpen = False

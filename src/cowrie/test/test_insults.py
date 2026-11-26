@@ -76,7 +76,6 @@ class TtylogRecordingTestCase(unittest.TestCase):
         lsp.stdinlogOpen = False
         lsp.bytesReceived = 0
         lsp.terminalProtocol = None
-        lsp.redirFiles = set()
         self.dispatched = capture_events(lsp)
         ttylog.ttylog_open(lsp.ttylogFile, 0.0)
         lsp.ttylogOpen = True
@@ -287,7 +286,6 @@ class ConnectionLostStdinTestCase(unittest.TestCase):
             lsp.stdinlogOpen = True
             lsp.stdinlogFile = os.path.join(downloadPath, "never-written-stdin.log")
             lsp.downloadPath = downloadPath
-            lsp.redirFiles = set()
             lsp.terminalProtocol = None
 
             opened: list[str] = []
@@ -315,7 +313,6 @@ class ConnectionLostStdinTestCase(unittest.TestCase):
             lsp.stdinlogOpen = True
             lsp.stdinlogFile = os.path.join(downloadPath, "stdin.log")
             lsp.downloadPath = downloadPath
-            lsp.redirFiles = set()
             lsp.terminalProtocol = None
             with open(lsp.stdinlogFile, "wb") as f:
                 f.write(b"id\n")

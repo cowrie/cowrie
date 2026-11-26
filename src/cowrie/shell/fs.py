@@ -145,7 +145,7 @@ class HoneyPotFilesystem:
         self.newcount: int = 0
 
         # Real files this connection created to hold what it writes. Only
-        # these are written in place; they are removed at logout.
+        # these are written in place; at logout they are stored by hash.
         self.backing_files: set[str] = set()
 
         # Files whose contents are generated when read, like a kernel's /proc
@@ -252,21 +252,22 @@ class HoneyPotFilesystem:
             return True
         return False
 
-    def remove_backing_files(self) -> None:
-        """Delete the real files behind this connection's writes. Their
-        content was already copied into the hash store."""
-        for path in self.backing_files:
-            try:
-                os.remove(path)
-            except FileNotFoundError:
-                pass
-            except OSError as e:
-                self._log.error(
-                    "Failed to remove backing file {path}: {error!r}",
-                    path=path,
-                    error=e,
-                )
-        self.backing_files.clear()
+    def backing_file_paths(self) -> dict[str, str]:
+        """Map each of this connection's backing files to the emulated path
+        that holds it now. A file deleted from the tree has no entry."""
+        if not self.backing_files:
+            return {}
+        paths: dict[str, str] = {}
+        stack: list[tuple[str, Node]] = [("", self.fs)]
+        while stack:
+            dirpath, directory = stack.pop()
+            for entry in directory[A_CONTENTS]:
+                path = f"{dirpath}/{entry[A_NAME]}"
+                if entry[A_TYPE] == T_DIR:
+                    stack.append((path, entry))
+                elif entry[A_REALFILE] in self.backing_files:
+                    paths[entry[A_REALFILE]] = path
+        return paths
 
     def update_realfile(self, f: Node | None, realfile: str) -> None:
         if f is None:

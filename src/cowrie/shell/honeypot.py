@@ -629,8 +629,6 @@ class HoneyPotShell:
         without writing it, when one of those redirections failed: bash
         applies them first, so their error is the only one reported."""
         pp = self._make_pipe(None, [], None, ops)
-        for real_path, virtual_path in pp.redirect_real_files:
-            self.protocol.terminal.redirFiles.add((real_path, virtual_path))
         if pp.has_redirection_error:
             return False
         pp.errReceived(message)
@@ -1162,14 +1160,10 @@ class HoneyPotShell:
         self, ops: list[dict[str, Any]]
     ) -> tuple[dict[int, tuple[str, Any]], bytes | None, bool]:
         """Apply redirection ops over this shell's fd table, opening any files
-        once for the whole group (or for exec, the rest of the session), and
-        register their backing files so they are hashed/renamed or removed at
-        session close instead of being orphaned in the download directory.
+        once for the whole group (or for exec, the rest of the session).
         Returns the new table, the stdin an input redirection among them
         supplies (or None), and whether a redirection failed."""
         pp = self._make_pipe(None, [], None, ops)
-        for real_path, virtual_path in pp.redirect_real_files:
-            self.protocol.terminal.redirFiles.add((real_path, virtual_path))
         return (
             pp.output_fds(),
             pp.input_data,

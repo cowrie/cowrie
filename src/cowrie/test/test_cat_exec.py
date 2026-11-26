@@ -42,7 +42,7 @@ def run_exec_cat_redirect(payload: bytes) -> bytes:
     lsp.dataReceived(payload)
     lsp.eofReceived()
 
-    redir_files = [rp[0] for rp in lsp.redirFiles]
+    redir_files = list(avatar.server.fs.backing_files)
     try:
         assert len(redir_files) == 1, f"expected one redirect file, got {redir_files}"
         with open(redir_files[0], "rb") as f:

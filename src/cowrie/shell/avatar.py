@@ -59,7 +59,10 @@ class CowrieUser(avatar.ConchUser):
 
     def logout(self) -> None:
         self._log.info("avatar {username} logging out", username=self.username)
-        self.server.logout()
+        # The connection service sets conn once it starts; a login that never
+        # opened it has no events to report on.
+        conn = getattr(self, "conn", None)
+        self.server.logout(conn.transport.events if conn is not None else None)
 
     def lookupChannel(self, channelType, windowSize, maxPacket, data):
         """

@@ -237,18 +237,6 @@ class HoneyPotCommand:
             self.exit_code = code
         if self.exit_code == 0 and getattr(self.pp, "stdout_write_failed", False):
             self.exit_code = self.closed_stdout_status
-        # Register this command's own redirection backing files for hashing at
-        # session close. Read from self.pp, not the protocol's current pipe: a
-        # command that finishes after a later one started would otherwise
-        # register that command's files and orphan its own.
-        if (
-            self.protocol
-            and self.protocol.terminal
-            and getattr(self.pp, "redirect_real_files", None)
-        ):
-            for real_path, virtual_path in self.pp.redirect_real_files:
-                self.protocol.terminal.redirFiles.add((real_path, virtual_path))
-
         if len(self.protocol.cmdstack):
             self.protocol.cmdstack.remove(self)
 
