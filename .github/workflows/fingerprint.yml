@@ -190,6 +190,7 @@ jobs:
 
           # Initialize detection flags
           DETECTIONS_FOUND=0
+          TESTS_INCOMPLETE=0
 
           echo -e "\n## Nmap Analysis"
           echo "Checking for suspicious patterns in nmap output..."
@@ -222,24 +223,33 @@ jobs:
             elif grep -q "is not a honeypot" results/detect-kippo-cowrie.txt; then
               echo "✓ detect-kippo-cowrie: NOT identified as honeypot"
             else
-              echo "✓ detect-kippo-cowrie did not identify as honeypot"
+              echo "⚠️  WARNING: detect-kippo-cowrie printed no verdict"
+              TESTS_INCOMPLETE=1
             fi
+          else
+            echo "⚠️  WARNING: detect-kippo-cowrie produced no output"
+            TESTS_INCOMPLETE=1
           fi
 
           echo -e "\n## Advanced Behavioral Tests Analysis"
           if [ -f results/advanced-tests.txt ]; then
             cat results/advanced-tests.txt
+          fi
 
-            # Check if advanced tests detected honeypot
-            if [ "${{ env.ADVANCED_TEST_RESULT }}" = "1" ]; then
-              echo "⚠️  WARNING: Advanced behavioral tests identified honeypot indicators"
-              DETECTIONS_FOUND=1
-            elif grep -qi "LIKELY HONEYPOT\|SUSPICIOUS" results/advanced-tests.txt; then
-              echo "⚠️  WARNING: Advanced tests found suspicious behaviors"
-              DETECTIONS_FOUND=1
-            else
-              echo "✓ Advanced behavioral tests passed"
-            fi
+          # advanced-honeypot-tests.py exits 1 when it finds detections and 0
+          # when it does not. Any other status means it never got as far as
+          # running them, so the log holds no verdict to read either way.
+          if [ "${{ env.ADVANCED_TEST_RESULT }}" = "1" ]; then
+            echo "⚠️  WARNING: Advanced behavioral tests identified honeypot indicators"
+            DETECTIONS_FOUND=1
+          elif [ "${{ env.ADVANCED_TEST_RESULT }}" != "0" ]; then
+            echo "⚠️  WARNING: Advanced behavioral tests did not run to completion (exit ${{ env.ADVANCED_TEST_RESULT }})"
+            TESTS_INCOMPLETE=1
+          elif grep -qi "LIKELY HONEYPOT\|SUSPICIOUS" results/advanced-tests.txt; then
+            echo "⚠️  WARNING: Advanced tests found suspicious behaviors"
+            DETECTIONS_FOUND=1
+          else
+            echo "✓ Advanced behavioral tests passed"
           fi
 
           echo -e "\n========================================="
@@ -252,6 +262,11 @@ jobs:
             echo "Review the results above to identify what signatures or behaviors are detectable."
             echo "DETECTIONS_FOUND=true" >> $GITHUB_ENV
             exit 1
+          elif [ $TESTS_INCOMPLETE -eq 1 ]; then
+            echo "⚠️  INCONCLUSIVE: one or more detection tools did not run to completion"
+            echo "A run that never reached Cowrie cannot show that Cowrie is undetectable."
+            echo "DETECTIONS_FOUND=false" >> $GITHUB_ENV
+            echo "TESTS_INCOMPLETE=true" >> $GITHUB_ENV
           else
             echo "✓ SUCCESS: No obvious honeypot detection signatures found"
             echo "DETECTIONS_FOUND=false" >> $GITHUB_ENV
@@ -285,6 +300,8 @@ jobs:
           if [ "${{ env.DETECTIONS_FOUND }}" = "true" ]; then
             echo "::error::Honeypot detection tests FAILED - Cowrie was identified as a honeypot"
             exit 1
+          elif [ "${{ env.TESTS_INCOMPLETE }}" = "true" ]; then
+            echo "::warning::Fingerprinting tests were inconclusive - a detection tool did not run to completion"
           else
             echo "::notice::Fingerprinting tests passed - no obvious honeypot signatures detected"
           fi
