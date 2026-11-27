@@ -12,7 +12,7 @@ import re
 import unittest
 
 from cowrie.core.config import CowrieConfig
-from cowrie.shell import protocol
+from cowrie.shell import procfs, protocol
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
@@ -90,6 +90,10 @@ BOT_PROC_CHECK = (
     b'"$((6*7))" "$_filter_status_pid" "$_filter_ns" "$_filter_status_ok"; '
     b"else printf '%s\\n' 'check:NA'; fi"
 )
+
+# The check a telnet bot ran on a honeypot of ours (2026-11): it logs in, runs
+# this line and leaves when nothing comes back.
+BOT_CMDLINE_CHECK = b"cd /proc && cat self/cmdline"
 
 # The lines of /proc/<pid>/status in Linux 6.1 (fs/proc/array.c,
 # fs/proc/task_mmu.c), for a process with memory and no NUMA cpuset.
@@ -172,6 +176,33 @@ class ProcSelfTests(unittest.TestCase):
         # /proc/cpuinfo lists two CPUs.
         self.assertEqual(status["Cpus_allowed"], "\t3")
         self.assertEqual(status["Cpus_allowed_list"], "\t0-1")
+
+    def test_bot_check_sees_its_own_cmdline(self) -> None:
+        self.tr.clear()
+        self.proto.lineReceived(BOT_CMDLINE_CHECK)
+        self.assertEqual(self.tr.value(), b"cat\0self/cmdline\0root@unitTest:/proc# ")
+
+    def test_cmdline_has_the_name_the_command_was_invoked_by(self) -> None:
+        self.assertEqual(
+            self.run_line(b"cat /proc/self/cmdline"), b"cat\0/proc/self/cmdline\0"
+        )
+        self.assertEqual(
+            self.run_line(b"/bin/cat /proc/self/cmdline"),
+            b"/bin/cat\0/proc/self/cmdline\0",
+        )
+
+    def test_comm_agrees_with_stat(self) -> None:
+        self.assertEqual(self.run_line(b"/bin/cat /proc/self/comm"), b"cat\n")
+        fields = self.run_line(b"/bin/cat /proc/self/stat").split()
+        self.assertEqual(fields[1], b"(cat)")
+
+    def test_builtin_reads_the_shell_comm(self) -> None:
+        out = self.run_line(b'read -r name < /proc/self/comm; echo "$name"')
+        self.assertEqual(out, b"bash\n")
+
+    def test_login_shell_cmdline(self) -> None:
+        # Nothing is running: the reading process is the login shell itself.
+        self.assertEqual(procfs.self_cmdline(self.proto), b"-bash\0")
 
     def test_builtin_reads_the_shell_status(self) -> None:
         out = self.run_line(

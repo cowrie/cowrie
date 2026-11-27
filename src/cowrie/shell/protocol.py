@@ -129,6 +129,12 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         self.fs.generated_files["/proc/self/status"] = functools.partial(
             procfs.self_status, self
         )
+        self.fs.generated_files["/proc/self/cmdline"] = functools.partial(
+            procfs.self_cmdline, self
+        )
+        self.fs.generated_files["/proc/self/comm"] = functools.partial(
+            procfs.self_comm, self
+        )
 
         idle_timeout = CowrieConfig.getint("honeypot", "idle_timeout", fallback=180)
         self.setTimeout(idle_timeout)

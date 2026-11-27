@@ -74,6 +74,19 @@ class ShellCatCommandTests(unittest.TestCase):
             self.tr.value(), b"1\n" + PROMPT + b"2\n" + PROMPT + b"logout\n"
         )
 
+    def test_cat_adds_no_newline(self) -> None:
+        # cat copies its input: a last line without a newline stays that way.
+        for line, expected in (
+            (b"printf abc | cat", b"abc"),
+            (b"printf 'a\\nb' | cat", b"a\nb"),
+            (b"printf 'a\\nb' | cat -n", b"     1  a\n     2  b"),
+            (b"printf abc | cat | wc -c", b"3\n"),
+        ):
+            with self.subTest(line=line):
+                self.tr.clear()
+                self.proto.lineReceived(line)
+                self.assertEqual(self.tr.value(), expected + PROMPT)
+
     def test_cat_command_004(self) -> None:
         self.proto.lineReceived(b"cat\n")
         self.proto.lineReceived(b"test\n")
