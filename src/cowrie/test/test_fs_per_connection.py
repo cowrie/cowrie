@@ -11,6 +11,7 @@ import hashlib
 import os
 import stat
 import tempfile
+import time
 import unittest
 from types import SimpleNamespace
 from unittest import mock
@@ -25,9 +26,12 @@ from cowrie.shell.realm import HoneyPotRealm
 from cowrie.shell.server import CowrieServer
 from cowrie.shell.session import SSHSessionForCowrieUser
 from cowrie.shell.telnet import HoneyPotTelnetSession
+from cowrie.ssh import transport as ssh_transport
+from cowrie.telnet import transport as telnet_transport
 from cowrie.test.eventcapture import (
     CaptureSink,
     capture_eventlog,
+    capture_events,
     events_of,
     make_exec_transport,
 )
@@ -285,37 +289,62 @@ class RedirectStorageTests(unittest.TestCase):
         self.assertEqual(downloads, [])
         self.assertFalse(os.path.exists(backing))
 
-    def test_ssh_logout_reports_on_the_connection_events(self) -> None:
+    def test_ssh_connection_lost_stores_before_session_closed(self) -> None:
+        """Output plugins finish a session on session.closed, so the stored
+        files must be reported before it."""
         server, avatar = new_connection()
         run_exec_channel(avatar, b"echo over-ssh > /tmp/s")
         user = CowrieUser(b"root", server)
-        events, dispatched = capture_eventlog()
-        user.conn = SimpleNamespace(transport=SimpleNamespace(events=events))
+        transport = ssh_transport.HoneyPotSSHTransport()
+        transport.transport = mock.MagicMock()
+        transport.startTime = time.time()
+        transport.avatar = user
+        transport.logoutFunction = user.logout
+        user.conn = SimpleNamespace(transport=transport)
+        dispatched = capture_events(transport)
 
-        user.logout()
+        transport.connectionLost(connectionDone)
 
         self.assertEqual(
             [
-                d["destfile"]
-                for d in events_of(dispatched, "cowrie.session.file_download")
+                (d["eventid"], d.get("destfile"))
+                for d in dispatched
+                if d["eventid"]
+                in ("cowrie.session.file_download", "cowrie.session.closed")
             ],
-            ["/tmp/s"],
+            [
+                ("cowrie.session.file_download", "/tmp/s"),
+                ("cowrie.session.closed", None),
+            ],
         )
 
-    def test_telnet_disconnect_stores_the_output(self) -> None:
+    def test_telnet_connection_lost_stores_before_session_closed(self) -> None:
         """Telnet calls logout() only after the session has dropped its
         server, so the session stores what it wrote when its connection is
-        lost."""
+        lost, before the transport reports session.closed."""
         server, avatar = new_connection()
         run_exec_channel(avatar, b"echo over-telnet > /tmp/e")
         backing = backing_file(server, "/tmp/e")
+        transport = telnet_transport.CowrieTelnetTransport()
+        transport.startTime = time.time()
         session = HoneyPotTelnetSession(b"root", server)
-        events, dispatched = capture_eventlog()
-        session.transport = SimpleNamespace(events=events)  # type: ignore[assignment]
+        session.transport = transport  # type: ignore[assignment]
+        transport.protocol = session  # type: ignore[assignment]
+        dispatched = capture_events(transport)
 
-        session.connectionLost(connectionDone)
-        session.logout()
+        transport.connectionLost(connectionDone)
 
         self.assertFalse(os.path.exists(backing))
         self.assertTrue(os.path.isfile(stored(b"over-telnet\n")))
-        self.assertEqual(len(events_of(dispatched, "cowrie.session.file_download")), 1)
+        self.assertEqual(
+            [
+                (d["eventid"], d.get("destfile"))
+                for d in dispatched
+                if d["eventid"]
+                in ("cowrie.session.file_download", "cowrie.session.closed")
+            ],
+            [
+                ("cowrie.session.file_download", "/tmp/e"),
+                ("cowrie.session.closed", None),
+            ],
+        )
