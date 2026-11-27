@@ -12,9 +12,11 @@ import tempfile
 import unittest
 from types import SimpleNamespace
 from typing import Any
+from unittest.mock import MagicMock, patch
 
 from twisted.conch.ssh.filetransfer import FXF_CREAT, FXF_WRITE
 
+from cowrie.shell import honeypot
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.eventcapture import capture_eventlog, events_of
 from cowrie.test.fake_server import FakeAvatar, FakeServer
@@ -58,6 +60,26 @@ class ShellEventTests(unittest.TestCase):
         self.assertEqual(len(events), 1)
         self.assertEqual(events[0]["input"], "nosuchcommand --foo")
         self.assertEqual(events[0]["session"], "test-suite")
+
+    def test_command_found_log_is_single_line(self) -> None:
+        logger = MagicMock()
+        with patch.object(honeypot.HoneyPotShell, "_log", logger):
+            self.proto.lineReceived(b'x=$(cat /etc/passwd); echo "$x"')
+        found = [
+            call
+            for call in logger.info.call_args_list
+            if call.args[:1] == ("Command found: {input}",)
+        ]
+        self.assertTrue(any("root:x:0:0" in c.kwargs["input"] for c in found))
+        for call in found:
+            self.assertNotIn("\n", call.kwargs["input"])
+            self.assertNotIn("\r", call.kwargs["input"])
+
+
+class SingleLineCommandTests(unittest.TestCase):
+    def test_collapses_cr_lf_and_crlf(self) -> None:
+        self.assertEqual(honeypot._single_line("a\r\nb\rc\nd"), "a b c d")
+        self.assertEqual(honeypot._single_line("plain"), "plain")
 
 
 class SessionParamsEventTests(unittest.TestCase):
