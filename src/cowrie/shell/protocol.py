@@ -21,7 +21,7 @@ from twisted.protocols.policies import TimeoutMixin
 
 import cowrie.commands
 from cowrie.core.config import CowrieConfig
-from cowrie.core.resources import read_data_bytes
+from cowrie.core.resources import list_data_files, read_data_bytes
 from cowrie.shell import command, honeypot, procfs
 from cowrie.shell.script import run_script_file
 
@@ -43,6 +43,13 @@ def boot_offset() -> float:
     return float(random.randint(86400, 90 * 86400))
 
 
+@functools.cache
+def bundled_text_commands() -> list[str]:
+    """Paths, relative to /, of the bundled commands that print canned
+    output."""
+    return list_data_files("txtcmds")
+
+
 class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     """
     Base protocol for interactive and non-interactive use
@@ -57,7 +64,7 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
     # instances created without __init__ (tests).
     _process_ended: bool = False
 
-    commands: ClassVar[dict] = {}
+    commands: ClassVar[dict[str, type[command.HoneyPotCommand]]] = {}
     for c in cowrie.commands.command_modules:
         try:
             module = import_module(f"cowrie.commands.{c}")
@@ -270,26 +277,13 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
         if path is None:
             return None
 
-        relpath = path.lstrip("/")
-        txtcmds_path = CowrieConfig.get("honeypot", "txtcmds_path", fallback="")
-        if txtcmds_path:
-            operator_path = Path(txtcmds_path) / relpath
-            if operator_path.is_file():
-                return self.txtcmd(operator_path.read_bytes())
+        output = self._text_command_output(path)
+        if output is not None:
+            return self.txtcmd(output)
 
-        try:
-            binary_data = read_data_bytes("txtcmds", *relpath.split("/"))
-            return self.txtcmd(binary_data)
-        except FileNotFoundError:
-            # No txtcmd file at this path -- including when the command resolves
-            # to a directory (e.g. `/` -> empty relpath -> the txtcmds directory
-            # itself), which read_data_bytes reports as FileNotFoundError on
-            # every platform. Fall through so the caller reports "Is a
-            # directory" instead of crashing the session.
-            pass
-
-        if path in self.commands:
-            return self.commands[path]
+        emulation = self._emulation(path)
+        if emulation is not None:
+            return emulation
 
         if self.fs.isfile(path):
             # bash names a command typed with a slash as typed, and one found
@@ -297,6 +291,53 @@ class HoneyPotBaseProtocol(insults.TerminalProtocol, TimeoutMixin):
             return self.scriptcmd(path, cmd if "/" in cmd else path)
 
         self._log.info("Can't find command {cmd}", cmd=cmd)
+        return None
+
+    def _same_file(self, a: str, b: str) -> bool:
+        """Whether two paths reach one node of the fake filesystem, as
+        /bin/cat and /usr/bin/cat do through the /bin -> usr/bin symlink."""
+        node = self.fs.getfile(a)
+        return node is not None and node is self.fs.getfile(b)
+
+    def _emulation(self, path: str) -> type[command.HoneyPotCommand] | None:
+        """The emulated command registered under any path to this file."""
+        if path in self.commands:
+            return self.commands[path]
+        name = path.rsplit("/", 1)[-1]
+        for key, emulation in self.commands.items():
+            if (
+                key.startswith("/")
+                and key.rsplit("/", 1)[-1] == name
+                and self._same_file(key, path)
+            ):
+                return emulation
+        return None
+
+    def _text_command_output(self, path: str) -> bytes | None:
+        """The canned output stored for any path to this file: the operator's
+        txtcmds_path first, then the bundled txtcmds."""
+        name = path.rsplit("/", 1)[-1]
+        # A directory such as `/` has no name to match; the caller reports
+        # "Is a directory".
+        if not name:
+            return None
+        txtcmds_path = CowrieConfig.get("honeypot", "txtcmds_path", fallback="")
+        if txtcmds_path:
+            root = Path(txtcmds_path)
+            for candidate in sorted(root.rglob("*")):
+                if (
+                    candidate.name == name
+                    and candidate.is_file()
+                    and self._same_file(
+                        "/" + candidate.relative_to(root).as_posix(), path
+                    )
+                ):
+                    return candidate.read_bytes()
+        for relpath in bundled_text_commands():
+            if relpath.rsplit("/", 1)[-1] == name and self._same_file(
+                "/" + relpath, path
+            ):
+                return read_data_bytes("txtcmds", *relpath.split("/"))
         return None
 
     def lineReceived(self, line: bytes) -> None:
