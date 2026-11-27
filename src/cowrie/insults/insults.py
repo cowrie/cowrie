@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import os
 import shutil
 import time
@@ -17,7 +16,7 @@ from twisted.logger import Logger
 from twisted.python.compat import iterbytes
 
 from cowrie.core import ttylog
-from cowrie.core.artifact import temp_download_path
+from cowrie.core.artifact import store_by_hash, temp_download_path
 from cowrie.core.config import CowrieConfig
 from cowrie.shell import protocol
 
@@ -284,16 +283,9 @@ class LoggingServerProtocol(insults.ServerProtocol):
         if self.stdinlogOpen:
             try:
                 if os.path.exists(self.stdinlogFile):
-                    with open(self.stdinlogFile, "rb") as f:
-                        shasum = hashlib.sha256(f.read()).hexdigest()
-                    shasumfile = os.path.join(self.downloadPath, shasum)
-                    if os.path.exists(shasumfile):
-                        os.remove(self.stdinlogFile)
-                        duplicate = True
-                    else:
-                        os.rename(self.stdinlogFile, shasumfile)
-                        duplicate = False
-
+                    shasum, shasumfile, duplicate = store_by_hash(
+                        self.stdinlogFile, self.downloadPath
+                    )
                     self.events.dispatch(
                         "cowrie.session.file_download",
                         "Saved stdin contents with SHA-256 %(shasum)s to %(outfile)s",
