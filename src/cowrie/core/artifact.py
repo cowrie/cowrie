@@ -46,6 +46,25 @@ def temp_download_path(prefix: str) -> str:
     )
 
 
+def store_by_hash(path: str, artifact_dir: str) -> tuple[str, str, bool]:
+    """Move a finished file into the artifact store, named by its SHA-256.
+
+    Returns the hash, the stored path, and whether that content was already
+    stored. A duplicate is deleted; the caller reports the outcome once, on
+    its file_download event (duplicate=True)."""
+    with open(path, "rb") as f:
+        shasum = hashlib.sha256(f.read()).hexdigest()
+    stored = os.path.join(artifact_dir, shasum)
+    if os.path.exists(stored):
+        os.remove(path)
+        return shasum, stored, True
+    os.rename(path, stored)
+    umask = os.umask(0)
+    os.umask(umask)
+    os.chmod(stored, 0o666 & ~umask)
+    return shasum, stored, False
+
+
 class Artifact:
     artifactDir: str = CowrieConfig.get("honeypot", "download_path", fallback=".")
 
@@ -95,25 +114,9 @@ class Artifact:
                 pass
             return None
 
-        self.fp.seek(0)
-        data = self.fp.read()
         self.fp.close()
         self.closed = True
-
-        self.shasum = hashlib.sha256(data).hexdigest()
-        self.shasumFilename = os.path.join(self.artifactDir, self.shasum)
-
-        if os.path.exists(self.shasumFilename):
-            # Content already captured; drop the temp copy. The dedup outcome is
-            # reported once, congruently, on the caller's file_download event
-            # (duplicate=True) rather than as a separate log line here.
-            os.remove(self.fp.name)
-            self.duplicate = True
-        else:
-            os.rename(self.fp.name, self.shasumFilename)
-            umask = os.umask(0)
-            os.umask(umask)
-            os.chmod(self.shasumFilename, 0o666 & ~umask)
-            self.duplicate = False
-
+        self.shasum, self.shasumFilename, self.duplicate = store_by_hash(
+            self.fp.name, self.artifactDir
+        )
         return self.shasum, self.shasumFilename

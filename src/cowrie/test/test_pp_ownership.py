@@ -47,7 +47,7 @@ class CommandOwnsItsPipeTests(unittest.TestCase):
         self.proto.commands["fakeasync"] = FakeAsyncCommand
         FakeAsyncCommand.pending = []
         self.created: list[str] = []
-        self.before = set(self.proto.terminal.redirFiles)
+        self.before = set(self.proto.fs.backing_files)
         self.tr.clear()
 
     def tearDown(self) -> None:
@@ -56,29 +56,27 @@ class CommandOwnsItsPipeTests(unittest.TestCase):
             if os.path.exists(real):
                 os.remove(real)
 
-    def new_redir_files(self) -> set[tuple[str, str]]:
-        new: set[tuple[str, str]] = set(self.proto.terminal.redirFiles) - self.before
-        self.created.extend(real for real, _virtual in new)
+    def new_redir_paths(self) -> dict[str, str]:
+        """Backing files this test's commands created, mapped to the
+        emulated path each one holds."""
+        paths = self.proto.fs.backing_file_paths()
+        new = {real: path for real, path in paths.items() if real not in self.before}
+        self.created.extend(new)
         return new
 
-    def test_async_stage_registers_its_own_redirect(self) -> None:
-        # The async stage's stderr redirect must be registered for hashing when
-        # it finishes, even though a downstream stage started meanwhile. Losing
-        # it orphans the attacker's captured bytes in the download directory
-        # with no file_download event.
+    def test_async_stage_writes_its_own_redirect(self) -> None:
+        # The async stage's stderr goes to its own redirect file, even though
+        # a downstream stage started meanwhile.
         self.proto.lineReceived(b"fakeasync 2> /tmp/pp_async_err.log | cat\n")
         FakeAsyncCommand.pending[0].finish()
-        self.assertIn(
-            "/tmp/pp_async_err.log",
-            {virtual for _real, virtual in self.new_redir_files()},
-        )
+        new = self.new_redir_paths()
+        self.assertEqual(list(new.values()), ["/tmp/pp_async_err.log"])
+        with open(next(iter(new)), "rb") as f:
+            self.assertEqual(f.read(), b"stderr-payload\n")
 
-    def test_sync_redirect_still_registers(self) -> None:
+    def test_sync_redirect_is_tracked(self) -> None:
         self.proto.lineReceived(b"echo hi > /tmp/pp_sync.log\n")
-        self.assertIn(
-            "/tmp/pp_sync.log",
-            {virtual for _real, virtual in self.new_redir_files()},
-        )
+        self.assertIn("/tmp/pp_sync.log", self.new_redir_paths().values())
 
     def test_command_pipe_is_its_own(self) -> None:
         self.proto.lineReceived(b"fakeasync | cat\n")

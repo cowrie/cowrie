@@ -598,8 +598,6 @@ class Command_sed(HoneyPotCommand):
             user=self.user,
         )
         pp.outReceived(data)
-        for real_path, virtual_path in pp.redirect_real_files:
-            self.protocol.terminal.redirFiles.add((real_path, virtual_path))
 
     def matches(self, address: Address, pattern: str, number: int, last: bool) -> bool:
         if address.kind == "line":

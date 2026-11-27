@@ -98,7 +98,6 @@ class PipeProtocol:
         self.targets: dict[int, tuple[str, Any]] = {}
 
         self.redirection_error = False
-        self.redirect_real_files: list[tuple[str, str]] = []
         # Set once a write finds the client gone, so a command that keeps
         # writing (a download's progress meter) logs the loss only once
         self.terminal_lost = False
@@ -239,7 +238,6 @@ class PipeProtocol:
                 return None
             safeoutfile, start_size = reuse
 
-        self.redirect_real_files.append((safeoutfile, outfile))
         return {
             "virtual": outfile,
             "real": safeoutfile,

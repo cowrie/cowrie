@@ -7,17 +7,21 @@ from __future__ import annotations
 
 import configparser
 import json
+import os
 import random
 from typing import TYPE_CHECKING
 
 from twisted.logger import Logger
 
+from cowrie.core.artifact import store_by_hash
 from cowrie.core.config import CowrieConfig
 from cowrie.core.resources import open_data_binary
 from cowrie.shell import fs
 
 if TYPE_CHECKING:
     from twisted.cred.portal import IRealm
+
+    from cowrie.core.events import EventLog
 
 
 class CowrieServer:
@@ -47,10 +51,38 @@ class CowrieServer:
             "Initialized emulated server as architecture: {arch}", arch=self.arch
         )
 
-    def logout(self) -> None:
-        """Release what the connection held on the real disk."""
-        if self.fs is not None:
-            self.fs.remove_backing_files()
+    def logout(self, events: EventLog | None) -> None:
+        """Store what the connection wrote, each file once with its final
+        content, and report it on ``events``. Empty files are deleted."""
+        if self.fs is None:
+            return
+        download_path = CowrieConfig.get("honeypot", "download_path", fallback=".")
+        paths = self.fs.backing_file_paths()
+        for realfile in self.fs.backing_files:
+            try:
+                if os.path.getsize(realfile) == 0:
+                    os.remove(realfile)
+                    continue
+                shasum, stored, duplicate = store_by_hash(realfile, download_path)
+            except FileNotFoundError:
+                continue
+            except OSError as e:
+                self._log.error(
+                    "Failed to store backing file {path}: {error!r}",
+                    path=realfile,
+                    error=e,
+                )
+                continue
+            if events is not None:
+                events.dispatch(
+                    "cowrie.session.file_download",
+                    "Saved redir contents with SHA-256 %(shasum)s to %(outfile)s",
+                    duplicate=duplicate,
+                    outfile=stored,
+                    shasum=shasum,
+                    destfile=paths.get(realfile, ""),
+                )
+        self.fs.backing_files.clear()
 
     def initFileSystem(self, home: str) -> None:
         """
@@ -60,8 +92,8 @@ class CowrieServer:
 
         Channels of a connection are assumed to run one after another, as
         every multi-channel session seen in the wild does: each channel
-        finds the files the previous one left, and stores what it wrote
-        when it closes.
+        finds the files the previous one left. What the connection wrote is
+        stored at logout.
         """
         if self.fs is not None:
             return

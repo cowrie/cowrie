@@ -312,19 +312,15 @@ class ShellFdRedirectionTests(unittest.TestCase):
         self.proto.lineReceived(b"echo first > f1; echo second > f2; cat f1; cat f2")
         self.assertEqual(self.tr.value(), b"first\nsecond\n" + PROMPT)
 
-    def test_bare_redirection_registers_backing_file(self) -> None:
+    def test_bare_redirection_tracks_backing_file(self) -> None:
         # A redirection with no command still creates a real backing file; it
-        # must be registered for cleanup so it is not orphaned in the download
-        # directory at session close (issue #40217).
+        # must be tracked so it is stored or removed at logout, not orphaned
+        # in the download directory (issue #40217).
         target = "/tmp/bare_redir_40217"
-        before = set(self.proto.terminal.redirFiles)
         self.proto.lineReceived(b">/tmp/bare_redir_40217")
-        new = self.proto.terminal.redirFiles - before
-        self.assertTrue(
-            any(virtual == target for _real, virtual in new),
-            f"backing file for {target} was not registered: {new}",
-        )
-        for real, _virtual in new:
+        paths = self.proto.fs.backing_file_paths()
+        self.assertIn(target, paths.values())
+        for real in paths:
             if os.path.exists(real):
                 os.remove(real)
 

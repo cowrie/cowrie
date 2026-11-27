@@ -54,7 +54,6 @@ class FakeTransport(testing.StringTransport):
 
     # Thanks to TerminalBuffer (some code was taken from twisted Terminal Buffer)
 
-    redirFiles: ClassVar[set[list[str]]] = set()
     width = 80
     height = 24
     void = object()
