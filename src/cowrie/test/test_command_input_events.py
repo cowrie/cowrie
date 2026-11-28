@@ -132,7 +132,7 @@ class CommandInputEventTests(unittest.TestCase):
         self.assert_input_event(b"dd", "cowrie.session.input", "dd")
 
     def test_grep_input_event(self) -> None:
-        from cowrie.commands.fs import Command_grep
+        from cowrie.commands.grep import Command_grep
 
         cmd = self.make_command(Command_grep, "grep", "stdin")
         self.assert_direct_input_event(cmd, "cowrie.command.input", "grep")
