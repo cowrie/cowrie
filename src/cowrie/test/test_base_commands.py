@@ -7,7 +7,7 @@ from __future__ import annotations
 import os
 import unittest
 
-from cowrie.commands.base import Command_php
+from cowrie.commands.php import Command_php
 from cowrie.shell.protocol import HoneyPotInteractiveProtocol
 from cowrie.test.fake_server import FakeAvatar, FakeServer
 from cowrie.test.fake_transport import FakeTransport
