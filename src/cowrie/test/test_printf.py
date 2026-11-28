@@ -86,10 +86,21 @@ class PrintfTests(unittest.TestCase):
             b"0x1.8p+0|0x0p+0|0X1.4P+3\n",
         )
 
+    def test_hex_float_of_an_overflowed_argument(self) -> None:
+        self.assertEqual(self.run_line(b"printf '%a|%A' 1e400 -1e400"), b"inf|-INF")
+
     def test_format_escapes(self) -> None:
         self.assertEqual(
             self.run_line(b"printf '\\x41\\101\\u00e9\\q\\n'"),
             "AAé\\q\n".encode(),
+        )
+
+    def test_code_points_past_the_unicode_range(self) -> None:
+        # bash keeps encoding past U+10FFFF, in up to six bytes, and prints
+        # nothing from 0x80000000 up.
+        self.assertEqual(
+            self.run_line(rb"printf '\U00110000|\U7FFFFFFF|\UFFFFFFFF|'"),
+            b"\xf4\x90\x80\x80|\xfd\xbf\xbf\xbf\xbf\xbf||",
         )
 
     def test_backslash_c_in_format_is_literal(self) -> None:
