@@ -146,7 +146,7 @@ class RedisOutputTests(unittest.TestCase):
     def test_lpush_is_the_default_send_method(self) -> None:
         out = self.start()
         server = self.connected(out)
-        out.write({"eventid": "cowrie.session.connect", "log_level": "info"})
+        out.write({"eventid": "cowrie.session.connect"})
         ((command, key, message),) = server.commands()
         self.assertEqual((command, key), ("LPUSH", "events"))
         self.assertEqual(json.loads(message), {"eventid": "cowrie.session.connect"})

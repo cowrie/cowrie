@@ -157,10 +157,8 @@ class Output(cowrie.core.output.Output):
                 )
             return
 
-        for i in list(event):
-            # Remove twisted 15 legacy keys
-            if i.startswith("log_") or i == "time" or i == "system":
-                del event[i]
+        event.pop("time", None)
+        event.pop("system", None)
 
         task = asyncio.ensure_future(self._write(json.dumps(event).encode("utf-8")))
         self._background_tasks.add(task)

@@ -33,10 +33,6 @@ class Output(cowrie.core.output.Output):
         pass
 
     def write(self, event: dict) -> None:
-        log_keys = [k for k in event if k.startswith("log_")]
-        for k in log_keys:
-            del event[k]
-
         msgtxt = f"[Cowrie {event['sensor']}]\nEvent: {event['eventid']}\nSource: {event['src_ip']}\nSession: {event['session']}"
 
         if event["eventid"] == "cowrie.login.success":

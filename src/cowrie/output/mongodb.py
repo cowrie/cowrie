@@ -96,11 +96,6 @@ class Output(cowrie.core.output.Output):
         )
 
     def write(self, event: dict[str, Any]) -> None:
-        for i in list(event):
-            # Remove twisted 15 legacy keys
-            if i.startswith("log_"):
-                del event[i]
-
         match event["eventid"]:
             case "cowrie.session.connect":
                 # Add the sensor unless it exists. The filter supplies the

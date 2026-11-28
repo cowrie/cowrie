@@ -41,10 +41,8 @@ class Output(cowrie.core.output.Output):
     @defer.inlineCallbacks
     def write(self, event):
         event["_time"] = event.pop("timestamp")
-        for i in list(event):
-            # Remove twisted 15 legacy keys
-            if i.startswith("log_") or i == "time" or i == "system":
-                del event[i]
+        event.pop("time", None)
+        event.pop("system", None)
 
         try:
             msg = json.dumps(event, separators=(",", ":")).encode()

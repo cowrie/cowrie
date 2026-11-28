@@ -94,11 +94,6 @@ class Output(cowrie.core.output.Output):
         Push to redis
         """
         # Add the entry to redis
-        for i in list(event):
-            # Remove twisted 15 legacy keys
-            if i.startswith("log_"):
-                del event[i]
-
         if self.pending >= self.max_pending:
             self.dropped += 1
             return

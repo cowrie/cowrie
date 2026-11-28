@@ -160,11 +160,6 @@ class Output(cowrie.core.output.Output):
         return ""
 
     def write(self, event: dict[str, Any]) -> None:
-        for i in list(event):
-            # Remove twisted 15 legacy keys
-            if i.startswith("log_"):
-                del event[i]
-
         # Check for verbose events to skip in case of not verbose mode
         verbose_events = (
             "cowrie.client.kex",
