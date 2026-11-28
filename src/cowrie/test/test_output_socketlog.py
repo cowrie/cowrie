@@ -73,11 +73,6 @@ class SocketLogOutputTests(unittest.TestCase):
             b'{"eventid": "cowrie.session.closed", "session": "a"}\n',
         )
 
-    def test_legacy_log_keys_are_dropped(self) -> None:
-        transport = _connect(self.out)
-        self.out.write({"eventid": "t", "log_namespace": "x", "log_time": 1})
-        self.assertEqual(transport.value(), b'{"eventid": "t"}\n')
-
     def test_events_before_connection_are_queued_in_order(self) -> None:
         self.out.write({"eventid": "first"})
         self.out.write({"eventid": "second"})

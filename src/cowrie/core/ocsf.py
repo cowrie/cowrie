@@ -44,9 +44,7 @@ def _raw_data(logentry: dict[str, Any]) -> str:
     value can never crash the output observer.
     """
     raw = {
-        key: value
-        for key, value in logentry.items()
-        if not key.startswith("log_") and key not in ("time", "system")
+        key: value for key, value in logentry.items() if key not in ("time", "system")
     }
     return json.dumps(raw, sort_keys=True, separators=(",", ":"), default=str)
 

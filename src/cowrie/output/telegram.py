@@ -39,11 +39,6 @@ class Output(cowrie.core.output.Output):
         pass
 
     def write(self, event):
-        for i in list(event):
-            # remove twisted 15 legacy keys
-            if i.startswith("log_"):
-                del event[i]
-
         # The message is sent with parse_mode=HTML, so every value put into it
         # is escaped: the command, credentials and URL are attacker-controlled,
         # and a literal "<", ">" or "&" would otherwise be read as markup --

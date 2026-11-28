@@ -149,11 +149,6 @@ class Output(cowrie.core.output.Output):
             self.connection = None
 
     def write(self, event: dict[str, Any]) -> None:
-        for i in list(event):
-            # remove twisted 15 legacy keys
-            if i.startswith("log_"):
-                del event[i]
-
         if "timestamp" in event:
             event["timestamp"] = iso8601_to_timestamp(event["timestamp"])
 

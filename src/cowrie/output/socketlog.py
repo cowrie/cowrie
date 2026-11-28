@@ -135,10 +135,5 @@ class Output(cowrie.core.output.Output):
         self.connector.disconnect()
 
     def write(self, event: dict[str, Any]) -> None:
-        for i in list(event):
-            # Remove twisted 15 legacy keys
-            if i.startswith("log_"):
-                del event[i]
-
         message = json.dumps(event) + "\n"
         self.factory.send(message.encode())

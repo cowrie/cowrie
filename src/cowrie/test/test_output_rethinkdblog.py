@@ -236,13 +236,12 @@ class RethinkDBOutputTests(unittest.TestCase):
         ((_, table_create),) = server.queries()
         self.assertEqual(table_create[0], Term.TABLE_CREATE)
 
-    def test_event_is_inserted_without_legacy_keys(self) -> None:
+    def test_event_is_inserted_with_epoch_timestamp(self) -> None:
         server = self.server()
         server.ready()
         self.out.write(
             {
                 "eventid": "cowrie.session.connect",
-                "log_level": "info",
                 "timestamp": "2026-10-06T08:00:00.000000Z",
             }
         )

@@ -47,10 +47,8 @@ class Output(cowrie.core.output.Output):
     def write(self, event):
         if self.epoch_timestamp:
             event["epoch"] = int(event["time"] * 1000000 / 1000)
-        for i in list(event):
-            # Remove twisted 15 legacy keys
-            if i.startswith("log_") or i == "time" or i == "system":
-                del event[i]
+        event.pop("time", None)
+        event.pop("system", None)
         try:
             # Serialize to a string first and write the line in one call: a
             # rotating logfile checks for rotation on every write, so chunked

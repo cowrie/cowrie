@@ -225,7 +225,7 @@ class MongoDBOutputTests(unittest.TestCase):
             "cowrie.direct-tcpip.data",
             "cowrie.something.else",
         ):
-            self.out.write({"eventid": eventid, "log_level": "info"})
+            self.out.write({"eventid": eventid})
         self.assertEqual(
             [(col, doc) for _, col, doc in server.writes()],
             [
