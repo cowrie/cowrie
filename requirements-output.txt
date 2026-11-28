@@ -38,10 +38,6 @@ slackclient==2.9.4
 # influxdb
 influxdb==5.3.2
 
-# dblog_xmpp
-# Disabled 2024-12-23 because unmaintained upstream dependency: https://github.com/cowrie/cowrie/issues/1639
-# wokkel==18.0.0
-
 # misp
 pymisp==3.0.0
 
