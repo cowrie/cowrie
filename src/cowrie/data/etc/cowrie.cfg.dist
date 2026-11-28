@@ -900,29 +900,6 @@ listen_endpoints = tcp:2223:interface=0.0.0.0
 
 
 # ============================================================================
-# Database logging Specific Options
-# ============================================================================
-
-# XMPP Logging
-# Log to an xmpp server.
-#
-#[database_xmpp]
-#server = sensors.carnivore.it
-#user = anonymous@sensors.carnivore.it
-#password = anonymous
-#muc = dionaea.sensors.carnivore.it
-#signal_createsession = cowrie-events
-#signal_connectionlost = cowrie-events
-#signal_loginfailed = cowrie-events
-#signal_loginsucceeded = cowrie-events
-#signal_command = cowrie-events
-#signal_clientversion = cowrie-events
-#debug=true
-
-
-
-
-# ============================================================================
 # Output Plugins
 # These provide an extensible mechanism to send audit log entries to third
 # parties. The audit entries contain information on clients connecting to
@@ -930,13 +907,6 @@ listen_endpoints = tcp:2223:interface=0.0.0.0
 #
 # Output entries need to start with 'output_' and have the 'enabled' entry.
 # ============================================================================
-
-[output_xmpp]
-enabled=false
-server = conference.cowrie.local
-user = cowrie@cowrie.local
-password = cowrie
-muc = hacker_room
 
 # JSON based logging module
 #
