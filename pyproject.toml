@@ -83,7 +83,6 @@ dev = [
 "pipdeptree==4.2.14",
 "pre-commit==4.7.0",
 "pylint==4.1.4",
-"pyre-check==0.10.0",
 "pyright==1.1.414",
 "pytype==2024.10.11; platform_python_implementation=='CPython'",
 "pyupgrade==3.22.0",
@@ -98,14 +97,6 @@ dev = [
 "tox==4.67.13",
 "yamllint==1.38.0",
 ]
-
-
-[tool.isort]
-profile = "black"
-known_zope = "zope"
-known_twisted = "twisted"
-known_first_party = ["cowrie","backend_pool"]
-sections=["FUTURE","STDLIB","THIRDPARTY","ZOPE","TWISTED","FIRSTPARTY","LOCALFOLDER"]
 
 
 [tool.mypy]
@@ -341,7 +332,6 @@ legacy_tox_ini = """
             --config-file="{toxinidir}/pyproject.toml" \
             {tty:--pretty:}                        \
             {posargs:src}
-        - pyre --noninteractive analyze
         - pyright {posargs:src}
     basepython = python3.11
 
