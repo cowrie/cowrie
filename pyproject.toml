@@ -63,15 +63,22 @@ playlog = "cowrie.scripts.playlog:run"
 
 [project.optional-dependencies]
 csirtg = ["csirtgsdk==1.1.5"]
-elasticsearch = ["pyes"]
-mysql = ["mysqlclient"]
+elasticsearch = ["elasticsearch"]
+hpfeeds = ["hpfeeds"]
+influxdb = ["influxdb"]
+kafka = ["aiokafka"]
+misp = ["pymisp"]
 mongodb = ["txmongo"]
+mysql = ["mysql-connector-python"]
+oraclecloud = ["oci"]
 pool = ["libvirt-python==12.9.0"]
+postgresql = ["psycopg2-binary"]
+prometheus = ["prometheus_client"]
+rabbitmq = ["pika"]
+redis = ["txredisapi"]
 rethinkdblog = ["rethinkdb"]
 s3 = ["botocore"]
 slack = ["slackclient"]
-influxdb = ["influxdb"]
-kafka = ["aiokafka"]
 dev = [
 "build==1.6.1",
 "coverage==7.17.3",
